@@ -3,11 +3,11 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** (date/time)
-**Current phase:** M0+M1
-**Next action:** Start M0+M1 (see section 2)
-**Overall:** 0 / 7 phases complete
-**Docker available:** unknown
+**Last updated:** 2026-10-13 01:10 IST
+**Current phase:** M0+M1 complete; M2 next
+**Next action:** M2 Chaos Lab — implement schema and two deterministic scenarios, verify signals and recovery
+**Overall:** 1 / 7 phases complete
+**Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
 ---
@@ -18,7 +18,7 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 
 | Phase | Name | Status | Gate command(s) | Gate result | Commit |
 |---|---|---|---|---|---|
-| M0+M1 | Foundation + Observability | NOT STARTED | `make up`, `make test` | — | — |
+| M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; 20 Python + 1 web tests passed; CI validated | this commit: `feat(M0+M1): foundation and arm64 observability lab` |
 | M2 | Chaos Lab | NOT STARTED | `make chaos-kill`, `make chaos-lag` | — | — |
 | M3 | Incident Core | NOT STARTED | `make test` (incident + isolation tests) | — | — |
 | M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
@@ -33,17 +33,49 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 Tick a box only after verifying it. Add a one-line note (file/test name) next to each ticked item.
 
 ### M0+M1 Foundation + Observability
-- [ ] Monorepo skeleton matches layout; uv workspace installs
-- [ ] Typed config + `.env.example`
-- [ ] Compose: PG primary + replica healthy
-- [ ] Compose: otel-collector, api, gateway, checkout-api, orders-api, pg-lag-probe, event-watcher, traffic
-- [ ] `/healthz` + `/readyz` on all services
-- [ ] OTel traces/metrics/logs from demo services
-- [ ] Collector → API `/internal/otlp/v1/*` ingest works
-- [ ] Telemetry tables + normalization + redaction (with tests)
-- [ ] One request → correlated trace + log (same trace_id) + metric in DB
-- [ ] Makefile targets, CI workflow, lint/type/test commands
-- [ ] **GATE:** `make up` healthy + `make test` green
+- [x] Monorepo skeleton matches layout; uv workspace installs — `make setup`: frozen sync checked 64 packages; npm ci completed
+- [x] Typed config + `.env.example` — `test_settings_hide_credentials_and_validate_provider`; generated ignored .env
+- [x] Compose: PG primary + replica healthy — `make up`; streaming standby + live replica read verified
+- [x] Compose: otel-collector, api, gateway, checkout-api, orders-api, pg-lag-probe, event-watcher, traffic — `make up`, Collector HTTP health, `make seed-traffic`; all enabled services healthy
+- [x] `/healthz` + `/readyz` on all services — API + all six demo services verified; web /healthz; Collector health extension /
+- [x] OTel traces/metrics/logs from demo services — SDK instrumentation; checkout correlation, probe metrics, real watcher events; seeded traffic healthy
+- [x] Collector → API `/internal/otlp/v1/*` ingest works — live integration through Collector HTTP JSON exporters
+- [x] Telemetry tables + normalization + redaction (with tests) — Alembic revision 0001; parser/redaction/component + live storage tests
+- [x] One request → correlated trace + log (same trace_id) + metric in DB — `test_request_has_correlated_trace_log_metric_and_replica_read`
+- [x] Makefile targets, CI workflow, lint/type/test commands — `make lint`, `make build-web`; Compose config validation; actionlint 1.7.7 passed
+- [x] **GATE:** `make up` healthy + `make test` green — 20 Python tests passed (4 live Docker integration, none skipped), 1 Vitest test passed
+
+
+Verification evidence (2026-10-13, native Apple Silicon):
+
+```text
+make up: exit 0
+Healthy: http://localhost:8000/readyz
+Healthy: http://localhost:8080/readyz
+Healthy: http://localhost:5173/healthz
+Healthy: http://localhost:13133/
+make seed-traffic: Container aipi-traffic-1 Healthy
+Demo endpoint checks: gateway, checkout-api, orders-api, pg-lag-probe,
+  event-watcher, traffic: [200, 200] for /healthz and /readyz
+make test (Node v25.9.0 explicitly selected in approved shell):
+  20 passed, 1 warning in 5.83s (Python; 4 live integration tests, none skipped)
+  Test Files 1 passed (1); Tests 1 passed (1) (Vitest 4.1.11)
+make lint: All checks passed!; 55 files already formatted;
+  Success: no issues found in 15 source files; eslint and tsc exit 0
+make build-web: vite v7.3.7; 27 modules transformed; built in 342ms
+make setup: Checked 64 packages; npm ci completed; found 0 vulnerabilities
+Compose base + test overlay config --quiet: exit 0
+rhysd/actionlint:1.7.7: exit 0
+Gitleaks v8.24.2 source snapshot: no leaks found
+Image inspect: postgres:16, aipi-python:local, aipi-web:latest,
+  otel/opentelemetry-collector-contrib:0.123.0 all linux/arm64
+```
+
+The sandbox's approved shell initially selected system Node 20; all final npm
+setup/tests explicitly selected `/Users/akshat/.nvm/versions/node/v25.9.0/bin`.
+Normal workspace commands and the web container use Node 25. Disposable lab
+credentials exposed in an early test traceback were rotated; failure output now
+suppresses driver connection locals. The lab and seeded traffic remain running.
 
 ### M2 Chaos Lab
 - [ ] Scenario schema + SCN-001 + SCN-002 scripts
@@ -112,7 +144,94 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 - Files touched:
 ```
 
-_(no failures logged yet)_
+### F-010 — Older Git lacks branch --show-current    Status: RESOLVED
+- Phase/step: M0+M1 repository inspection
+- Command: `git branch --show-current`
+- Error (trimmed, real output): `error: unknown option show-current`.
+- Suspected cause: older machine Git version.
+- Tried / fix: use portable `git symbolic-ref --short HEAD` instead.
+- Files touched: none
+
+### F-009 — Secret scanner flagged synthetic redaction sample    Status: RESOLVED
+- Phase/step: M0+M1 candidate-file secret scan
+- Command: `docker run --rm -v /tmp/aipi-secret-scan:/repo:ro ghcr.io/gitleaks/gitleaks:v8.24.2 dir /repo --redact=100 --no-banner --verbose`
+- Error (trimmed, real output): `leaks found: 1`; `RuleID: aws-access-token`; `File: /repo/tests/unit/test_telemetry.py`.
+- Suspected cause: deliberately synthetic AWS-format adversarial input.
+- Tried: construct the benign test string at runtime, preserving the redaction assertion without committing a credential-shaped literal.
+- Fix / workaround: repeated source scan: `no leaks found`; no scanner exclusion or broad allowlist added.
+- Files touched: tests/unit/test_telemetry.py
+
+### F-008 — Hardening test expectation and event typing    Status: RESOLVED
+- Phase/step: M0+M1 final parser review
+- Command: `make lint`; `uv run pytest -m 'not docker'`
+- Error (trimmed, real output): `Argument 1 to int has incompatible type ... JsonValue`; `assert len(markers) == 2; AssertionError: assert 1 == 2`.
+- Suspected cause: mypy cannot narrow repeated dictionary lookups; markers intentionally aggregate multiple matches by field/rule.
+- Tried: narrow a local event timestamp variable; assert the documented marker contract.
+- Fix / workaround: use a typed local; test one marker for two replacements in the same field.
+- Files touched: packages/telemetry/src/aipi_telemetry/otlp.py, tests/unit/test_telemetry.py
+
+### F-007 — Integration tests overlapped stack rebuild    Status: RESOLVED
+- Phase/step: M0+M1 live integration
+- Command: `make test`
+- Error (trimmed, real output): `3 failed, 13 passed`; `Checkout dependency unavailable`; `connection to server at 127.0.0.1, port 5432 failed: Connection refused`.
+- Suspected cause: tests were started while Compose recreated the database and demo containers.
+- Tried: wait for completed make up before rerunning; prevent driver connection locals in future failure output.
+- Fix / workaround: sequential `make test`: `16 passed` Python and `1 passed` frontend; all generated lab passwords rotated in PostgreSQL and ignored .env, including replica connection configuration; no replacement values emitted.
+- Files touched: tests/integration/test_lab.py, ignored .env
+
+### F-006 — Web dev server ownership    Status: RESOLVED
+- Phase/step: M0+M1 first Compose gate
+- Command: `make up`; `docker compose --env-file .env -f infra/docker/compose.yml logs --tail=30 web`
+- Error (trimmed, real output): `container aipi-web-1 exited (1)`; `EACCES: permission denied, open '/app/node_modules/.vite-temp/vite.config.ts.timestamp-...mjs'`
+- Suspected cause: non-root Node process cannot write Vite config cache owned by root.
+- Tried: grant ownership of /app to node after image build.
+- Fix / workaround: rebuilt `make up` passed; web and all service health checks passed.
+- Files touched: infra/docker/Dockerfile.web
+
+### F-005 — Frontend dependency advisories    Status: RESOLVED
+- Phase/step: M0+M1 dependency audit
+- Command: `npm audit --json`
+- Error (trimmed, real output): `3 vulnerabilities (1 moderate, 2 critical)`; Vitest <4.1.11 and tinypool <2.1.2.
+- Suspected cause: old Vitest major selected initially.
+- Tried: upgrade to patched Vitest 4.1.11 and current compatible Vite/plugin.
+- Fix / workaround: patched dependencies installed with Node 25; `found 0 vulnerabilities`; final Vitest 4.1.11 test passed.
+- Files touched: apps/web/package.json, apps/web/package-lock.json
+
+### F-004 — Missing unit directory on initial test write    Status: RESOLVED
+- Phase/step: M0+M1 test scaffolding
+- Command: `cat > tests/unit/test_telemetry.py`; `uv run pytest -m 'not docker'`
+- Error (trimmed, real output): `no such file or directory: tests/unit/test_telemetry.py`; first run had no selected unit tests.
+- Suspected cause: unit directory omitted from skeleton.
+- Tried: create tests/unit and write tests again.
+- Fix / workaround: `13 passed, 3 deselected` on the corrected run.
+- Files touched: tests/unit/*
+
+### F-003 — Initial lint and SDK typing    Status: RESOLVED
+- Phase/step: M0+M1 static checks
+- Command: `uv run ruff check . --fix`; `uv run mypy --strict packages apps/api services/demo-services/src`
+- Error (trimmed, real output): `Found 44 errors (9 fixed, 35 remaining)` (line formatting); `Call to untyped function "shutdown" in typed context [no-untyped-call]`
+- Suspected cause: initial formatting and missing upstream log-provider annotation.
+- Tried: ruff format; narrow SDK-only typing exception.
+- Fix / workaround: automatic formatting; targeted ignore for third-party shutdown method.
+- Files touched: Python modules, PROGRESS.md
+
+### F-002 — uv sandbox cache and network    Status: RESOLVED
+- Phase/step: M0+M1 dependency installation
+- Command: `uv sync --all-packages`; `UV_CACHE_DIR=/tmp/aipi-uv-cache uv sync --all-packages`
+- Error (trimmed, real output): `failed to open file /Users/akshat/.cache/uv/sdists-v9/.git: Operation not permitted`; `failed to lookup address information: nodename nor servname provided, or not known`
+- Suspected cause: restricted cache writes and sandbox DNS.
+- Tried: workspace-safe /tmp cache; approved network access.
+- Fix / workaround: approved sync succeeded: `Resolved 67 packages`, `Installed 64 packages`.
+- Files touched: Makefile, uv.lock
+
+### F-001 — Docker socket sandbox access    Status: RESOLVED
+- Phase/step: M0+M1 environment check
+- Command: `docker version`
+- Error (trimmed, real output): `permission denied while trying to connect to the docker API at unix:///Users/akshat/.docker/run/docker.sock`
+- Suspected cause: sandbox socket restriction.
+- Tried: `docker info` with approved escalation.
+- Fix / workaround: approved Docker daemon access; output `aarch64 29.8.1`.
+- Files touched: PROGRESS.md
 
 ---
 
@@ -122,7 +241,9 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 
 | # | Date | What changed | Why | ADR |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| 1 | 2026-10-13 | Web/Python future-phase placeholders; explicit failures for future Make targets; opt-in traffic profile | Keep the M0+M1 boundary | ADR-011 |
+| 2 | 2026-10-13 | Separate migration admin and telemetry writer; deterministic ingest IDs; histogram sum/count storage | Least privilege and retry safety | ADR-012 |
+| 3 | 2026-10-13 | Native multiarch images, pinned Collector; host HTTP check for shell-free Collector | Apple Silicon compatibility and actual health verification | ADR-013 |
 
 ---
 
@@ -130,7 +251,10 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
-- (none yet)
+- GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
+- M2–M7 deliverables and gates are not started. Agents/LLM adapters, chaos scripts, incident APIs, golden evaluation, and the full dashboard are intentionally deferred.
+- Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
+- Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
 
 ---
 
@@ -149,7 +273,7 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 
 ## 7. LOG (append one line per work session, newest first)
 
-`YYYY-MM-DD HH:MM | phase | what was done | result | next`
+`2026-10-13 01:10 | M0+M1 | Implemented native lab, OTel ingest/storage/redaction, workspace, web shell, CI, docs; fixed all logged failures | Phase gate passed: 20 Python + 1 web tests; lint/build/health/secret scan green | M2 Chaos Lab`
 
 ---
 

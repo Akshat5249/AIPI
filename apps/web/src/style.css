@@ -1,0 +1,4 @@
+body { font-family: system-ui, sans-serif; background: #eef2f6; color: #182536; }
+main { max-width: 820px; margin: 80px auto; padding: 32px; background: white; border-radius: 12px; }
+.banner { background: #e2f4ea; padding: 16px; border-radius: 6px; }
+a { color: #1555b0; }

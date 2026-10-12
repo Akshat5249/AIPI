@@ -1,0 +1,6 @@
+# CI smoke overlay for the normal lab project on an isolated Docker runner.
+services:
+  traffic:
+    environment:
+      TRAFFIC_RPS: '1'
+      TRAFFIC_SEED: '42'

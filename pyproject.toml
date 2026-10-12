@@ -1,0 +1,26 @@
+[project]
+name = "aipi"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["aipi-api", "aipi-telemetry", "aipi-tools", "aipi-agents", "aipi-evaluation", "aipi-demo"]
+[tool.uv.workspace]
+members = ["apps/api", "packages/*", "services/demo-services"]
+[tool.uv.sources]
+aipi-api = { workspace = true }
+aipi-telemetry = { workspace = true }
+aipi-tools = { workspace = true }
+aipi-agents = { workspace = true }
+aipi-evaluation = { workspace = true }
+aipi-demo = { workspace = true }
+[dependency-groups]
+dev = ["ruff>=0.11", "mypy>=1.15", "pytest>=8", "pytest-asyncio>=0.25", "pyyaml>=6", "types-PyYAML>=6"]
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+[tool.mypy]
+strict = true
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["docker: requires a reachable Docker daemon and a running lab"]
+asyncio_mode = "auto"

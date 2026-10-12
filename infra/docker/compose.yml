@@ -1,0 +1,159 @@
+name: aipi
+x-python: &python
+  image: aipi-python:local
+  build:
+    context: ../..
+    dockerfile: infra/docker/Dockerfile.python
+  restart: unless-stopped
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/readyz', timeout=3)"]
+    interval: 5s
+    timeout: 4s
+    retries: 24
+    start_period: 10s
+x-demo: &demo
+  <<: *python
+  command: [uvicorn, 'aipi_demo.app:create_app', --factory, --host, 0.0.0.0, --port, '8000']
+  depends_on:
+    api: {condition: service_healthy}
+    otel-collector: {condition: service_started}
+x-otel-env: &otel-env
+  APP_ENV: ${APP_ENV:-local}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+services:
+  postgres-primary:
+    image: postgres:16
+    command: [postgres, -c, wal_level=replica, -c, max_wal_senders=10, -c, max_replication_slots=10]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: aipi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run make setup-env}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:?run make setup-env}
+      APP_RW_PASSWORD: ${APP_RW_PASSWORD:?run make setup-env}
+      APP_RO_PASSWORD: ${APP_RO_PASSWORD:?run make setup-env}
+      INVESTIGATOR_PASSWORD: ${INVESTIGATOR_PASSWORD:?run make setup-env}
+      TELEMETRY_WRITER_PASSWORD: ${TELEMETRY_WRITER_PASSWORD:?run make setup-env}
+      CHAOS_PASSWORD: ${CHAOS_PASSWORD:?run make setup-env}
+    ports: ['127.0.0.1:5432:5432']
+    volumes:
+      - primary-data:/var/lib/postgresql/data
+      - ../postgres/init-primary.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d aipi']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  postgres-replica:
+    image: postgres:16
+    entrypoint: [bash, /replica-entrypoint.sh]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run make setup-env}
+      REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:?run make setup-env}
+      PGDATA: /var/lib/postgresql/data
+    ports: ['127.0.0.1:5433:5432']
+    volumes:
+      - replica-data:/var/lib/postgresql/data
+      - ../postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
+    depends_on:
+      postgres-primary: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d aipi && test "$(psql -U postgres -d aipi -Atc "SELECT pg_is_in_recovery()")" = t']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  migrate:
+    <<: *python
+    restart: 'no'
+    healthcheck: {disable: true}
+    command: [alembic, upgrade, head]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres-primary:5432/aipi
+    depends_on:
+      postgres-primary: {condition: service_healthy}
+  api:
+    <<: *python
+    environment:
+      <<: *otel-env
+      OTEL_ENABLED: 'true'
+      DATABASE_URL: postgresql+psycopg://investigator_ro:${INVESTIGATOR_PASSWORD}@postgres-primary:5432/aipi
+      TELEMETRY_DATABASE_URL: postgresql+psycopg://telemetry_writer:${TELEMETRY_WRITER_PASSWORD}@postgres-primary:5432/aipi
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-mock}
+      MODEL_NAME: ${MODEL_NAME:-deterministic-mock}
+      MODEL_API_KEY: ${MODEL_API_KEY:-}
+      REDACT_EMAILS: ${REDACT_EMAILS:-true}
+    ports: ['127.0.0.1:8000:8000']
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.123.0
+    command: [--config=/etc/otelcol/config.yml]
+    volumes: ['../otel/collector.yml:/etc/otelcol/config.yml:ro']
+    ports: ['127.0.0.1:4318:4318', '127.0.0.1:13133:13133']
+    depends_on:
+      api: {condition: service_healthy}
+  gateway:
+    <<: *demo
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: gateway
+    ports: ['127.0.0.1:8080:8000']
+    depends_on:
+      checkout-api: {condition: service_healthy}
+      orders-api: {condition: service_healthy}
+  checkout-api:
+    <<: *demo
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: checkout-api
+      DEMO_DATABASE_URL: postgresql://app_rw:${APP_RW_PASSWORD}@postgres-primary:5432/aipi
+  orders-api:
+    <<: *demo
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: orders-api
+      DEMO_DATABASE_URL: postgresql://app_ro:${APP_RO_PASSWORD}@postgres-replica:5432/aipi
+    depends_on:
+      api: {condition: service_healthy}
+      otel-collector: {condition: service_started}
+      postgres-replica: {condition: service_healthy}
+  pg-lag-probe:
+    <<: *demo
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: pg-lag-probe
+      PRIMARY_PROBE_URL: postgresql://investigator_ro:${INVESTIGATOR_PASSWORD}@postgres-primary:5432/aipi
+      REPLICA_PROBE_URL: postgresql://investigator_ro:${INVESTIGATOR_PASSWORD}@postgres-replica:5432/aipi
+    depends_on:
+      postgres-replica: {condition: service_healthy}
+      api: {condition: service_healthy}
+      otel-collector: {condition: service_started}
+  event-watcher:
+    <<: *demo
+    user: '0:0'
+    volumes: ['/var/run/docker.sock:/var/run/docker.sock:ro']
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: event-watcher
+  traffic:
+    <<: *demo
+    profiles: [traffic]
+    environment:
+      <<: *otel-env
+      SERVICE_NAME: traffic
+      TRAFFIC_SEED: ${TRAFFIC_SEED:-42}
+      TRAFFIC_RPS: ${TRAFFIC_RPS:-2}
+    depends_on:
+      gateway: {condition: service_healthy}
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.web
+    ports: ['127.0.0.1:5173:5173']
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://localhost:5173/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+volumes:
+  primary-data:
+  replica-data:

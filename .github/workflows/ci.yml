@@ -1,0 +1,37 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    env:
+      MODEL_PROVIDER: mock
+      UV_CACHE_DIR: /tmp/aipi-uv-cache
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: astral-sh/setup-uv@v6
+        with: {version: '0.11.21', enable-cache: true, python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '25', cache: npm, cache-dependency-path: apps/web/package-lock.json}
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: make setup
+      - run: make lint
+      - run: uv run pytest -m 'not docker'
+      - run: cd apps/web && npm test && npm run build
+      - name: Build images and health smoke
+        run: make up
+      - name: Live telemetry and database isolation gate
+        run: make test
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --env-file .env -f infra/docker/compose.yml logs --tail=80
+      - name: Cleanup
+        if: always()
+        run: make down
+      # Golden/schema/hallucination checks added with the corresponding phases.
+      # Publication is intentionally a no-op for this local lab.
