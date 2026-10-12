@@ -50,3 +50,26 @@ superuser credentials, waits for actual replay-paused state, and always attempts
 resume before checking telemetry. A session advisory lock serializes scenarios.
 All runtime causal labels and scenario snapshots remain solely in ground_truth;
 operator JSON and normal workload telemetry contain observations only.
+
+## ADR-015 — Frozen scoped snapshots and separate retrieval/persistence paths
+
+Incidents declare their primary service and optional related_services at creation.
+This explicit allowlist allows a checkout incident to include gateway failures
+and a replica incident to include probe health gauges, without later widening.
+Windows are positive, timezone-aware, and at most six hours. The retrieval adapter
+reloads authoritative incident bounds and only runs parameterized telemetry SELECTs
+with investigator_ro. The API writes immutable snapshots and denial audits.
+
+The first bundle for each normalized scope is frozen to prevent late OTLP arrivals
+from changing replay IDs. A transaction advisory lock serializes snapshot creation.
+Evidence IDs are source-derived and shared across incidents; the storage primary
+key is (incident_id, id), preserving incident ownership for future citations.
+Database triggers block updates/deletes/truncation even by accidental admin SQL.
+Diagnostic ordering and per-signal round-robin selection cap bundles at 50.
+
+The existing restricted telemetry_writer receives explicit SELECT/INSERT grants
+on M3 metadata/artifact tables. No new credential or .env change is needed; it
+cannot read ground truth. Investigation retrieval itself remains read-only.
+GET /api/scenarios uses static public descriptors instead of a privileged view or
+ground-truth connection. Catalog/schema tests guard against causal-label exposure.
+The six read-only tools and their investigation audit records remain M4 work.

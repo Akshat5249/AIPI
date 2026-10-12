@@ -2,7 +2,7 @@
 name = "aipi-tools"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = ["aipi-telemetry", "pydantic>=2", "sqlalchemy>=2"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

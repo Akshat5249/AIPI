@@ -29,3 +29,18 @@ or resume replay. Each run holds a PostgreSQL advisory lock so concurrent fault
 injections are refused. Operator output contains observed signals and recovery
 checks, with no expected root-cause label. Workload requests carry ordinary order
 fields and no scenario tags or injection timestamps.
+
+M3 evidence SELECTs use only investigator_ro and four hard-coded telemetry sources.
+ScopePolicy checks an incident's immutable service allowlist and time bounds;
+the reader reloads those bounds from public.incidents, independently of the API.
+Denied API queries are audited in scope_denials. Every scope snapshot is capped
+at 50 and frozen on first read; evidence and bundle tables have mutation-blocking
+triggers. Public scenario descriptors are static: the API never connects to or
+queries ground_truth. Request IDs are validated and errors omit submitted secrets
+and database driver details.
+
+The existing telemetry_writer identity additionally receives SELECT/INSERT on
+incidents, evidence, evidence_bundles and scope_denials for API bookkeeping. It
+cannot update/delete them, control WAL replay, or read ground truth. This explicit
+reuse avoids adding or regenerating any lab credential. Persistence remains in
+the API layer; the retrieval package contains SELECTs only.

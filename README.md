@@ -2,7 +2,8 @@
 
 An evidence-grounded, read-only incident investigation platform under construction.
 M0+M1 implements the observable lab and validated telemetry store. M2 adds
-verified service-kill and replica-lag scenarios. Agents follow in later phases; see [PROGRESS.md](PROGRESS.md).
+verified service-kill and replica-lag scenarios. M3 adds scoped incidents, immutable
+evidence/timelines and deterministic correlators. Agents follow in later phases; see [PROGRESS.md](PROGRESS.md).
 
 ```text
 traffic → gateway → checkout-api → PostgreSQL primary
@@ -43,3 +44,5 @@ Changing passwords requires coordinated database role updates or a deliberate
 lab reset. Never commit `.env`. See [security notes](docs/SECURITY.md).
 
 See [chaos operations and recovery](docs/CHAOS.md) for scenario details.
+
+See [Incident Core API](docs/API.md) for creation, scoped evidence, and error contracts.

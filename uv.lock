@@ -67,6 +67,7 @@ version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
     { name = "aipi-telemetry" },
+    { name = "aipi-tools" },
     { name = "fastapi" },
     { name = "pydantic-settings" },
     { name = "uvicorn" },
@@ -75,6 +76,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aipi-telemetry", editable = "packages/telemetry" },
+    { name = "aipi-tools", editable = "packages/tools" },
     { name = "fastapi", specifier = ">=0.115,<1" },
     { name = "pydantic-settings", specifier = ">=2.8" },
     { name = "uvicorn", specifier = ">=0.34" },
@@ -133,6 +135,18 @@ requires-dist = [
 name = "aipi-tools"
 version = "0.1.0"
 source = { editable = "packages/tools" }
+dependencies = [
+    { name = "aipi-telemetry" },
+    { name = "pydantic" },
+    { name = "sqlalchemy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aipi-telemetry", editable = "packages/telemetry" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "sqlalchemy", specifier = ">=2" },
+]
 
 [[package]]
 name = "alembic"

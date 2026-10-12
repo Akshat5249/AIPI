@@ -210,8 +210,8 @@ def test_whole_batch_is_validated_before_storage(monkeypatch):
     app = create_app(
         Settings(
             _env_file=None,
-            database_url="sqlite://",
-            telemetry_database_url="sqlite://",
+            database_url="postgresql+psycopg://investigator_ro@127.0.0.1:1/aipi",
+            telemetry_database_url="postgresql+psycopg://telemetry_writer@127.0.0.1:1/aipi",
             otel_enabled=False,
         )
     )

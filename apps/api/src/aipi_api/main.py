@@ -14,6 +14,9 @@ from sqlalchemy import text
 from starlette.concurrency import run_in_threadpool
 
 from aipi_api.config import Settings
+from aipi_api.errors import ErrorEnvelope, install_errors
+from aipi_api.incidents import IncidentCore
+from aipi_api.routes import router
 
 
 class Health(BaseModel):
@@ -25,6 +28,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     config = settings or Settings()  # type: ignore[call-arg]
     store = TelemetryStore(config.telemetry_database_url.get_secret_value())
 
+    core = IncidentCore(
+        config.database_url.get_secret_value(), config.telemetry_database_url.get_secret_value()
+    )
+
     telemetry = (
         configure("api", config.otel_exporter_otlp_endpoint) if config.otel_enabled else None
     )
@@ -33,11 +40,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
         store.engine.dispose()
+        core.close()
         if telemetry:
             await run_in_threadpool(telemetry.shutdown)
 
-    app = FastAPI(title="AIPI", lifespan=lifespan)
+    app = FastAPI(
+        title="AIPI",
+        lifespan=lifespan,
+        responses={code: {"model": ErrorEnvelope} for code in (400, 403, 404, 422, 500, 503)},
+    )
     app.state.store = store
+    app.state.core = core
+    install_errors(app)
+    app.include_router(router)
 
     @app.get("/healthz")
     def health() -> Health:
@@ -48,6 +63,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             with store.engine.connect() as connection:
                 connection.execute(text("SELECT 1 FROM telemetry_logs LIMIT 1"))
+            with core.reader.engine.connect() as connection:
+                connection.execute(text("SELECT 1 FROM incidents LIMIT 1"))
         except Exception as exc:
             raise HTTPException(503, "Telemetry database unavailable") from exc
         return Health(status="ready")

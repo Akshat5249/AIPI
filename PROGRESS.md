@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 01:30 IST
-**Current phase:** M2 complete (gate passed)
-**Next action:** M3 Incident Core: incident CRUD, bounded deterministic evidence retrieval and isolation
-**Overall:** 2 / 7 phases complete
+**Last updated:** 2026-10-13 01:54 IST
+**Current phase:** M3 complete (gate passed)
+**Next action:** M4 read-only tool registry, mock adapter and agent workflow (not started)
+**Overall:** 3 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -19,8 +19,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 | Phase | Name | Status | Gate command(s) | Gate result | Commit |
 |---|---|---|---|---|---|
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
-| M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | this commit: `feat(M2): verified chaos lab with restricted ground truth` |
-| M3 | Incident Core | NOT STARTED | `make test` (incident + isolation tests) | — | — |
+| M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
+| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 60 Python + 1 web passed; both real incident windows replay identical IDs | this commit: `feat(M3): scoped incident core and immutable evidence` |
 | M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
@@ -163,13 +163,83 @@ or investigation accuracy claims are made at this phase. Static templates remain
 in source; stdout reports observed signals rather than expected causal labels.
 
 ### M3 Incident Core
-- [ ] Incident CRUD + validation
-- [ ] Bounded evidence retrieval + stable evidence IDs
-- [ ] Immutable evidence, timeline builder, ScopePolicy
-- [ ] Correlators (5 rules) + unit tests
-- [ ] Error contract + request-id middleware
-- [ ] Test: ground truth unreachable from APIs/tools
-- [ ] **GATE:** same evidence IDs on re-run
+
+Dedicated live M3 gate output:
+
+```text
+uv run pytest tests/integration/test_incidents.py -v -s --tb=short
+SCN-001: incident_id=d9856c8b-563b-46af-bc6e-b739f6febab4
+  items=50; truncated=true; identical_ids=true;
+  rules=[ProcessExitRule]; chaos_recovery=verified
+SCN-002: incident_id=7a3c46e2-fbe7-442a-bb71-724f07970de1
+  items=50; truncated=true; identical_ids=true;
+  rules=[ErrorSpikeRule, ReplicaLagRule, DownstreamTimeoutRule, PrimaryHealthRule];
+  chaos_recovery=verified
+5 passed in 32.94s
+```
+
+Both real scenarios recovered. Each window came from host clock bounds around
+scenario execution, not hidden injection metadata. The dedicated suite also
+verified all four telemetry types, cap/truncation, late-arrival snapshot stability,
+SQL mutation/truncate guards, denial audits, forged-scope denial, API validation,
+and ground-truth privilege failures. ErrorSpikeRule subsequently gained a guard
+against comparing different services or label series, covered by a new unit test.
+
+
+Baseline required before implementation (existing .env preserved):
+
+```text
+make test: 33 passed, 1 warning in 34.98s
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 602ms
+```
+- [x] Incident POST/list/by-id + validation — live HTTP 201/422/404, positive max 6h and timezone checks
+- [x] Bounded evidence retrieval + stable evidence IDs — both real windows return identical IDs; cap 50 and truncation tested
+- [x] Immutable evidence, timeline builder, ScopePolicy — deep-frozen payloads; SQL guards; narrowing/denials audited
+- [x] Correlators (5 rules) + unit tests — 9 pure-rule tests; live ProcessExit/ReplicaLag/PrimaryHealth assertions
+- [x] Error contract + request-id middleware — stable codes and response/header request IDs; sanitized validation
+- [x] Ground truth unreachable from API/investigator/retrieval — real privilege failures, source allowlist, forged-boundary denial; public catalog fields only
+- [x] **GATE:** same evidence IDs on re-run — both real scenarios, 13 live Docker tests; final full suite green
+
+Final M3 gate (native host Python 3.12.0, explicit Node v25.9.0):
+
+```text
+Baseline make test: 33 passed, 1 warning in 34.98s; Vitest 1 passed
+Docker Compose build/up --wait: exit 0; migration and API healthy
+make seed-traffic: Container aipi-traffic-1 Healthy
+Offline suite: 46 passed, 12 deselected, 1 warning in 1.88s
+Final make lint: All checks passed!; 80 files already formatted;
+  Success: no issues found in 31 source files; ESLint/tsc exit 0
+OpenAPI/incident/ingest component checks: 27 passed, 1 warning in 1.89s
+Final make test: 60 passed, 1 warning in 69.00s (0:01:09)
+  13 live Docker tests, none skipped; both scenarios run/recover again
+  Test Files 1 passed (1); Tests 1 passed (1); Duration 727ms
+rhysd/actionlint:1.7.7: exit 0
+Gitleaks v8.24.2 final source: scanned ~486528 bytes (486.53 KB); no leaks found
+.env content unchanged from start of M3
+```
+
+Final live snapshot checks (real output, trimmed):
+
+```text
+Post-gate lab: healthy primary, unpaused standby, six healthy demo containers,
+  fresh order visible
+incident_id=54aba96a-629a-4dbe-86e7-a5f1b9f9fd5e; service=orders-api
+  items=50; identical_ids=true; truncated=true
+  ids_sha256=cc19caf276a206987867692756d4daff6b7d219399c54c9842be5b23b7db8213
+  rules=[ReplicaLagRule, DownstreamTimeoutRule, PrimaryHealthRule]
+  contradicts=[primary outage]
+incident_id=e47a1305-30d2-4e81-bdb2-20c81754e65c; service=checkout-api
+  items=50; identical_ids=true; truncated=true
+  ids_sha256=c45d37e1cad097971e7cf8227d13b2b2a65282858bcad1d712092d6ec8fbbb07
+  rules=[ProcessExitRule]; contradicts=[]
+```
+
+The only warning is the existing FastAPI/httpx TestClient deprecation. CI was
+validated locally; GitHub-hosted CI was not run. Runtime API responses and
+OpenAPI now agree on ErrorEnvelope. Existing credentials were reused throughout;
+no setup-env or .env regeneration command was executed. Retrieval uses only
+investigator_ro; application writes are explicit SELECT/INSERT grants to the
+existing writer. No agents, LLM adapters, LangGraph, or mutating tools were added.
 
 ### M4 Agents + Tools + Report
 - [ ] 6 read-only tools + registry test (no mutating tool)
@@ -219,6 +289,35 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 - Fix / workaround (if resolved):
 - Files touched:
 ```
+
+### F-020 — Authoritative scope query formatting    Status: RESOLVED
+- Phase/step: M3 security review
+- Command: `uv run ruff check .`
+- Error (real output): `E501 Line too long (113 > 100)` in the new persisted-incident SELECT.
+- Fix: split the static SQL string; retrieval reloads authoritative incident bounds before telemetry SELECTs.
+- Files touched: packages/tools/src/aipi_tools/retrieval.py
+
+### F-019 — Isolation test asserted overly broad exception    Status: RESOLVED
+- Phase/step: M3 integration test lint
+- Command: `uv run ruff check . --fix`
+- Error (real output): `B017 Do not assert blind exception: Exception`.
+- Fix: assert SQLAlchemy ProgrammingError with permission-denied message, proving the intended security boundary.
+- Files touched: tests/integration/test_incidents.py
+
+### F-018 — Existing ingest test used obsolete database identities    Status: RESOLVED
+- Phase/step: M3 offline suite
+- Command: `uv run pytest -m 'not docker' --tb=short`
+- Error (real output): `1 failed, 45 passed, 8 deselected`; `Incident persistence requires the restricted API writer`.
+- Cause: replacing the old SQLite dummy URL also changed the writer dummy to investigator_ro.
+- Fix: use the correct investigator_ro and telemetry_writer identities at an unreachable test port; no live credentials or .env changes.
+- Files touched: tests/unit/test_telemetry.py
+
+### F-017 — Workspace rebuild needed sandbox network    Status: RESOLVED
+- Phase/step: M3 local package dependencies
+- Command: `uv run ruff format ...`; `uv run mypy ...` after changing local dependencies
+- Error (real output): `Failed to build aipi-api`; `Failed to fetch https://pypi.org/simple/hatchling/`; `failed to lookup address information`.
+- Fix: approved `uv sync --all-packages --frozen` rebuilt aipi-api and aipi-tools; subsequent Ruff and strict mypy passed. Existing .env preserved.
+- Files touched: package manifests, uv.lock
 
 ### F-016 — Audit test-file lookup    Status: RESOLVED
 - Phase/step: M2 infrastructure review
@@ -369,6 +468,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 3 | 2026-10-13 | Native multiarch images, pinned Collector; host HTTP check for shell-free Collector | Apple Silicon compatibility and actual health verification | ADR-013 |
 
 | 4 | 2026-10-13 | Bounded manual-kill observation and explicit start; restricted replay function grants | Verified Docker behavior and least privilege | ADR-014 |
+| 5 | 2026-10-13 | Explicit related-service allowlists; immutable per-scope snapshots; existing restricted writer persists metadata; static public catalog | Correlation across declared dependencies, stable replay despite late data, no credential regeneration or privileged API reads | ADR-015 |
 
 ---
 
@@ -377,7 +477,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M3–M7 deliverables and gates are not started. Agents/LLM adapters, incident APIs, golden evaluation, and the full dashboard remain deferred.
+- M4–M7 deliverables and gates are not started. Six-tool registry, agents/LLM/LangGraph, golden evaluation and the full dashboard remain deferred. No agent or model implementation was added in M3.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
 - Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
 
@@ -397,6 +497,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-13 01:54 IST | M3 | Started with passing make test; delivered validated incident API, request IDs/errors, persisted scope bounds, immutable capped evidence/timelines, five pure correlators and isolated public scenario catalog; .env unchanged | Gate passed: 60 Python + 1 web, 13 live Docker tests including real replay/contradiction checks; lint/secret scan/CI validation green | M4`
 
 `2026-10-13 01:30 IST | M2 | Audited and repaired M0+M1 first (e01c082); implemented restricted chaos registry, contracts, serialized injection/recovery, live signal gates and tests | Gate passed: both real scenarios recovered; 33 Python + 1 web tests, lint/CI/secret scan green | M3 Incident Core`
 
