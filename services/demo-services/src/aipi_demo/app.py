@@ -55,6 +55,13 @@ def create_app() -> FastAPI:
 
     @app.get("/readyz")
     async def ready() -> dict[str, str]:
+        if service == "gateway":
+            try:
+                for upstream in ("checkout-api", "orders-api"):
+                    response = await client.get(f"http://{upstream}:8000/readyz")
+                    response.raise_for_status()
+            except httpx.HTTPError as exc:
+                raise HTTPException(503, "Upstream service unavailable") from exc
         if db:
             try:
                 async with await psycopg.AsyncConnection.connect(
@@ -79,7 +86,11 @@ def create_app() -> FastAPI:
                     "http://checkout-api:8000/checkout", json=body.model_dump()
                 )
                 response.raise_for_status()
-                return Order.model_validate(response.json())
+                order = Order.model_validate(response.json())
+                telemetry.logger.info(
+                    "gateway request completed", extra={"order.id": str(order.id)}
+                )
+                return order
             if service != "checkout-api" or not db:
                 raise HTTPException(404, "Route unavailable for this service")
             order = Order(id=uuid4(), product=body.product, quantity=body.quantity)
@@ -116,7 +127,11 @@ def create_app() -> FastAPI:
                 if response.status_code == 404:
                     raise HTTPException(404, "Order not visible on replica")
                 response.raise_for_status()
-                return Order.model_validate(response.json())
+                order = Order.model_validate(response.json())
+                telemetry.logger.info(
+                    "gateway request completed", extra={"order.id": str(order.id)}
+                )
+                return order
             if service != "orders-api" or not db:
                 raise HTTPException(404, "Route unavailable for this service")
             with tracer.start_as_current_span(

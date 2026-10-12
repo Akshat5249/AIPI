@@ -26,35 +26,37 @@ async def probe(telemetry: Telemetry, app: Any) -> None:
         )
     }
     while True:
-        async with await psycopg.AsyncConnection.connect(
-            os.environ["PRIMARY_PROBE_URL"]
-        ) as primary:
-            cursor = await primary.execute("SELECT pg_current_wal_lsn()::text")
-            row = await cursor.fetchone()
-            assert row
-            lsn = row[0]
-        async with await psycopg.AsyncConnection.connect(
-            os.environ["REPLICA_PROBE_URL"]
-        ) as replica:
-            cursor = await replica.execute(
-                "SELECT pg_wal_lsn_diff(%s::pg_lsn, pg_last_wal_replay_lsn()), "
-                "pg_is_wal_replay_paused(), "
-                "extract(epoch FROM now() - pg_last_xact_replay_timestamp())",
-                (lsn,),
-            )
-            row = await cursor.fetchone()
-            assert row
-        lag_bytes, paused, elapsed = row
-        values = {
-            "replica_lag_bytes": max(0, float(lag_bytes or 0)),
-            "replica_lag_seconds": max(0, float(elapsed or 0)) if lag_bytes else 0,
-            "replica_replay_paused": int(paused),
-            "primary_healthy": 1,
-        }
-        for name, value in values.items():
-            gauges[name].set(value)
-        if values["replica_lag_seconds"] > 2 or paused:
-            telemetry.logger.warning("replica replay delayed", extra=values)
+        with telemetry.traces.get_tracer(__name__).start_as_current_span("replica.status"):
+            async with await psycopg.AsyncConnection.connect(
+                os.environ["PRIMARY_PROBE_URL"]
+            ) as primary:
+                cursor = await primary.execute("SELECT pg_current_wal_lsn()::text")
+                row = await cursor.fetchone()
+                assert row
+                lsn = row[0]
+            async with await psycopg.AsyncConnection.connect(
+                os.environ["REPLICA_PROBE_URL"]
+            ) as replica:
+                cursor = await replica.execute(
+                    "SELECT pg_wal_lsn_diff(%s::pg_lsn, pg_last_wal_replay_lsn()), "
+                    "pg_is_wal_replay_paused(), "
+                    "extract(epoch FROM now() - pg_last_xact_replay_timestamp())",
+                    (lsn,),
+                )
+                row = await cursor.fetchone()
+                assert row
+            lag_bytes, paused, elapsed = row
+            values = {
+                "replica_lag_bytes": max(0, float(lag_bytes or 0)),
+                "replica_lag_seconds": max(0, float(elapsed or 0)) if lag_bytes else 0,
+                "replica_replay_paused": int(paused),
+                "primary_healthy": 1,
+            }
+            for name, value in values.items():
+                gauges[name].set(value)
+            telemetry.logger.info("replica status sampled", extra=values)
+            if values["replica_lag_seconds"] > 2 or paused:
+                telemetry.logger.warning("replica replay delayed", extra=values)
         app.state.worker_ready = True
         await asyncio.sleep(2)
 
@@ -63,6 +65,7 @@ async def watch(telemetry: Telemetry, app: Any) -> None:
     filters = json.dumps(
         {"label": ["com.docker.compose.project=aipi"], "event": ["die", "start", "restart"]}
     )
+    counter = telemetry.metrics.get_meter(__name__).create_counter("runtime_events_total")
     transport = httpx.AsyncHTTPTransport(uds="/var/run/docker.sock")
     async with httpx.AsyncClient(transport=transport, timeout=None) as client:
         # Prove the socket is usable before marking the worker ready.
@@ -78,17 +81,21 @@ async def watch(telemetry: Telemetry, app: Any) -> None:
                     continue
                 event = DockerEvent.model_validate_json(line)
                 attributes = event.actor.attributes
-                telemetry.logger.info(
-                    "container lifecycle event",
-                    extra={
-                        "event.domain": "runtime",
-                        "event.name": event.action,
-                        "container.name": attributes.get("com.docker.compose.service", "unknown"),
-                        "container.id": event.actor.id,
-                        "exit_code": attributes.get("exitCode", ""),
-                        "event.timestamp_ns": event.timestamp_ns,
-                    },
-                )
+                with telemetry.traces.get_tracer(__name__).start_as_current_span("runtime.event"):
+                    counter.add(1, {"event.name": event.action})
+                    telemetry.logger.info(
+                        "container lifecycle event",
+                        extra={
+                            "event.domain": "runtime",
+                            "event.name": event.action,
+                            "container.name": attributes.get(
+                                "com.docker.compose.service", "unknown"
+                            ),
+                            "container.id": event.actor.id,
+                            "exit_code": attributes.get("exitCode", ""),
+                            "event.timestamp_ns": event.timestamp_ns,
+                        },
+                    )
 
 
 async def traffic(telemetry: Telemetry, app: Any) -> None:

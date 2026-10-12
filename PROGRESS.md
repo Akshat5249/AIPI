@@ -4,8 +4,8 @@
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
 **Last updated:** 2026-10-13 01:10 IST
-**Current phase:** M0+M1 complete; M2 next
-**Next action:** M2 Chaos Lab — implement schema and two deterministic scenarios, verify signals and recovery
+**Current phase:** M0+M1 audit complete; M2 next
+**Next action:** Implement M2 scenarios and restricted ground-truth migration; run both live gates
 **Overall:** 1 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
@@ -77,6 +77,23 @@ Normal workspace commands and the web container use Node 25. Disposable lab
 credentials exposed in an early test traceback were rotated; failure output now
 suppresses driver connection locals. The lab and seeded traffic remain running.
 
+M0+M1 follow-up audit (2026-10-13): missing web readiness endpoint, gateway upstream
+readiness checks, complete probe/watcher work traces and metrics, and successful
+gateway application logs. All repaired before M2 implementation.
+
+```text
+make up: exit 0; Healthy: API / gateway / web / Collector
+make seed-traffic: Container aipi-traffic-1 Healthy
+make lint: All checks passed!; 55 files already formatted;
+  Success: no issues found in 15 source files; ESLint / tsc exit 0
+make test: 21 passed, 1 warning in 6.32s; Vitest: 1 passed
+```
+
+The live audit test verifies logs, traces, and metrics for gateway, checkout,
+orders, lag probe, and event watcher. Seeded traffic is active. Gateway readiness
+now checks both upstream readiness endpoints; web exposes /readyz. Future
+incident/agent/evaluation/dashboard deliverables remain assigned to M3–M6.
+
 ### M2 Chaos Lab
 - [ ] Scenario schema + SCN-001 + SCN-002 scripts
 - [ ] Ground truth written to `ground_truth.chaos_runs`
@@ -143,6 +160,16 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 - Fix / workaround (if resolved):
 - Files touched:
 ```
+
+### F-011 — Audit repair formatting    Status: RESOLVED
+- Phase/step: M0+M1 follow-up audit
+- Command: `uv run ruff check . --fix`
+- Error (trimmed, real output): `Found 3 errors` (E501 in gateway logging and watcher attributes); `B023 Function definition does not bind loop variable` in the new integration polling test.
+- Suspected cause: new lines exceeded the formatter limit.
+- Tried: `uv run ruff format .`; bind test loop variables in lambda defaults.
+- Fix / workaround: subsequent `make lint` passed Ruff checks.
+- Files touched: services/demo-services/src/aipi_demo/*
+
 
 ### F-010 — Older Git lacks branch --show-current    Status: RESOLVED
 - Phase/step: M0+M1 repository inspection

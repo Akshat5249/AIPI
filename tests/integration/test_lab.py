@@ -175,3 +175,24 @@ def test_runtime_watcher_events_preserve_target_and_original_timestamp() -> None
         assert service == attributes["container.name"]
         assert attributes["service.name"] == "event-watcher"
         assert abs(timestamp.timestamp() - attributes["event.timestamp_ns"] / 1e9) < 0.001
+
+
+def test_normal_work_emits_worker_signals_and_web_readiness() -> None:
+    assert httpx.get("http://localhost:5173/readyz").status_code == 200
+    order = httpx.post("http://localhost:8080/checkout", json={"product": "audit"}).json()
+    eventually(lambda: httpx.get("http://localhost:8080/orders/" + order["id"]).status_code == 200)
+    with connect() as db:
+        for service in ("gateway", "checkout-api", "orders-api", "pg-lag-probe", "event-watcher"):
+            for table, timestamp in (
+                ("telemetry_logs", "ts"),
+                ("telemetry_spans", "start_ts"),
+                ("telemetry_metrics", "ts"),
+            ):
+                # Table/column names are a fixed test allowlist; service is parameterized.
+                eventually(
+                    lambda table=table, timestamp=timestamp, service=service: db.execute(
+                        f"SELECT count(*) FROM {table} WHERE service=%s "
+                        f"AND {timestamp}>now()-interval '5 minutes'",
+                        (service,),
+                    ).fetchone()[0]
+                )
