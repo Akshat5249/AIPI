@@ -25,7 +25,8 @@ jobs:
       - run: cd apps/web && npm test && npm run build
       - name: Build images and health smoke
         run: make up
-      - name: Live telemetry and database isolation gate
+      - run: make seed-traffic
+      - name: Live telemetry, chaos recovery, and database isolation gate
         run: make test
       - name: Logs on failure
         if: failure()

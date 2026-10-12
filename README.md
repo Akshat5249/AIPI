@@ -1,8 +1,8 @@
 # AI Production Incident Investigator
 
 An evidence-grounded, read-only incident investigation platform under construction.
-M0+M1 implements the observable lab and validated telemetry store. Agents and
-chaos scenarios are scheduled for later phases; see [PROGRESS.md](PROGRESS.md).
+M0+M1 implements the observable lab and validated telemetry store. M2 adds
+verified service-kill and replica-lag scenarios. Agents follow in later phases; see [PROGRESS.md](PROGRESS.md).
 
 ```text
 traffic → gateway → checkout-api → PostgreSQL primary
@@ -16,8 +16,10 @@ support Apple Silicon natively. No LLM API key is needed.
 ```sh
 make setup         # dependencies and generated private lab credentials
 make up            # build, migrate, wait for health (ports 5432/5433/8000/8080/5173/4318/13133)
-make seed-traffic  # optional seeded background workload
-make test          # unit/component tests + running-lab integration + web tests
+make seed-traffic  # required seeded background workload for chaos gates
+make chaos-kill    # real SIGKILL, telemetry checks, checkout recovery
+make chaos-lag     # standby replay pause, lag/primary checks, replay recovery
+make test          # unit/component + live telemetry/chaos integration + web tests
 make lint
 make down          # retain PostgreSQL volumes
 ```
@@ -39,3 +41,5 @@ checks replica reads, role isolation, ingestion retries, and redaction in storag
 Passwords in `.env` must match existing volumes: `make down` preserves them.
 Changing passwords requires coordinated database role updates or a deliberate
 lab reset. Never commit `.env`. See [security notes](docs/SECURITY.md).
+
+See [chaos operations and recovery](docs/CHAOS.md) for scenario details.

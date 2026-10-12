@@ -22,5 +22,6 @@ select = ["E", "F", "I", "UP", "B"]
 strict = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["docker: requires a reachable Docker daemon and a running lab"]
 asyncio_mode = "auto"

@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 01:10 IST
-**Current phase:** M0+M1 audit complete; M2 next
-**Next action:** Implement M2 scenarios and restricted ground-truth migration; run both live gates
-**Overall:** 1 / 7 phases complete
+**Last updated:** 2026-10-13 01:30 IST
+**Current phase:** M2 complete (gate passed)
+**Next action:** M3 Incident Core: incident CRUD, bounded deterministic evidence retrieval and isolation
+**Overall:** 2 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -18,8 +18,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 
 | Phase | Name | Status | Gate command(s) | Gate result | Commit |
 |---|---|---|---|---|---|
-| M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; 20 Python + 1 web tests passed; CI validated | this commit: `feat(M0+M1): foundation and arm64 observability lab` |
-| M2 | Chaos Lab | NOT STARTED | `make chaos-kill`, `make chaos-lag` | — | — |
+| M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
+| M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | this commit: `feat(M2): verified chaos lab with restricted ground truth` |
 | M3 | Incident Core | NOT STARTED | `make test` (incident + isolation tests) | — | — |
 | M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
@@ -95,13 +95,72 @@ now checks both upstream readiness endpoints; web exposes /readyz. Future
 incident/agent/evaluation/dashboard deliverables remain assigned to M3–M6.
 
 ### M2 Chaos Lab
-- [ ] Scenario schema + SCN-001 + SCN-002 scripts
-- [ ] Ground truth written to `ground_truth.chaos_runs`
-- [ ] Precondition checks + recovery verification
-- [ ] A: die→start events + 5xx spike visible
-- [ ] B: lag rises, `replica_replay_paused=1`, primary healthy
-- [ ] `make chaos-kill`, `make chaos-lag`
-- [ ] **GATE:** both scenarios run and recover
+- [x] Scenario schema + SCN-001 + SCN-002 scripts — schema contract tests passed
+- [x] Ground truth written to `ground_truth.chaos_runs` — migration 0002; live run metadata checks; non-chaos roles denied
+- [x] Precondition checks + recovery verification — unit failure paths, overlap refusal, live HTTP/DB/Docker checks
+- [x] A: die→start events + 5xx spike visible — live make chaos-kill passed
+- [x] B: lag rises, `replica_replay_paused=1`, primary healthy — live make chaos-lag passed
+- [x] `make chaos-kill`, `make chaos-lag` — both exit 0 on this machine
+- [x] **GATE:** both scenarios run and recover — live integration runs repeated successfully in full suite
+
+Live SCN-001 command output (2026-10-13, Apple Silicon):
+
+```text
+make chaos-kill: exit 0
+"run_id": "716ffec7-76b3-4c4c-bb10-99a137d5e331",
+"scenario_id": "SCN-001", "passed": true, "recovery_status": "verified",
+"gateway_5xx_requests": 69, "explicit_start_required": true,
+"event": "die", "ts": "2026-10-12T19:57:09.408357+00:00", "exit_code": "137"
+"event": "start", "ts": "2026-10-12T19:57:17.840432+00:00"
+"gateway_failed_spans": 258, "gateway_error_logs": 86,
+"gateway_503_counter_increase": 75.0
+Restricted-role integration: 1 passed in 1.11s
+```
+
+Live SCN-002 command output:
+
+```text
+make chaos-lag: exit 0
+"run_id": "4e42bc15-cf04-4042-9eb2-976b5e7e645c",
+"scenario_id": "SCN-002", "passed": true, "recovery_status": "verified",
+"healthy_primary_writes": 10,
+"direct_primary_health_samples": [true,true,true,true,true,true,true,true,true,true],
+"replica_read_recovered": true, "replay_resumed": true,
+"lag_samples": [
+  {"ts": "2026-10-12T19:57:39.556698+00:00", "seconds": 0.69015},
+  {"ts": "2026-10-12T19:57:41.565357+00:00", "seconds": 2.749074},
+  {"ts": "2026-10-12T19:57:43.570420+00:00", "seconds": 4.762386},
+  {"ts": "2026-10-12T19:57:45.574960+00:00", "seconds": 6.792152},
+  {"ts": "2026-10-12T19:57:47.581467+00:00", "seconds": 8.821291}
+],
+"max_lag_bytes": 1349776.0, "replay_paused_samples": 5,
+"primary_healthy_samples": 5, "stale_read_logs": 13
+```
+
+Final M2 verification output:
+
+```text
+make up: exit 0; API / gateway / web / Collector healthy
+make seed-traffic: Container aipi-traffic-1 Healthy
+make lint: All checks passed!; 67 files already formatted;
+  Success: no issues found in 23 source files; ESLint and tsc exit 0
+make test (host Python 3.12.0 and explicit Node v25.9.0):
+  33 passed, 1 warning in 38.09s
+  8 live Docker tests, including both scenarios; none skipped
+  Test Files 1 passed (1); Tests 1 passed (1); Duration 548ms
+Post-gate lab: all six demo containers healthy; primary healthy;
+  standby unpaused; new order visible
+Final integration run: SCN-002 completed verified
+Final integration run: SCN-001 completed verified
+rhysd/actionlint:1.7.7: exit 0
+Gitleaks v8.24.2 final source: scanned ~412708 bytes (412.71 KB); no leaks found
+```
+
+Both scripts and live tests use the actual Docker Desktop lab. Runtime labels,
+scenario snapshots and injection records are confined to the restricted schema;
+API/demo identities have no schema access or replay-control grant. No live LLM
+or investigation accuracy claims are made at this phase. Static templates remain
+in source; stdout reports observed signals rather than expected causal labels.
 
 ### M3 Incident Core
 - [ ] Incident CRUD + validation
@@ -160,6 +219,43 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 - Fix / workaround (if resolved):
 - Files touched:
 ```
+
+### F-016 — Audit test-file lookup    Status: RESOLVED
+- Phase/step: M2 infrastructure review
+- Command: `cat tests/unit/test_structure.py`
+- Error (real output): `No such file or directory`.
+- Fix: inspected the actual tests/unit/test_infra.py contract tests; no implementation impact.
+- Files touched: none
+
+### F-015 — Recovery preceded Docker health status    Status: RESOLVED
+- Phase/step: M2 sequential integration gate
+- Command: `make test`
+- Error (real output): `1 failed, 32 passed, 1 warning in 18.50s`; second scenario refused injection: `Precondition failed: checkout-api not healthy`.
+- Cause: HTTP readiness recovered before Docker completed its next healthcheck after start.
+- Fix: SCN-001 recovery now also waits for Docker checkout/gateway health, making sequential scenarios safe. Limit 503 baselines to fresh samples to handle process counter resets.
+- Files touched: chaos/scenarios/scn_001_service_kill.py, signals.py
+
+### F-014 — Pytest module-name collision    Status: RESOLVED
+- Phase/step: M2 full gate
+- Command: `make test`
+- Error (real output): `import file mismatch: imported module 'test_chaos' ... tests/integration/test_chaos.py ... not the same ... tests/unit/test_chaos.py`.
+- Fix: renamed unit file to test_chaos_contracts.py; independent test basenames avoid pytest import collision.
+- Files touched: tests/unit/test_chaos_contracts.py
+
+### F-013 — Live kill probe timed out    Status: RESOLVED
+- Phase/step: M2 first live SCN-001
+- Command: `make seed-traffic && make chaos-kill`
+- Error (real output): `"passed": false, "recovery_status": "verified", "error": "ReadTimeout"`; `make: *** [chaos-kill] Error 1`.
+- Cause: host request timeout (3s) was shorter than gateway upstream timeout (5s).
+- Fix: host timeout 8s and bounded 8s observation; tolerate transport errors but require actual HTTP 5xx. Recovery succeeded on the failed run.
+- Files touched: chaos/scenarios/lab.py, scn_001_service_kill.py
+
+### F-012 — Initial chaos static checks    Status: RESOLVED
+- Phase/step: M2 implementation
+- Command: Ruff and strict mypy on chaos modules
+- Error (real output): `Found 10 errors (1 fixed, 9 remaining)`; `runtime_events ... list[dict[str, Any]] ... expected JsonValue`.
+- Fix: split long strings, use Python 3.12 type parameters, validate observation JSON.
+- Files touched: chaos/scenarios/*, migration 0002
 
 ### F-011 — Audit repair formatting    Status: RESOLVED
 - Phase/step: M0+M1 follow-up audit
@@ -272,6 +368,8 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 2 | 2026-10-13 | Separate migration admin and telemetry writer; deterministic ingest IDs; histogram sum/count storage | Least privilege and retry safety | ADR-012 |
 | 3 | 2026-10-13 | Native multiarch images, pinned Collector; host HTTP check for shell-free Collector | Apple Silicon compatibility and actual health verification | ADR-013 |
 
+| 4 | 2026-10-13 | Bounded manual-kill observation and explicit start; restricted replay function grants | Verified Docker behavior and least privilege | ADR-014 |
+
 ---
 
 ## 5. SKIPPED / NOT VERIFIED
@@ -279,7 +377,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M2–M7 deliverables and gates are not started. Agents/LLM adapters, chaos scripts, incident APIs, golden evaluation, and the full dashboard are intentionally deferred.
+- M3–M7 deliverables and gates are not started. Agents/LLM adapters, incident APIs, golden evaluation, and the full dashboard remain deferred.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
 - Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
 
@@ -299,6 +397,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-13 01:30 IST | M2 | Audited and repaired M0+M1 first (e01c082); implemented restricted chaos registry, contracts, serialized injection/recovery, live signal gates and tests | Gate passed: both real scenarios recovered; 33 Python + 1 web tests, lint/CI/secret scan green | M3 Incident Core`
 
 `2026-10-13 01:10 | M0+M1 | Implemented native lab, OTel ingest/storage/redaction, workspace, web shell, CI, docs; fixed all logged failures | Phase gate passed: 20 Python + 1 web tests; lint/build/health/secret scan green | M2 Chaos Lab`
 

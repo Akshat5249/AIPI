@@ -36,3 +36,17 @@ Use multi-architecture official PostgreSQL 16, Python 3.12 and Node 25 images,
 without an amd64 override. Pin Collector contrib to 0.123.0. Its image has no shell
 or curl: `make up` checks its HTTP health extension from the host after Compose
 waits for every service that supports an in-container health check.
+
+## ADR-014 — Verified local chaos and bounded manual-kill recovery
+
+SCN-001 uses the fixed aipi checkout target with its `unless-stopped` policy.
+On Docker Desktop 29.8.1/aarch64, manual SIGKILL left the container stopped after
+the bounded observation interval. The runner explicitly starts it and requires
+stored die(exit 137) followed by start, plus failed gateway telemetry. This is
+the restart-behavior adjustment permitted by the resolved scenario spec.
+
+SCN-002 uses narrow PostgreSQL function grants to chaos_admin instead of
+superuser credentials, waits for actual replay-paused state, and always attempts
+resume before checking telemetry. A session advisory lock serializes scenarios.
+All runtime causal labels and scenario snapshots remain solely in ground_truth;
+operator JSON and normal workload telemetry contain observations only.

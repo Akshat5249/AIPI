@@ -1,0 +1,121 @@
+{
+  "$defs": {
+    "GroundTruth": {
+      "additionalProperties": false,
+      "properties": {
+        "injected_fault": {
+          "minLength": 1,
+          "title": "Injected Fault",
+          "type": "string"
+        },
+        "expected_root_cause": {
+          "minLength": 1,
+          "title": "Expected Root Cause",
+          "type": "string"
+        }
+      },
+      "required": [
+        "injected_fault",
+        "expected_root_cause"
+      ],
+      "title": "GroundTruth",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Static templates are stored as registry records only in ground_truth.",
+  "properties": {
+    "scenario_id": {
+      "enum": [
+        "SCN-001",
+        "SCN-002"
+      ],
+      "title": "Scenario Id",
+      "type": "string"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "target": {
+      "enum": [
+        "checkout-api",
+        "postgres-replica"
+      ],
+      "title": "Target",
+      "type": "string"
+    },
+    "preconditions": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Preconditions",
+      "type": "array"
+    },
+    "injection": {
+      "minLength": 1,
+      "title": "Injection",
+      "type": "string"
+    },
+    "ground_truth": {
+      "$ref": "#/$defs/GroundTruth"
+    },
+    "expected_signals": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Expected Signals",
+      "type": "array"
+    },
+    "expected_false_leads": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Expected False Leads",
+      "type": "array"
+    },
+    "recovery": {
+      "minLength": 1,
+      "title": "Recovery",
+      "type": "string"
+    },
+    "evaluation_thresholds": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Evaluation Thresholds",
+      "type": "object"
+    },
+    "seed": {
+      "default": 42,
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "scenario_id",
+    "name",
+    "description",
+    "target",
+    "preconditions",
+    "injection",
+    "ground_truth",
+    "expected_signals",
+    "expected_false_leads",
+    "recovery",
+    "evaluation_thresholds"
+  ],
+  "title": "ScenarioSpec",
+  "type": "object"
+}

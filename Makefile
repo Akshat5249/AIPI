@@ -21,11 +21,15 @@ test:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
-	uv run mypy --strict packages apps/api services/demo-services/src
+	uv run mypy --strict packages apps/api services/demo-services/src chaos
 	cd apps/web && npm run lint && npm run typecheck
 build-web:
 	cd apps/web && npm run build
 smoke:
 	uv run pytest -m docker -v
-chaos-kill chaos-lag investigate eval record-golden demo:
+chaos-kill:
+	uv run python -m chaos.scenarios.scn_001_service_kill
+chaos-lag:
+	uv run python -m chaos.scenarios.scn_002_replica_lag
+investigate eval record-golden demo:
 	@echo "$@ is scheduled for its later phase; see PROGRESS.md"; exit 2
