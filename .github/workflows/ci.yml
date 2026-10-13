@@ -26,7 +26,7 @@ jobs:
       - name: Build images and health smoke
         run: make up
       - run: make seed-traffic
-      - name: Live telemetry, chaos recovery, and database isolation gate
+      - name: Live telemetry, chaos, agents and database isolation gate
         run: make test
       - name: Logs on failure
         if: failure()
@@ -34,5 +34,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: make down
-      # Golden/schema/hallucination checks added with the corresponding phases.
+      # Synthetic agent goldens/schema/citation checks run in pytest; M5 adds scorecards.
       # Publication is intentionally a no-op for this local lab.

@@ -31,5 +31,8 @@ chaos-kill:
 	uv run python -m chaos.scenarios.scn_001_service_kill
 chaos-lag:
 	uv run python -m chaos.scenarios.scn_002_replica_lag
-investigate eval record-golden demo:
+investigate:
+	@test -n "$(ID)" || (echo "Usage: make investigate ID=<incident_id>"; exit 2)
+	uv run python scripts/investigate.py "$(ID)"
+eval record-golden demo:
 	@echo "$@ is scheduled for its later phase; see PROGRESS.md"; exit 2

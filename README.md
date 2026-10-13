@@ -3,7 +3,9 @@
 An evidence-grounded, read-only incident investigation platform under construction.
 M0+M1 implements the observable lab and validated telemetry store. M2 adds
 verified service-kill and replica-lag scenarios. M3 adds scoped incidents, immutable
-evidence/timelines and deterministic correlators. Agents follow in later phases; see [PROGRESS.md](PROGRESS.md).
+evidence/timelines and deterministic correlators. M4 adds a six-node LangGraph
+with scoped read-only tools, deterministic mock reasoning and evidence-linked
+reports. Evaluation/replay and the dashboard follow in M5/M6; see [PROGRESS.md](PROGRESS.md).
 
 ```text
 traffic → gateway → checkout-api → PostgreSQL primary
@@ -20,7 +22,8 @@ make up            # build, migrate, wait for health (ports 5432/5433/8000/8080/
 make seed-traffic  # required seeded background workload for chaos gates
 make chaos-kill    # real SIGKILL, telemetry checks, checkout recovery
 make chaos-lag     # standby replay pause, lag/primary checks, replay recovery
-make test          # unit/component + live telemetry/chaos integration + web tests
+make investigate ID=<incident_uuid>  # background mock investigation + report
+make test          # units, synthetic goldens, live chaos/reports, web tests
 make lint
 make down          # retain PostgreSQL volumes
 ```

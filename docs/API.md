@@ -104,3 +104,30 @@ EVIDENCE_QUERY_TIMEOUT (503, retryable), and INTERNAL_ERROR (500).
 The public catalog does not query ground_truth. Its static descriptors deliberately
 have no import dependency on the chaos scenario definitions or hidden labels.
 The API's reader and writer identities both lack ground_truth schema access.
+
+## M4 investigations
+
+`POST /api/incidents/{id}/investigate` with `{}` (or no body) returns 202 with
+queued investigation metadata. It schedules an in-process background task.
+`GET /api/investigations/{id}` returns queued/running/completed/failed status,
+versions, model/provider, tokens, cost, elapsed latency and a sanitized failure
+code. Unknown input fields are rejected. Existing incident scopes cannot widen.
+
+After completion, `GET /api/incidents/{id}/hypotheses`, `/report`, and
+`/recommendations` return the latest investigation's typed artifacts. Pending
+reports return 409 INVESTIGATION_NOT_READY; failed reports return
+INVESTIGATION_FAILED. Facts, hypotheses and recommendations remain separate;
+every citation resolves inside the owning incident's service/time scope. This
+includes frozen rule witnesses and persisted tool/runbook evidence outside the
+50-item display bundle. Recommendations require approval and executed=false.
+
+`GET /api/investigations/{id}/events` streams SSE: seq becomes `id`, kind becomes
+`event`, and data is a typed event JSON object. Resume with Last-Event-ID or
+`?after=N`. `?format=json` returns investigation_id, status, events and last_seq.
+The stream sends heartbeat comments and ends with `event: done` for terminal jobs.
+Invalid cursors/formats use the normal request-ID error envelope.
+
+`make investigate ID=<incident_uuid>` starts, polls and prints the report with
+the default mock. It needs no model key. A process restart marks interrupted
+jobs failed; restart an investigation with another POST. One API process is the
+MVP deployment boundary. The report routes expose no scenario ground-truth fields.

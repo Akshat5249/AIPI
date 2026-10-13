@@ -16,6 +16,17 @@ def is_metric(e: Evidence, name: str) -> bool:
     return e.type == "metric" and e.payload.get("metric_name") == name
 
 
+def request_symptom(e: Evidence) -> bool:
+    if e.type not in {"log", "trace"}:
+        return False
+    return (
+        "timeout" in str(e.payload).lower()
+        or "stale replica read" in e.summary.lower()
+        or e.payload.get("severity") in {"ERROR", "FATAL"}
+        or str(e.payload.get("status")) in {"2", "STATUS_CODE_ERROR"}
+    )
+
+
 def verify(proposal: Proposal, context: AgentInput) -> Hypothesis:
     rules = {s.rule for s in context.signals}
     items = sorted(context.items, key=lambda e: (e.timestamp, e.source_ref))
@@ -33,6 +44,8 @@ def verify(proposal: Proposal, context: AgentInput) -> Hypothesis:
             and http_status(e) in {"500", "502", "503", "504"}
             or e.type == "trace"
             and str(e.payload.get("status")) in {"2", "STATUS_CODE_ERROR"}
+            or e.type == "log"
+            and e.payload.get("severity") in {"ERROR", "FATAL"}
         ]
         if "ProcessExitRule" not in rules:
             missing.append("Correlated exit, HTTP failure and failed-span check")
@@ -55,12 +68,7 @@ def verify(proposal: Proposal, context: AgentInput) -> Hypothesis:
         if "ReplicaLagRule" not in rules:
             missing.append("Pause, lag, WAL backlog and healthy-primary conjunction")
     elif proposal.category == "primary_outage":
-        for_items = [
-            e
-            for e in items
-            if e.type in {"log", "trace"}
-            and ("timeout" in str(e.payload).lower() or "stale replica read" in e.summary.lower())
-        ]
+        for_items = [e for e in items if request_symptom(e)]
         against = [
             e
             for e in items
@@ -68,12 +76,7 @@ def verify(proposal: Proposal, context: AgentInput) -> Hypothesis:
         ]
         missing.append("Direct primary failure evidence; read symptoms are nonspecific")
     elif proposal.category == "dependency":
-        for_items = [
-            e
-            for e in items
-            if e.type in {"log", "trace"}
-            and ("timeout" in str(e.payload).lower() or "stale replica read" in e.summary.lower())
-        ]
+        for_items = [e for e in items if request_symptom(e)]
         against = [
             e
             for e in items

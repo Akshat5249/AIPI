@@ -13,6 +13,7 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from aipi_api.incidents import MissingIncident
+from aipi_api.investigation_repository import InvestigationUnavailable
 
 
 class ErrorDetail(BaseModel):
@@ -75,9 +76,18 @@ def install_errors(app: FastAPI) -> None:
     async def validation(request: Request, exc: RequestValidationError) -> JSONResponse:
         return response(request, "VALIDATION_ERROR", "Request validation failed", 422)
 
+    @app.exception_handler(InvestigationUnavailable)
+    async def unavailable(request: Request, exc: InvestigationUnavailable) -> JSONResponse:
+        return response(
+            request,
+            exc.code,
+            "Investigation report unavailable",
+            409 if exc.code == "INVESTIGATION_NOT_READY" else 500,
+        )
+
     @app.exception_handler(MissingIncident)
     async def missing(request: Request, exc: MissingIncident) -> JSONResponse:
-        return response(request, "NOT_FOUND", "Incident not found", 404)
+        return response(request, "NOT_FOUND", "Requested resource not found", 404)
 
     @app.exception_handler(ScopeDenied)
     async def denied(request: Request, exc: ScopeDenied) -> JSONResponse:

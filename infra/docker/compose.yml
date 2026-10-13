@@ -76,6 +76,7 @@ services:
       <<: *otel-env
       OTEL_ENABLED: 'true'
       DATABASE_URL: postgresql+psycopg://investigator_ro:${INVESTIGATOR_PASSWORD}@postgres-primary:5432/aipi
+      REPLICA_DATABASE_URL: postgresql+psycopg://investigator_ro:${INVESTIGATOR_PASSWORD}@postgres-replica:5432/aipi
       TELEMETRY_DATABASE_URL: postgresql+psycopg://telemetry_writer:${TELEMETRY_WRITER_PASSWORD}@postgres-primary:5432/aipi
       MODEL_PROVIDER: ${MODEL_PROVIDER:-mock}
       MODEL_NAME: ${MODEL_NAME:-deterministic-mock}

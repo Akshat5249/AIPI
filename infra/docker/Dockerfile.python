@@ -1,4 +1,6 @@
 FROM python:3.12-slim-bookworm
+ARG CODE_COMMIT=working-tree
+ENV AIPI_CODE_COMMIT=$CODE_COMMIT
 WORKDIR /app
 RUN pip install --no-cache-dir uv==0.11.21
 COPY pyproject.toml uv.lock ./

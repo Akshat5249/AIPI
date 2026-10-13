@@ -51,3 +51,61 @@ def test_poison_does_not_change_conclusions():
     clean, poisoned = investigate(context("scn-001")), investigate(context("poisoned-log"))
     assert clean.root_cause == poisoned.root_cause
     assert clean.ranked_hypotheses == poisoned.ranked_hypotheses
+
+
+@pytest.mark.parametrize("name", ["scn-001", "scn-002", "poisoned-log"])
+def test_langgraph_golden(name):
+    from uuid import uuid4
+
+    from aipi_agents.schemas import InvestigationState
+    from aipi_agents.workflow import NODES, Workflow
+    from aipi_tools.audit import MemoryAudit
+    from aipi_tools.backend import FixtureBackend
+    from aipi_tools.registry import ToolRunner
+
+    data = context(name)
+    audit = MemoryAudit(uuid4())
+    runner = ToolRunner(
+        FixtureBackend(data.incident, data.items, Path("runbooks")),
+        audit,
+        audit.investigation_id,
+        data.incident.id,
+    )
+    final = Workflow(runner, audit).run(
+        InvestigationState(investigation_id=audit.investigation_id, input=data)
+    )
+    assert final.report.ranked_hypotheses[0].category == expected_category(
+        FIXTURES / f"{name}.truth.json"
+    )
+    assert cited_ids(final.report) <= set(final.evidence_ids)
+    assert [e.node for e in audit.events if e.kind == "node_completed"] == list(NODES)
+    assert len(audit.calls) == len(final.tool_calls)
+    assert all(c.status == "ok" for c in audit.calls)
+
+
+def test_graph_poison_conclusion_unchanged():
+    from uuid import uuid4
+
+    from aipi_agents.schemas import InvestigationState
+    from aipi_agents.workflow import Workflow
+    from aipi_tools.audit import MemoryAudit
+    from aipi_tools.backend import FixtureBackend
+    from aipi_tools.registry import ToolRunner
+
+    reports = []
+    for name in ("scn-001", "poisoned-log"):
+        data = context(name)
+        audit = MemoryAudit(uuid4())
+        runner = ToolRunner(
+            FixtureBackend(data.incident, data.items, Path("runbooks")),
+            audit,
+            audit.investigation_id,
+            data.incident.id,
+        )
+        reports.append(
+            Workflow(runner, audit)
+            .run(InvestigationState(investigation_id=audit.investigation_id, input=data))
+            .report
+        )
+    assert reports[0].root_cause == reports[1].root_cause
+    assert reports[0].ranked_hypotheses == reports[1].ranked_hypotheses

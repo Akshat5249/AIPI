@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 22:23 IST
-**Current phase:** M4a gate passed; M4b workflow next
-**Next action:** Commit M4a, then LangGraph workflow, background API/SSE and both live mock reports
-**Overall:** 3 / 7 phases complete
+**Last updated:** 2026-10-14 00:39 IST
+**Current phase:** M4 complete — gate passed
+**Next action:** M5 Evaluation when requested; M4 verified and committed
+**Overall:** 4 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -21,7 +21,7 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
 | M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement `37c8acc` |
-| M4 | Agents + Tools + Report | IN PROGRESS (M4a gate passed) | `make test`, `make lint`; synthetic and live tool gate | M4a: 89 Python + 1 web, 15 live tests; M4b pending | M4a in this commit |
+| M4 | Agents + Tools + Report | DONE (gate passed) | `make test`, `make lint`; synthetic goldens and live reports | 102 Python + 1 web; 18 live tests, none skipped; both scoped mock reports valid | M4a `afba25f`; `feat(M4b)` in this commit |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
 | M7 | Polish | NOT STARTED | fresh-clone run of README | — | — |
@@ -353,14 +353,14 @@ and candidate drop counts documented in ADR-016. M4a remains not started.
 ### M4 Agents + Tools + Report
 - [x] 6 read-only tools + registry test (no mutating tool) — synthetic scope/timeout tests and live audit/privilege gate
 - [x] LLM adapter interface + deterministic default mock — synthetic goldens; optional paid providers deferred per request
-- [ ] LangGraph nodes: Triage, Retriever, Hypothesis, Verifier, Ranker, Reporter
+- [x] LangGraph nodes: Triage, Retriever, Hypothesis, Verifier, Ranker, Reporter — eight goldens and explicit node events/spans/repair-edge tests
 - [x] Confidence scoring + unit tests — exact fixed-input section-8 formula; no model score accepted
 - [x] Report schema validation + unknown-ID rejection — rejects/repairs once, then fails in unit tests
-- [ ] Investigation endpoints + SSE events
+- [x] Investigation endpoints + SSE events — both real mock jobs, JSON snapshots, streamed ordered events, terminal state and validation/failure tests
 - [x] Recommendations (recommend-only) — approval=true, executed=false in golden tests
 - [x] Prompt-injection tests — poisoned golden conclusion unchanged; escaped delimiters and redaction
-- [ ] Golden tests on synthetic bundles, then live
-- [ ] **GATE:** both scenarios → valid evidence-linked report, golden green
+- [x] Golden tests on synthetic bundles, then live — authored fixtures first, offline/graph goldens, then real SCN-001/SCN-002; all cited IDs resolved
+- [x] **GATE:** both scenarios → valid evidence-linked report, golden green — 102 Python + 1 web; all 18 Docker tests executed
 
 M4a verification (actual output; gate passed):
 
@@ -379,6 +379,60 @@ make test final: 89 passed, 1 warning in 139.04s; 15 live Docker tests, none ski
 Image inspection: aipi-python:local linux/arm64
 .env checksum matches the pre-M3 preserved checksum: True
 ```
+
+M4b verification (real output, native Apple Silicon):
+
+```text
+LangGraph dependency: Resolved 90 packages; installed langgraph==1.2.15
+Synthetic + graph/repair/scoring checks: 26 passed in 2.40s
+Initial live end-to-end reports: 2 passed in 109.42s (both scenarios recovered)
+Failure/restart API gate: 1 passed in 2.47s
+  report rejection persisted; request IDs preserved; interrupted jobs failed;
+  invalid SSE cursors rejected
+make test before final Reporter hardening: 100 passed in 253.02s; web 1 passed
+make test final (final image + confidence/recommendation tampering tests):
+  102 passed in 240.98s (0:04:00); 18 live Docker tests, none skipped
+  Test Files 1 passed (1); Tests 1 passed (1); Duration 763ms
+make lint final: All checks passed!; 116 files already formatted;
+  Success: no issues found in 52 source files; ESLint / tsc exit 0
+Docker build + API readiness: exit 0; image linux/arm64
+Compose config --quiet: exit 0; actionlint 1.7.7: exit 0
+make investigate ID=d1ac8743-02bf-46cd-9c8f-c3c689419e89: exit 0
+  completed 408dea37-6b72-486e-a338-3deee7d60100; mock; 1044.954959 ms
+  replica_lag rank 1 confidence .96; primary_outage rank 3 with AGAINST
+Gitleaks final source (including real reports and completed log):
+  scanned ~1939814 bytes (1.94 MB); no leaks found
+.env checksum equals the preserved pre-M3 checksum: True
+```
+
+Final live report captures (all claims/structured citations/Markdown IDs validated,
+all cited IDs resolved by scoped API lookup; same bundle IDs on repeat retrieval):
+
+| Scenario | Incident ID | Investigation ID | Latency | Cited IDs | Outside bundle | Outside rule witnesses |
+|---|---|---|---|---|---|---|
+| SCN-001 | 36d8db4c-81d5-4f76-af55-4fbf58ec8f23 | c87fd71c-70bc-40e1-b862-c04f99e4e3de | 1655.6955 ms | 372 | 353 | 352 |
+| SCN-002 | d1ac8743-02bf-46cd-9c8f-c3c689419e89 | 8c17d69d-29cb-495f-b572-9b08755ea3ab | 547.0889 ms | 140 | 117 | 116 |
+
+SCN-001 top termination confidence .96 cites die `ev_d293a27f2daf3a3b`
+(exit_code=137), start `ev_7541c306b52fca1d` and gateway ERROR log
+`ev_6ee34843fc311ca1`. Dependency rank 2 has FOR request symptoms and AGAINST die.
+SCN-002 top replica lag confidence .96 cites lag summary
+`ev_923bf36c67395587` (max 10.24426 seconds), paused summary
+`ev_ad3b4e8d57cb9c62` (0→1→0), WAL backlog, stale-read WARN log
+`ev_7fad9c514caf08ce` and timeout DB trace `ev_cb673269f520f6fe`.
+Primary outage ranks 3, confidence .20, with healthy-primary AGAINST
+`ev_7a3f9f21676de2a9`. All recommendations require approval and executed=false.
+
+Complete outside-ID arrays, their raw rule witness subsets, reports and resolved
+observations are recorded in [SCN-001](docs/verification/m4/scn_001_service_kill.json)
+and [SCN-002](docs/verification/m4/scn_002_replica_lag.json).
+The outside counts include one scoped runbook in each report. Example outside
+rule IDs: SCN-001 `ev_008d3d196fa57259`, `ev_01e20ca7b2c52b70`;
+SCN-002 `ev_08ebfe80b74fcdf3`, `ev_0958286d97a06473`.
+Both tests verify cross-incident denial, scope-widening rejection, no hidden
+labels in API/report/events, six completed nodes and at least eight tool audits,
+ordered JSON/SSE events and terminal done. All tools use investigator_ro;
+live INSERT/UPDATE/ground-truth privilege refusals passed.
 
 ### M5 Evaluation
 - [ ] Metrics + hallucination gate
@@ -407,6 +461,24 @@ Image inspection: aipi-python:local linux/arm64
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
 ```
+### F-036 — RESOLVED — Temporary automatic approval-review usage limit
+- Command: final Docker Gitleaks scan of /tmp/aipi-m4b-secret-scan.
+- Real result: action was not executed because automatic approval review hit its usage limit; this was explicitly a review failure, not an unsafe-action determination.
+- Fix: user requested continue; retried the same scan through approval review. It ran successfully: scanned ~1933645 bytes, no leaks found. No approval bypass used.
+- Files: PROGRESS.md.
+
+### F-035 — RESOLVED — M4b offline API lifespan dependency
+- Command: `uv run pytest -m 'not docker' -q`.
+- Real output: `2 failed, 76 passed, 15 deselected in 3.52s`; connection to mocked 127.0.0.1:1 during new interrupted-job startup recovery.
+- Fix: existing isolated HTTP tests mock the new recovery port, as they already mock persistence/core reads; live recovery remains real and tested separately.
+- Files: test_incident_core.py, test_telemetry.py.
+
+### F-034 — RESOLVED — M4b graph SDK typing
+- Command: `uv run mypy --strict packages apps/api`.
+- Real output: two overload errors for StateGraph.add_node and graph.invoke (typed Pydantic state versus a dumped dictionary).
+- Fix: explicit RunnableLambda typed node/input schema; pass validated state and RunnableConfig. Golden graph tests and strict checks passed after correction.
+- Files: workflow.py. Formatting/import issues fixed with Ruff before subsequent checks.
+
 ### F-033 — RESOLVED — M3 matching-operation error-rate regression found in M4a gate
 - Command: `make test` after FK-test repair.
 - Real output: `1 failed, 87 passed, 1 warning in 141.52s`; SCN-002 missing ErrorSpikeRule.
@@ -427,10 +499,10 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 
 ### F-030 — Initial M4 inspection paths    Status: RESOLVED
 - Phase/step: M4 baseline inspection
-- Command: `cat CODEX_MASTER_PROMPT.md AIPI_CONTEXT.md`; `cat apps/api/src/aipi_api/app.py`
+- Commands: `cat CODEX_MASTER_PROMPT.md AIPI_CONTEXT.md`; `cat apps/api/src/aipi_api/app.py`; glob/reads using guessed migration/docs paths (0003 under infra/postgres, 05_API_Contract, 10_Security_and_Safety, ARCHITECTURE.md); `.gitleaks.toml` inspection.
 - Error (real): `AIPI_CONTEXT.md: No such file or directory`; `app.py: No such file or directory`
 - Suspected cause: context lives in docs/ and API factory in main.py.
-- Tried / fix: discover with rg; read docs/AIPI_CONTEXT.md and main.py.
+- Tried / fix: discover with rg; read actual context, API/security specs and main.py; migrations are under infra/docker; use existing numbered architecture docs and default Gitleaks configuration.
 - Files touched: PROGRESS.md
 
 ### F-029 — Secret scan referenced nonexistent configuration    Status: RESOLVED
@@ -692,6 +764,8 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 4 | 2026-10-13 | Bounded manual-kill observation and explicit start; restricted replay function grants | Verified Docker behavior and least privilege | ADR-014 |
 | 5 | 2026-10-13 | Explicit related-service allowlists; immutable per-scope snapshots; existing restricted writer persists metadata; static public catalog | Correlation across declared dependencies, stable replay despite late data, no credential regeneration or privileged API reads | ADR-015 |
 | 6 | 2026-10-13 | Full-scope frozen signals, one summary per metric series, log/trace floors, deterministic severity/time/source selection; raw and candidate counts; v2 snapshots | Prevent selection bias, retain severe observations and expose omitted candidates without hidden labels | ADR-016 |
+| 7 | 2026-10-13 | Synthetic-first bundles, isolated scorer truth, six scoped SELECT/BM25 tools, supervisor audits, deterministic mock and exact scoring; optional paid providers deferred | Offline/key-free repeatability and least privilege | ADR-017 |
+| 8 | 2026-10-14 | Six-node validated LangGraph, background jobs/SSE, immutable artifacts/provenance and full witness citations; Reporter preserves verified confidence and non-mutating checks | Inspectable execution and scoped evidence resolution beyond the cap | ADR-018 |
 
 ---
 
@@ -700,7 +774,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M4a foundations are implemented; the full LangGraph/API/live-report gate remains pending M4b. M5–M7 evaluation/replay, dashboard and final polish are not started.
+- M4 is verified locally with mock, including both live scenarios. M5–M7 evaluation/replay, dashboard and final polish are not started. Synthetic bundles remain golden fixtures; real reports are verification captures, not M5 recorded goldens.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
 - Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
 
@@ -720,6 +794,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-14 00:39 IST | M4b | Six validated LangGraph nodes and repair edge; background jobs/status/artifacts, resumable SSE, full-scope witness and runbook provenance, confidence/check tamper rejection, API/CLI docs | Gate: 102 Python + 1 web; 18 live tests none skipped; both recovered scenarios with 512 resolved citations and 470 outside display; lint/actionlint/native build/secret scan passed; .env unchanged | Commit M4b; M5 not started`
 
 `2026-10-13 22:23 IST | M4a | Synthetic-first observable goldens and separate scorer truth; six scoped read-only tools, BM25 runbooks, durable audits/provenance, deterministic adapter and exact scoring, one model/report correction; repaired mixed-operation ErrorSpike baseline | Gate: 89 Python + 1 web; 15 live tests none skipped; lint/secret scan green; native ARM64 image; .env unchanged | Commit M4a then M4b workflow/endpoints/live reports`
 

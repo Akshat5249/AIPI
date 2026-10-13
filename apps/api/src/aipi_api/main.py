@@ -16,6 +16,8 @@ from starlette.concurrency import run_in_threadpool
 from aipi_api.config import Settings
 from aipi_api.errors import ErrorEnvelope, install_errors
 from aipi_api.incidents import IncidentCore
+from aipi_api.investigation_routes import router as investigation_router
+from aipi_api.investigations import Investigator
 from aipi_api.routes import router
 
 
@@ -36,9 +38,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         configure("api", config.otel_exporter_otlp_endpoint) if config.otel_enabled else None
     )
 
+    investigator = Investigator(
+        core,
+        config,
+        telemetry.traces.get_tracer("aipi.investigations") if telemetry else None,
+        telemetry.metrics.get_meter("aipi.investigations") if telemetry else None,
+    )
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        await run_in_threadpool(investigator.recover_interrupted)
         yield
+        investigator.close()
         store.engine.dispose()
         core.close()
         if telemetry:
@@ -51,8 +62,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.store = store
     app.state.core = core
+    app.state.investigator = investigator
     install_errors(app)
     app.include_router(router)
+    app.include_router(investigation_router)
 
     @app.get("/healthz")
     def health() -> Health:

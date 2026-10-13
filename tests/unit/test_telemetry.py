@@ -217,6 +217,7 @@ def test_whole_batch_is_validated_before_storage(monkeypatch):
     )
     saved = []
     monkeypatch.setattr(app.state.store, "persist", lambda rows: saved.append(rows))
+    monkeypatch.setattr(app.state.investigator, "recover_interrupted", lambda: None)
     with TestClient(app) as client:
         assert client.get("/healthz").status_code == 200
         assert client.post("/internal/otlp/v1/logs", json=logs_payload()).json() == {}

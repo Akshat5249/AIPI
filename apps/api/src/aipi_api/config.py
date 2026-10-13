@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     telemetry_database_url: SecretStr
     otel_exporter_otlp_endpoint: str = "http://localhost:4318"
     model_provider: Literal["mock", "anthropic", "openai"] = "mock"
+    replica_database_url: SecretStr | None = None
+    runbooks_path: str = "runbooks"
     model_name: str = "deterministic-mock"
     model_api_key: SecretStr = SecretStr("")
     redact_emails: bool = True

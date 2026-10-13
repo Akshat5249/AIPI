@@ -1,5 +1,6 @@
 """Evidence-backed report assembly, full citation validation and exactly one repair."""
 
+import re
 from collections.abc import Callable
 
 from aipi_telemetry.evidence import build_timeline
@@ -22,20 +23,14 @@ class ReportValidationError(Exception):
 
 def template(context: AgentInput, ranked: tuple[Hypothesis, ...]) -> Report:
     claims = []
-    known = {e.evidence_id: e for e in context.items}
     for i, result in enumerate(context.signals):
-        families: dict[tuple[str, str], str] = {}
-        for eid in result.evidence_ids:
-            e = known[eid]
-            key = (e.type, str(e.payload.get("metric_name", e.payload.get("event_name", ""))))
-            families.setdefault(key, eid)
-        if families:
+        if result.evidence_ids:
             claims.append(
                 Claim(
                     claim_id=f"fact_{i}",
                     kind="fact",
                     text=result.statement,
-                    evidence_ids=tuple(families.values()),
+                    evidence_ids=result.evidence_ids,
                 )
             )
     for h in ranked:
@@ -58,7 +53,8 @@ def template(context: AgentInput, ranked: tuple[Hypothesis, ...]) -> Report:
                     "Review scoped lifecycle, replay and dependency evidence "
                     "with the service owner before any remediation"
                 ),
-                evidence_ids=ranked[0].for_ids,
+                evidence_ids=ranked[0].for_ids
+                + tuple(e.evidence_id for e in context.items if e.type == "runbook")[:1],
             ),
         )
         claims.append(
@@ -90,7 +86,13 @@ def template(context: AgentInput, ranked: tuple[Hypothesis, ...]) -> Report:
             confidence=ranked[0].confidence,
         ),
         claims=tuple(claims),
-        timeline=build_timeline(context.items[:50]),
+        timeline=build_timeline(
+            tuple(
+                e
+                for e in context.items
+                if e.evidence_id in {eid for h in ranked for eid in h.for_ids + h.against}
+            )
+        ),
         ranked_hypotheses=ranked,
         unresolved_questions=tuple(dict.fromkeys(q for h in ranked for q in h.missing)),
         recommendations=recs,
@@ -102,6 +104,9 @@ def template(context: AgentInput, ranked: tuple[Hypothesis, ...]) -> Report:
 
 
 def validate_report(report: Report, context: AgentInput) -> None:
+    markdown_ids = set(re.findall(r"ev_[A-Za-z0-9_]+", report.markdown))
+    if not markdown_ids <= cited_ids(report):
+        raise ReportValidationError("Markdown references unregistered evidence")
     if not cited_ids(report) <= {e.evidence_id for e in context.items}:
         raise ReportValidationError("Report references unknown or out-of-scope evidence")
 
@@ -117,6 +122,11 @@ def write_report(
             candidate = producer(canonical, bool(attempt)) if producer else canonical.model_dump()
             report = Report.model_validate(candidate)
             validate_report(report, context)
+            if (
+                report.ranked_hypotheses != ranked
+                or report.recommendations != canonical.recommendations
+            ):
+                raise ReportValidationError("Report changed verified ranking or read-only checks")
             return report, attempt + 1
         except (ValidationError, ReportValidationError) as exc:
             if attempt:

@@ -18,7 +18,7 @@ The demo services have separate `app_rw` and `app_ro` roles for orders.
 
 Collector sends JSON over the internal Compose network; API validates and redacts
 before inserting. No raw validation errors or input payloads are returned to clients.
-Before future model calls, run the same redaction function again.
+Model context is redacted again, with escaped untrusted-data boundaries.
 
 M2 scenario templates are static source files; runtime causal labels and injection
 records are written only to `ground_truth.scenarios` and `ground_truth.chaos_runs`.
@@ -44,3 +44,21 @@ incidents, evidence, evidence_bundles and scope_denials for API bookkeeping. It
 cannot update/delete them, control WAL replay, or read ground truth. This explicit
 reuse avoids adding or regenerating any lab credential. Persistence remains in
 the API layer; the retrieval package contains SELECTs only.
+
+
+M4 tools expose six fixed typed read-only operations. The runner binds its owning
+incident, reloads the stored scope and logs denied attempts; no model-selected
+SQL, shell or remediation operation exists. SQL sources require investigator_ro
+on both primary and replica. The supervisor's telemetry_writer persists audits,
+provenance and artifacts, with UPDATE grants restricted to investigation status,
+latency and usage fields; artifacts remain immutable. Tools never receive a
+query writer, migration administrator or ground-truth credential.
+
+The model proposes falsifiable hypotheses only. Deterministic verification and
+the fixed formula decide rank/confidence. Every report/Markdown citation must
+resolve within scoped evidence, including witnesses outside the cap. Invalid
+reports receive one repair, then fail. Recommendations are non-mutating checks,
+require human approval and have executed=false. Poisoned logs cannot change the
+mock conclusion; separate synthetic truth files are read only by the scorer.
+Background jobs run in one API process; interrupted jobs fail on startup. This
+MVP has no authentication and should remain a loopback-only local lab.

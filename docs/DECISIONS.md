@@ -167,3 +167,43 @@ contradicting families each add .15, capped at .45. The model has no score input
 Report generation validates every structured citation and retries repair once;
 recommendations are human-review checks, require approval and are never executed.
 Full-scope rule witnesses remain usable even when absent from the 50-item display.
+
+## ADR-018 — Validated LangGraph, background supervisor and scoped report provenance
+
+M4b compiles a six-node StateGraph with Pydantic state: Triage → Retriever →
+Hypothesis → Verifier → Ranker → Reporter. Each transition is revalidated and
+emits durable events and nested OTel spans. Reporter has one explicit repair
+edge; a second invalid output fails the job. Malformed hypothesis outputs get
+one schema correction. Confidence remains the fixed deterministic formula.
+The mock consumes correlator signals and never receives hidden labels or scores.
+
+The supervisor freezes full-scope signals and resolves their immutable witnesses
+before model reasoning; tools may add bounded telemetry and runbook observations.
+Every fact cites the complete original rule witness set, including observations
+outside the display cap. Competing hypotheses preserve FOR/AGAINST families;
+primary outage retains nonspecific read symptoms FOR and healthy primary AGAINST.
+Report timelines show verified causal/contradicting observations chronologically.
+All structured citations and Markdown IDs are validated. Stored agent_evidence
+provenance enables evidence-by-ID lookup for additional tool/runbook citations,
+with the same authoritative incident/service/time bounds and immutable records.
+
+FastAPI BackgroundTasks implements a single-process local job (no queue).
+Status and artifacts persist in PostgreSQL; interrupted queued/running jobs fail
+explicitly on startup. SSE streams ordered persisted events with seq IDs, a
+Last-Event-ID/after cursor, heartbeat and terminal done event; format=json provides
+an ordered snapshot. Tokens/cost are zero for mock; actual latency, source count,
+confidence and tool failures are instrumented. Paid adapters remain optional and
+unimplemented. The M5 scorer/replay and dashboard remain future phase gates.
+
+LangGraph API usage was checked against its official Graph API documentation:
+https://docs.langchain.com/oss/python/langgraph/graph-api. Locked version 1.2.15
+runs on host Python 3.12 and native linux/arm64 Docker. Runtime build metadata uses
+AIPI_CODE_COMMIT (working-tree builds state that explicitly); no agent runs git.
+
+Reporter output must preserve the verified hypothesis ordering/confidence and
+the factory's read-only recommendations, even if a candidate is otherwise
+schema-valid. It cannot replace them with model confidence or mutating advice.
+Recommendation citations include a retrieved scoped runbook where available.
+Nonspecific error logs/failed traces count as request symptoms for competing
+hypotheses, but lifecycle/pause counterevidence and missing direct causal checks
+prevent those secondary symptoms from outranking the verified root cause.

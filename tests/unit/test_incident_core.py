@@ -156,6 +156,7 @@ def test_api_error_contract_and_public_catalog(monkeypatch):
         raise MissingIncident()
 
     monkeypatch.setattr(app.state.core, "get", missing)
+    monkeypatch.setattr(app.state.investigator, "recover_interrupted", lambda: None)
     with TestClient(app) as client:
         for method, path, body, code in [
             ("POST", "/api/incidents", {}, "VALIDATION_ERROR"),

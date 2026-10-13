@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 
 from aipi_telemetry.evidence import Evidence
 from aipi_telemetry.redaction import redact
-from opentelemetry import trace
+from opentelemetry import metrics, trace
 from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -57,12 +57,16 @@ class ToolRunner:
         investigation_id: UUID,
         incident_id: UUID,
         tracer: trace.Tracer | None = None,
+        meter: metrics.Meter | None = None,
     ) -> None:
         self.backend = backend
         self.audit = audit
         self.investigation_id = investigation_id
         self.incident_id = incident_id
         self.tracer = tracer or trace.get_tracer("aipi.tools")
+        source = meter or metrics.get_meter("aipi.tools")
+        self.latency = source.create_histogram("tool.latency_ms", unit="ms")
+        self.failures = source.create_counter("tool.failures")
 
     def call(self, name: ToolName, args: ToolInput, actor: str) -> ToolResult:
         # Revalidate at boundary: callers cannot bypass typed inputs via model_copy.
@@ -142,6 +146,10 @@ class ToolRunner:
                     attempts=attempts,
                     error="TOOL_OUTPUT_INVALID",
                 )
+            elapsed = (time.monotonic() - started) * 1000
+            self.latency.record(elapsed, {"tool": name})
+            if result.status != "ok":
+                self.failures.add(1, {"tool": name, "status": result.status})
             self.audit.retain(result.items)
             clean, _ = redact(args.model_dump(mode="json"))
             self.audit.record_tool(

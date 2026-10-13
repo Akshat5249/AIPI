@@ -2,7 +2,7 @@
 name = "aipi-agents"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
-dependencies = ["aipi-tools", "aipi-telemetry", "pydantic>=2"]
+dependencies = ["aipi-tools", "aipi-telemetry", "pydantic>=2", "langgraph>=1,<2"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -81,3 +81,20 @@ v
 - Store raw evidence identifiers so every report statement can be traced back.
 - Separate retrieval from reasoning to reduce hallucination and make evaluation possible.
 - Keep remediation tools disabled/read-only in MVP.
+
+# M4 implemented slice
+
+The local implementation now uses six explicit validated LangGraph nodes:
+Triage → Retriever → Hypothesis → Verifier → Ranker → Reporter, with one report
+repair edge. Scoped deterministic correlation precedes the mock model. Confidence
+is calculated entirely by the documented formula; model self-confidence is never
+accepted. The supervisor persists jobs, node/tool audits, hypotheses, FOR/AGAINST
+relations, immutable evidence provenance and reports. The six SELECT-only/BM25
+tools have no mutation operation. Background status and resumable SSE are exposed
+by FastAPI. Synthetic and live mock report gates are automated in pytest.
+
+Telemetry rows and application artifacts share PostgreSQL, with distinct reader,
+restricted writer and migration identities. Ground truth stays in its restricted
+schema and is available only to host chaos/evaluation code. Report facts preserve
+full-scope rule witnesses outside the 50-item display bundle. The M5 replay and
+scorecard layer and M6 React investigation dashboard remain future phase gates.

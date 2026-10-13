@@ -15,6 +15,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import make_url
 
+from aipi_api.agent_storage import agent_evidence
 from aipi_api.core_storage import bundles, denials, evidence, incidents
 
 
@@ -147,13 +148,23 @@ class IncidentCore:
         return self.retrieve(request, request_id).signals
 
     def evidence_item(self, request: ScopeRequest, request_id: str, item_id: str) -> Evidence:
-        """Resolve only an item or full-scope rule citation in this exact frozen scope."""
+        """Resolve bundle, rule or persisted investigation evidence inside authorized scope."""
         bundle = self.retrieve(request, request_id)
         permitted = {e.evidence_id for e in bundle.items} | {
             eid for result in bundle.signals for eid in result.evidence_ids
         }
         if item_id not in permitted:
-            raise MissingIncident("Evidence not found in incident scope")
+            with self.reader.engine.connect() as db:
+                provenance = db.scalar(
+                    select(agent_evidence.c.evidence_id)
+                    .where(
+                        agent_evidence.c.incident_id == request.incident_id,
+                        agent_evidence.c.evidence_id == item_id,
+                    )
+                    .limit(1)
+                )
+            if provenance is None:
+                raise MissingIncident("Evidence not found in incident scope")
         with self.reader.engine.connect() as db:
             row = (
                 db.execute(
