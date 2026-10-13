@@ -3,9 +3,9 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 21:46 IST
-**Current phase:** M3 selection/correlation refinement DONE (gate passed)
-**Next action:** M4a (not started); full-scope correlation and selection refinement passed
+**Last updated:** 2026-10-13 22:23 IST
+**Current phase:** M4a gate passed; M4b workflow next
+**Next action:** Commit M4a, then LangGraph workflow, background API/SSE and both live mock reports
 **Overall:** 3 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
@@ -20,8 +20,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 |---|---|---|---|---|---|
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
-| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement in this commit |
-| M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
+| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement `37c8acc` |
+| M4 | Agents + Tools + Report | IN PROGRESS (M4a gate passed) | `make test`, `make lint`; synthetic and live tool gate | M4a: 89 Python + 1 web, 15 live tests; M4b pending | M4a in this commit |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
 | M7 | Polish | NOT STARTED | fresh-clone run of README | — | — |
@@ -351,16 +351,34 @@ Severe-log and trace floors are availability-bounded, with deterministic overflo
 and candidate drop counts documented in ADR-016. M4a remains not started.
 
 ### M4 Agents + Tools + Report
-- [ ] 6 read-only tools + registry test (no mutating tool)
-- [ ] LLM adapters (mock / anthropic / openai)
+- [x] 6 read-only tools + registry test (no mutating tool) — synthetic scope/timeout tests and live audit/privilege gate
+- [x] LLM adapter interface + deterministic default mock — synthetic goldens; optional paid providers deferred per request
 - [ ] LangGraph nodes: Triage, Retriever, Hypothesis, Verifier, Ranker, Reporter
-- [ ] Confidence scoring + unit tests
-- [ ] Report schema validation + unknown-ID rejection
+- [x] Confidence scoring + unit tests — exact fixed-input section-8 formula; no model score accepted
+- [x] Report schema validation + unknown-ID rejection — rejects/repairs once, then fails in unit tests
 - [ ] Investigation endpoints + SSE events
-- [ ] Recommendations (recommend-only)
-- [ ] Prompt-injection tests
+- [x] Recommendations (recommend-only) — approval=true, executed=false in golden tests
+- [x] Prompt-injection tests — poisoned golden conclusion unchanged; escaped delimiters and redaction
 - [ ] Golden tests on synthetic bundles, then live
 - [ ] **GATE:** both scenarios → valid evidence-linked report, golden green
+
+M4a verification (actual output; gate passed):
+
+```text
+Baseline make test before new code: 71 passed, 1 warning in 143.87s; web 1 passed (893ms)
+Synthetic goldens + scoring/safety/tools: 17 passed in 2.16s (including live audit)
+Offline regression suite: 74 passed, 15 deselected, 1 warning in 2.73s
+make lint: All checks passed!; 108 files already formatted;
+  Success: no issues found in 48 source files; ESLint / tsc exit 0
+M4a live: 3 calls + 3 events; denied widening logged;
+  WAL receiver SELECT observed; investigator INSERT/UPDATE/truth denied
+Docker image native rebuild + API readiness: exit 0 (migration 0004)
+Gitleaks final source: scanned ~699468 bytes; no leaks found
+make test final: 89 passed, 1 warning in 139.04s; 15 live Docker tests, none skipped
+  Vitest: Test Files 1 passed; Tests 1 passed; Duration 824ms
+Image inspection: aipi-python:local linux/arm64
+.env checksum matches the pre-M3 preserved checksum: True
+```
 
 ### M5 Evaluation
 - [ ] Metrics + hallucination gate
@@ -389,6 +407,32 @@ and candidate drop counts documented in ADR-016. M4a remains not started.
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
 ```
+### F-033 — RESOLVED — M3 matching-operation error-rate regression found in M4a gate
+- Command: `make test` after FK-test repair.
+- Real output: `1 failed, 87 passed, 1 warning in 141.52s`; SCN-002 missing ErrorSpikeRule.
+- Diagnosis: scoped SQL showed orders-api postgres.select_order failed-span rate 0 → .3611; GET request rate remained 0 (fallback is HTTP 200), while p95 was 224.73 → 352.76 ms, below the 2× latency threshold. Service-wide mixing diluted errors below .25.
+- Fix: compare failed-span rates for matching service/operation, as already required for latency; add offline mixed-operation regression. No lowered threshold or scenario/truth-aware behavior.
+- Files: correlators.py, test_correlators.py; rebuild live API before gate re-run.
+
+### F-032 — RESOLVED — M4a foreign-key-aware immutability test
+- Command: `make test`.
+- Real output: `1 failed, 85 passed, 1 warning in 143.55s`; `psycopg.errors.FeatureNotSupported: cannot truncate a table referenced in a foreign key constraint`; agent_evidence now references evidence.
+- Fix: test TRUNCATE CASCADE to reach the immutable trigger while including referenced artifact tables; the trigger rejects the entire transaction. The original foreign-key refusal already prevented mutation.
+- Files: tests/integration/test_incidents.py. Final gate output below supersedes this failed run.
+
+### F-031 — RESOLVED — M4a typing and formatting
+- Commands: `uv run ruff check packages --fix`, `uv run mypy --strict packages apps/api`.
+- Real output: Ruff initially reported 41 errors (6 fixed); after formatting 11 remained. Mypy reported 16 errors across 6 files (JSON union narrowing, aliases, generic types).
+- Fix: Python 3.12 type parameters, explicit validated JSON/model types, wrapped long literals. Re-run results are recorded in the M4 session gate below.
+
+### F-030 — Initial M4 inspection paths    Status: RESOLVED
+- Phase/step: M4 baseline inspection
+- Command: `cat CODEX_MASTER_PROMPT.md AIPI_CONTEXT.md`; `cat apps/api/src/aipi_api/app.py`
+- Error (real): `AIPI_CONTEXT.md: No such file or directory`; `app.py: No such file or directory`
+- Suspected cause: context lives in docs/ and API factory in main.py.
+- Tried / fix: discover with rg; read docs/AIPI_CONTEXT.md and main.py.
+- Files touched: PROGRESS.md
+
 ### F-029 — Secret scan referenced nonexistent configuration    Status: RESOLVED
 - Phase/step: M3 refinement pre-commit scan
 - Command: `docker run --rm -v /tmp/aipi-selection-secret-scan:/repo zricethezav/gitleaks:v8.24.2 dir /repo --config /repo/.gitleaks.toml --redact`
@@ -656,7 +700,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M4–M7 deliverables and gates are not started. Six-tool registry, agents/LLM/LangGraph, golden evaluation and the full dashboard remain deferred. No agent or model implementation was added in M3.
+- M4a foundations are implemented; the full LangGraph/API/live-report gate remains pending M4b. M5–M7 evaluation/replay, dashboard and final polish are not started.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
 - Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
 
@@ -676,6 +720,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-13 22:23 IST | M4a | Synthetic-first observable goldens and separate scorer truth; six scoped read-only tools, BM25 runbooks, durable audits/provenance, deterministic adapter and exact scoring, one model/report correction; repaired mixed-operation ErrorSpike baseline | Gate: 89 Python + 1 web; 15 live tests none skipped; lint/secret scan green; native ARM64 image; .env unchanged | Commit M4a then M4b workflow/endpoints/live reports`
 
 `2026-10-13 21:46 IST | M3 refinement | Frozen full-scope correlation and cited sources; versioned metric-series summaries (histogram data excluded); severe-log/error-slow-trace floors; latency baseline and route-specific chaos verifier; updated ADR-016 | 71 Python + 1 web, 14 live Docker tests, lint and secret scan passed; .env unchanged | M4a not started`
 

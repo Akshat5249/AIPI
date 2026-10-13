@@ -137,3 +137,33 @@ verifier compares the /checkout 503 counter only, avoiding unrelated /orders
 series at identical export timestamps. Offline crowded windows prove floors,
 oldest decisive retention, series transitions, stable IDs, and full-scope rule
 invariance even when a particular witness falls outside the displayed bundle.
+
+## ADR-017 — Scoped investigation tools, supervisor audits and synthetic-first mock
+
+M4a first authored `synthetic:true` observable fixture bundles. Hidden truth files
+are read only by `aipi_evaluation.golden`; agents/tools do not import the scorer,
+chaos code or truth readers. The deterministic mock derives falsifiable competing
+hypotheses solely from full-scope correlator signals. Optional paid providers are
+not implemented in this local release, as explicitly permitted by the M4 request.
+
+Six typed tools expose fixed allowlisted SELECT operations under investigator_ro.
+A runner binds its owning incident, independently reloads its authoritative scope,
+rejects widening/cross-incident requests, validates source results and attempts
+at most three reads (initial + two timeout retries). The API supervisor owns the
+restricted writer and records immutable tool calls/events and evidence provenance;
+query backends never receive a writer or administrator credential. Local Markdown
+runbooks are service-tagged BM25 chunks with versioned content/source IDs.
+
+Replication status uses historical scoped lag/paused/health metrics. A live WAL
+receiver view observation is included only if its observation timestamp is inside
+the requested incident window. Current recovered state is not evidence about a
+completed historical outage. Both connections assert investigator_ro identity.
+
+Confidence uses the exact section-8 weighted formula and capped contradiction
+penalty. Components are deterministic: direct conjunction coverage/proximity/check
+=1; nonspecific symptom coverage=.4, proximity=.2, check=0; retrieval quality=1
+(or .8 for truncated retrieval, 0 without supporting evidence). Unique material
+contradicting families each add .15, capped at .45. The model has no score input.
+Report generation validates every structured citation and retries repair once;
+recommendations are human-review checks, require approval and are never executed.
+Full-scope rule witnesses remain usable even when absent from the 50-item display.

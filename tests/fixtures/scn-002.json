@@ -1,0 +1,401 @@
+{
+  "synthetic": true,
+  "incident": {
+    "id": "10000000-0000-0000-0000-000000000002",
+    "title": "Synthetic availability incident",
+    "service": "orders-api",
+    "related_services": [
+      "checkout-api",
+      "pg-lag-probe"
+    ],
+    "start_time": "2026-10-13T00:00:00+00:00",
+    "end_time": "2026-10-13T00:05:00+00:00",
+    "symptom": "Observed request failures",
+    "status": "open",
+    "created_at": "2026-10-13T00:00:00+00:00"
+  },
+  "items": [
+    {
+      "evidence_id": "ev_f268c08dfe32f63d",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:metric:replica_lag_seconds-0",
+      "summary": "{'metric_name': 'replica_lag_seconds', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_seconds",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_315733c87fcf6bc2",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:metric:replica_lag_seconds-1",
+      "summary": "{'metric_name': 'replica_lag_seconds', 'value': 3, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_seconds",
+        "value": 3,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_90599d152bd4d731",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:metric:replica_lag_seconds-2",
+      "summary": "{'metric_name': 'replica_lag_seconds', 'value': 8, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_seconds",
+        "value": 8,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_be4e1c89d6eb42f1",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:metric:replica_lag_seconds-3",
+      "summary": "{'metric_name': 'replica_lag_seconds', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_seconds",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_cf471d78c602f6fd",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:metric:replica_lag_bytes-0",
+      "summary": "{'metric_name': 'replica_lag_bytes', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_bytes",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_dea0bc4a1b89c19e",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:metric:replica_lag_bytes-1",
+      "summary": "{'metric_name': 'replica_lag_bytes', 'value': 1000, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_bytes",
+        "value": 1000,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_8a2d2af3ab3b1b1c",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:metric:replica_lag_bytes-2",
+      "summary": "{'metric_name': 'replica_lag_bytes', 'value': 5000, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_bytes",
+        "value": 5000,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_68011cc8b6a31993",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:metric:replica_lag_bytes-3",
+      "summary": "{'metric_name': 'replica_lag_bytes', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_lag_bytes",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_d6cd28a5cc35d3b7",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:metric:replica_replay_paused-0",
+      "summary": "{'metric_name': 'replica_replay_paused', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_replay_paused",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_35312df4f1a7a245",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:metric:replica_replay_paused-1",
+      "summary": "{'metric_name': 'replica_replay_paused', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_replay_paused",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_23891e6530735a4f",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:metric:replica_replay_paused-2",
+      "summary": "{'metric_name': 'replica_replay_paused', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_replay_paused",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_e879e8694e0b72c9",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:metric:replica_replay_paused-3",
+      "summary": "{'metric_name': 'replica_replay_paused', 'value': 0, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "replica_replay_paused",
+        "value": 0,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_c4dce641bc3e08e4",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:metric:primary_healthy-0",
+      "summary": "{'metric_name': 'primary_healthy', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "primary_healthy",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_2d4693dc47dda452",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:metric:primary_healthy-1",
+      "summary": "{'metric_name': 'primary_healthy', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "primary_healthy",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_95f42765f33b6b27",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:metric:primary_healthy-2",
+      "summary": "{'metric_name': 'primary_healthy', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "primary_healthy",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_31ad89968daaf28d",
+      "type": "metric",
+      "service": "pg-lag-probe",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:metric:primary_healthy-3",
+      "summary": "{'metric_name': 'primary_healthy', 'value': 1, 'labels_json': {}}",
+      "payload": {
+        "metric_name": "primary_healthy",
+        "value": 1,
+        "labels_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_ca011fe6c774d1a1",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:trace:lag-trace-0",
+      "summary": "{'trace_id': '0000000000000000000000000000000a', 'span_id': '000000000000000a', 'status': '0', 'operation': 'GET /orders', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000a",
+        "span_id": "000000000000000a",
+        "status": "0",
+        "operation": "GET /orders",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_2068809ee0a2c98e",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:05+00:00",
+      "source_ref": "synthetic:trace:lag-trace-1",
+      "summary": "{'trace_id': '0000000000000000000000000000000b', 'span_id': '000000000000000b', 'status': '0', 'operation': 'GET /orders', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000b",
+        "span_id": "000000000000000b",
+        "status": "0",
+        "operation": "GET /orders",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_cc16521c93cb2c12",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:trace:lag-trace-2",
+      "summary": "{'trace_id': '0000000000000000000000000000000c', 'span_id': '000000000000000c', 'status': '0', 'operation': 'GET /orders', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000c",
+        "span_id": "000000000000000c",
+        "status": "0",
+        "operation": "GET /orders",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_461e4fd1a25a15fe",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:15+00:00",
+      "source_ref": "synthetic:trace:lag-trace-3",
+      "summary": "{'trace_id': '0000000000000000000000000000000d', 'span_id': '000000000000000d', 'status': '0', 'operation': 'GET /orders', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000d",
+        "span_id": "000000000000000d",
+        "status": "0",
+        "operation": "GET /orders",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_be0cc59091d00309",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:trace:lag-trace-4",
+      "summary": "{'trace_id': '0000000000000000000000000000000e', 'span_id': '000000000000000e', 'status': '2', 'operation': 'GET /orders', 'duration_ms': 350}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000e",
+        "span_id": "000000000000000e",
+        "status": "2",
+        "operation": "GET /orders",
+        "duration_ms": 350
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_79263d0f369211f3",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:25+00:00",
+      "source_ref": "synthetic:trace:lag-trace-5",
+      "summary": "{'trace_id': '0000000000000000000000000000000f', 'span_id': '000000000000000f', 'status': '2', 'operation': 'GET /orders', 'duration_ms': 350}",
+      "payload": {
+        "trace_id": "0000000000000000000000000000000f",
+        "span_id": "000000000000000f",
+        "status": "2",
+        "operation": "GET /orders",
+        "duration_ms": 350
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_b241fa0353b319f7",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:trace:lag-trace-6",
+      "summary": "{'trace_id': '00000000000000000000000000000010', 'span_id': '0000000000000010', 'status': '2', 'operation': 'GET /orders', 'duration_ms': 350}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000010",
+        "span_id": "0000000000000010",
+        "status": "2",
+        "operation": "GET /orders",
+        "duration_ms": 350
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_3a26150074242c2f",
+      "type": "trace",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:35+00:00",
+      "source_ref": "synthetic:trace:lag-trace-7",
+      "summary": "{'trace_id': '00000000000000000000000000000011', 'span_id': '0000000000000011', 'status': '2', 'operation': 'GET /orders', 'duration_ms': 350}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000011",
+        "span_id": "0000000000000011",
+        "status": "2",
+        "operation": "GET /orders",
+        "duration_ms": 350
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_091595d7a2b0fc06",
+      "type": "log",
+      "service": "orders-api",
+      "timestamp": "2026-10-13T00:00:22+00:00",
+      "source_ref": "synthetic:log:lag-timeout",
+      "summary": "{'severity': 'WARN', 'body': 'stale replica read', 'attributes_json': {'error.type': 'ReplicaReadTimeout'}, 'trace_id': '0000000000000000000000000000000f'}",
+      "payload": {
+        "severity": "WARN",
+        "body": "stale replica read",
+        "attributes_json": {
+          "error.type": "ReplicaReadTimeout"
+        },
+        "trace_id": "0000000000000000000000000000000f"
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_9d86fa23212df60f",
+      "type": "log",
+      "service": "checkout-api",
+      "timestamp": "2026-10-13T00:00:24+00:00",
+      "source_ref": "synthetic:log:primary-write",
+      "summary": "{'severity': 'INFO', 'body': 'order created'}",
+      "payload": {
+        "severity": "INFO",
+        "body": "order created"
+      },
+      "redactions": []
+    }
+  ]
+}

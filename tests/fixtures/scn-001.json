@@ -1,0 +1,244 @@
+{
+  "synthetic": true,
+  "incident": {
+    "id": "10000000-0000-0000-0000-000000000001",
+    "title": "Synthetic availability incident",
+    "service": "checkout-api",
+    "related_services": [
+      "gateway"
+    ],
+    "start_time": "2026-10-13T00:00:00+00:00",
+    "end_time": "2026-10-13T00:05:00+00:00",
+    "symptom": "Observed request failures",
+    "status": "open",
+    "created_at": "2026-10-13T00:00:00+00:00"
+  },
+  "items": [
+    {
+      "evidence_id": "ev_9b4eccb062aaf3f7",
+      "type": "event",
+      "service": "checkout-api",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:event:kill-die",
+      "summary": "{'event_domain': 'runtime', 'event_name': 'die', 'attributes_json': {'exit_code': '137'}}",
+      "payload": {
+        "event_domain": "runtime",
+        "event_name": "die",
+        "attributes_json": {
+          "exit_code": "137"
+        }
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_7c872b2502f55fec",
+      "type": "event",
+      "service": "checkout-api",
+      "timestamp": "2026-10-13T00:00:40+00:00",
+      "source_ref": "synthetic:event:kill-start",
+      "summary": "{'event_domain': 'runtime', 'event_name': 'start', 'attributes_json': {}}",
+      "payload": {
+        "event_domain": "runtime",
+        "event_name": "start",
+        "attributes_json": {}
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_384f79888d9772fc",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:trace:kill-trace-0",
+      "summary": "{'trace_id': '00000000000000000000000000000001', 'span_id': '0000000000000001', 'status': '0', 'operation': 'POST /checkout', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000001",
+        "span_id": "0000000000000001",
+        "status": "0",
+        "operation": "POST /checkout",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_f0293879714e8bb6",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:05+00:00",
+      "source_ref": "synthetic:trace:kill-trace-1",
+      "summary": "{'trace_id': '00000000000000000000000000000002', 'span_id': '0000000000000002', 'status': '0', 'operation': 'POST /checkout', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000002",
+        "span_id": "0000000000000002",
+        "status": "0",
+        "operation": "POST /checkout",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_d8f5837f5500b5ff",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:trace:kill-trace-2",
+      "summary": "{'trace_id': '00000000000000000000000000000003', 'span_id': '0000000000000003', 'status': '0', 'operation': 'POST /checkout', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000003",
+        "span_id": "0000000000000003",
+        "status": "0",
+        "operation": "POST /checkout",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_22b1a161b4f78513",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:15+00:00",
+      "source_ref": "synthetic:trace:kill-trace-3",
+      "summary": "{'trace_id': '00000000000000000000000000000004', 'span_id': '0000000000000004', 'status': '0', 'operation': 'POST /checkout', 'duration_ms': 2}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000004",
+        "span_id": "0000000000000004",
+        "status": "0",
+        "operation": "POST /checkout",
+        "duration_ms": 2
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_ea474f419fac1089",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:trace:kill-trace-4",
+      "summary": "{'trace_id': '00000000000000000000000000000005', 'span_id': '0000000000000005', 'status': '2', 'operation': 'POST /checkout', 'duration_ms': 5000}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000005",
+        "span_id": "0000000000000005",
+        "status": "2",
+        "operation": "POST /checkout",
+        "duration_ms": 5000
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_efef22529a669eb3",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:25+00:00",
+      "source_ref": "synthetic:trace:kill-trace-5",
+      "summary": "{'trace_id': '00000000000000000000000000000006', 'span_id': '0000000000000006', 'status': '2', 'operation': 'POST /checkout', 'duration_ms': 5000}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000006",
+        "span_id": "0000000000000006",
+        "status": "2",
+        "operation": "POST /checkout",
+        "duration_ms": 5000
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_7853a17c81fea42b",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:30+00:00",
+      "source_ref": "synthetic:trace:kill-trace-6",
+      "summary": "{'trace_id': '00000000000000000000000000000007', 'span_id': '0000000000000007', 'status': '2', 'operation': 'POST /checkout', 'duration_ms': 5000}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000007",
+        "span_id": "0000000000000007",
+        "status": "2",
+        "operation": "POST /checkout",
+        "duration_ms": 5000
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_d7a04115c69a0b70",
+      "type": "trace",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:35+00:00",
+      "source_ref": "synthetic:trace:kill-trace-7",
+      "summary": "{'trace_id': '00000000000000000000000000000008', 'span_id': '0000000000000008', 'status': '2', 'operation': 'POST /checkout', 'duration_ms': 5000}",
+      "payload": {
+        "trace_id": "00000000000000000000000000000008",
+        "span_id": "0000000000000008",
+        "status": "2",
+        "operation": "POST /checkout",
+        "duration_ms": 5000
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_c36b43036977fd3d",
+      "type": "metric",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:00+00:00",
+      "source_ref": "synthetic:metric:kill-requests-0",
+      "summary": "{'metric_name': 'requests_total', 'value': 0, 'labels_json': {'route': '/checkout', 'status': '503'}}",
+      "payload": {
+        "metric_name": "requests_total",
+        "value": 0,
+        "labels_json": {
+          "route": "/checkout",
+          "status": "503"
+        }
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_9dbb43798b4456b2",
+      "type": "metric",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:10+00:00",
+      "source_ref": "synthetic:metric:kill-requests-1",
+      "summary": "{'metric_name': 'requests_total', 'value': 4, 'labels_json': {'route': '/checkout', 'status': '503'}}",
+      "payload": {
+        "metric_name": "requests_total",
+        "value": 4,
+        "labels_json": {
+          "route": "/checkout",
+          "status": "503"
+        }
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_7296a9ab58ca5fea",
+      "type": "metric",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:20+00:00",
+      "source_ref": "synthetic:metric:kill-requests-2",
+      "summary": "{'metric_name': 'requests_total', 'value': 10, 'labels_json': {'route': '/checkout', 'status': '503'}}",
+      "payload": {
+        "metric_name": "requests_total",
+        "value": 10,
+        "labels_json": {
+          "route": "/checkout",
+          "status": "503"
+        }
+      },
+      "redactions": []
+    },
+    {
+      "evidence_id": "ev_9dc9b87e49f4cb0b",
+      "type": "log",
+      "service": "gateway",
+      "timestamp": "2026-10-13T00:00:21+00:00",
+      "source_ref": "synthetic:log:kill-timeout",
+      "summary": "{'severity': 'ERROR', 'body': 'checkout dependency failed', 'attributes_json': {'error.type': 'ReadTimeout'}, 'trace_id': '00000000000000000000000000000005'}",
+      "payload": {
+        "severity": "ERROR",
+        "body": "checkout dependency failed",
+        "attributes_json": {
+          "error.type": "ReadTimeout"
+        },
+        "trace_id": "00000000000000000000000000000005"
+      },
+      "redactions": []
+    }
+  ]
+}

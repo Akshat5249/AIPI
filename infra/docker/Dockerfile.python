@@ -6,6 +6,7 @@ COPY apps/api apps/api
 COPY packages packages
 COPY services/demo-services services/demo-services
 RUN uv sync --frozen --all-packages --no-dev
+COPY runbooks runbooks
 COPY infra/docker/alembic.ini alembic.ini
 COPY infra/docker/migrations migrations
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1

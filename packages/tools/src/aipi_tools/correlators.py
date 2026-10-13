@@ -106,9 +106,21 @@ class ErrorSpikeRule:
                                 (first, last),
                             ),
                         )
-        for service in sorted({item.service for item in items if item.type == "trace"}):
+        for service, operation in sorted(
+            {
+                (item.service, str(item.payload.get("operation", "")))
+                for item in items
+                if item.type == "trace"
+            }
+        ):
             spans = sorted(
-                (e for e in items if e.type == "trace" and e.service == service),
+                (
+                    e
+                    for e in items
+                    if e.type == "trace"
+                    and e.service == service
+                    and str(e.payload.get("operation", "")) == operation
+                ),
                 key=lambda e: (e.timestamp, e.evidence_id),
             )
             if len(spans) >= 4:

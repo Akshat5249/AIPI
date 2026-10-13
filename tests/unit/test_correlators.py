@@ -124,3 +124,25 @@ def test_error_spike_latency_compares_matching_operations():
         for i, e in enumerate(spans)
     )
     assert not ErrorSpikeRule.apply(mismatched)
+
+
+def test_error_spike_does_not_dilute_db_failures_with_successful_http():
+    samples = tuple(
+        ev(
+            "trace",
+            {
+                "operation": "postgres.select_order",
+                "status": "0" if i < 4 else "2",
+                "duration_ms": 200,
+            },
+            i,
+        )
+        for i in range(8)
+    )
+    successful = tuple(
+        ev("trace", {"operation": "GET /orders", "status": "0", "duration_ms": 200}, i)
+        for i in range(30)
+    )
+    signals = ErrorSpikeRule.apply(samples + successful)
+    assert signals and set(signals[0].evidence_ids) == {e.evidence_id for e in samples}
+    assert not ErrorSpikeRule.apply(successful)

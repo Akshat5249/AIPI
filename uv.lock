@@ -60,6 +60,18 @@ dev = [
 name = "aipi-agents"
 version = "0.1.0"
 source = { editable = "packages/agents" }
+dependencies = [
+    { name = "aipi-telemetry" },
+    { name = "aipi-tools" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aipi-telemetry", editable = "packages/telemetry" },
+    { name = "aipi-tools", editable = "packages/tools" },
+    { name = "pydantic", specifier = ">=2" },
+]
 
 [[package]]
 name = "aipi-api"
@@ -101,6 +113,12 @@ requires-dist = [
 name = "aipi-evaluation"
 version = "0.1.0"
 source = { editable = "packages/evaluation" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2" }]
 
 [[package]]
 name = "aipi-telemetry"

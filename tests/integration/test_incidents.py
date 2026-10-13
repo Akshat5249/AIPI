@@ -384,7 +384,7 @@ def test_scope_cap_late_arrivals_and_database_immutability():
                 with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
                     db.execute(f"DELETE FROM {table} WHERE incident_id=%s", (current.id,))
                 with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
-                    db.execute(f"TRUNCATE {table}")
+                    db.execute(f"TRUNCATE {table} CASCADE")
             with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
                 db.execute(
                     "UPDATE evidence SET summary='rewrite' WHERE incident_id=%s", (current.id,)
