@@ -3,9 +3,9 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 01:54 IST
-**Current phase:** M3 complete (gate passed)
-**Next action:** M4 read-only tool registry, mock adapter and agent workflow (not started)
+**Last updated:** 2026-10-13 14:25 IST
+**Current phase:** M3 prioritization follow-up complete (gate passed)
+**Next action:** M4a (not started); relevance and truncation gate passed
 **Overall:** 3 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
@@ -20,7 +20,7 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 |---|---|---|---|---|---|
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
-| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 60 Python + 1 web passed; both real incident windows replay identical IDs | this commit: `feat(M3): scoped incident core and immutable evidence` |
+| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 65 Python + 1 web passed; decisive signals retained with exact drop counts and stable IDs | `60790a4`; prioritization follow-up in this commit |
 | M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
@@ -241,6 +241,59 @@ no setup-env or .env regeneration command was executed. Retrieval uses only
 investigator_ro; application writes are explicit SELECT/INSERT grants to the
 existing writer. No agents, LLM adapters, LangGraph, or mutating tools were added.
 
+M3 prioritization follow-up (before M4a):
+
+- Global relevance tiers use lifecycle names, a fixed metric-name list, and severity;
+  traces inherit only linked scoped log severity. No metric values, span status,
+  scenario IDs or ground-truth queries rank evidence.
+- SQL and Python break ties by timestamp then source_ref; IDs retain the original
+  type/source hash. relevance-v1 has a separate immutable snapshot cache namespace.
+- Exact available_counts/dropped_counts cover all scoped rows, including beyond
+  the per-source 50-candidate limit.
+- M3 commit reference corrected to 60790a4; Decisions rows are contiguous again.
+  Unit tests confirm definitions ADR-007 through ADR-015 in docs/DECISIONS.md.
+- Complete real inventory (all 50 items per live scenario, grouped by type/service):
+  [docs/verification/evidence-priority-live.txt](docs/verification/evidence-priority-live.txt).
+
+```text
+uv run pytest tests/integration/test_incidents.py -v -s --tb=short
+SCN-001: selected=50
+  available={event:2, metric:468, log:114, trace:572}
+  dropped={event:0, metric:438, log:111, trace:557}
+  selected by type={event:2, metric:30, log:3, trace:15}
+  die exit_code=137: ev_bd70a98706ab4d09
+  start: ev_5300ce76444ceabf
+  identical_ids=true; ProcessExitRule; recovery=verified
+SCN-002: selected=50
+  available={event:0, metric:212, log:71, trace:268}
+  dropped={event:0, metric:162, log:71, trace:268}
+  selected by service={checkout-api:8, orders-api:16, pg-lag-probe:26} (all metrics)
+  replica_lag_seconds=0.468535, 2.489531, 4.502678, 6.523544, 8.542551, 9.675256, 0
+  replica_replay_paused=1 retained; primary_healthy=1 retained
+  identical_ids=true; ReplicaLagRule + PrimaryHealthRule; recovery=verified
+Live crowded synthetic window: 146 available; 50 selected;
+  oldest die/start + four lag/health metrics retained
+  dropped={event:38, metric:0, log:58, trace:0}
+6 passed in 34.65s
+Offline suite before live gate: 51 passed, 13 deselected, 1 warning in 2.14s
+```
+
+Final prioritization gate output:
+
+```text
+make test: 65 passed, 1 warning in 67.33s (0:01:07)
+  14 live Docker tests, none skipped
+  Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 709ms
+make lint: All checks passed!; 82 files already formatted;
+  Success: no issues found in 32 source files; ESLint/tsc exit 0
+Gitleaks v8.24.2: scanned ~526761 bytes (526.76 KB); no leaks found
+.env unchanged
+```
+
+ADR-007 through ADR-015 were confirmed by definition entries, not merely mention
+matches. PROGRESS Decisions table rows 1–6 are contiguous and well formed. M4a,
+agents, LLM adapters and LangGraph remain not started.
+
 ### M4 Agents + Tools + Report
 - [ ] 6 read-only tools + registry test (no mutating tool)
 - [ ] LLM adapters (mock / anthropic / openai)
@@ -289,6 +342,20 @@ Add an entry whenever a command, test, or build fails and is not fixed immediate
 - Fix / workaround (if resolved):
 - Files touched:
 ```
+
+### F-022 — Decision-definition test import sorting    Status: RESOLVED
+- Phase/step: M3 prioritization final lint
+- Command: `make lint`
+- Error (real output): `I001 Import block is un-sorted or un-formatted`; `make: *** [lint] Error 1`.
+- Fix: Ruff organized the added re import; reran the complete lint gate.
+- Files touched: tests/unit/test_evidence_ranking.py
+
+### F-021 — Evidence inventory line formatting    Status: RESOLVED
+- Phase/step: M3 prioritization follow-up
+- Command: `uv run ruff check . --fix`
+- Error (real output): `E501 Line too long (125 > 100)` and `(111 > 100)` in inventory print statements.
+- Fix: split the diagnostic print strings before the live gate.
+- Files touched: tests/integration/test_incidents.py
 
 ### F-020 — Authoritative scope query formatting    Status: RESOLVED
 - Phase/step: M3 security review
@@ -466,9 +533,9 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 1 | 2026-10-13 | Web/Python future-phase placeholders; explicit failures for future Make targets; opt-in traffic profile | Keep the M0+M1 boundary | ADR-011 |
 | 2 | 2026-10-13 | Separate migration admin and telemetry writer; deterministic ingest IDs; histogram sum/count storage | Least privilege and retry safety | ADR-012 |
 | 3 | 2026-10-13 | Native multiarch images, pinned Collector; host HTTP check for shell-free Collector | Apple Silicon compatibility and actual health verification | ADR-013 |
-
 | 4 | 2026-10-13 | Bounded manual-kill observation and explicit start; restricted replay function grants | Verified Docker behavior and least privilege | ADR-014 |
 | 5 | 2026-10-13 | Explicit related-service allowlists; immutable per-scope snapshots; existing restricted writer persists metadata; static public catalog | Correlation across declared dependencies, stable replay despite late data, no credential regeneration or privileged API reads | ADR-015 |
+| 6 | 2026-10-13 | Global telemetry relevance tiers; time/source tie order; exact dropped counts; versioned snapshots | Preserve decisive evidence and expose truncation without hidden labels | ADR-016 |
 
 ---
 
@@ -497,6 +564,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-13 14:25 IST | M3 follow-up | Replaced round-robin cap with telemetry relevance and time/source ties; exact dropped counts; versioned immutable snapshots; printed all 100 live items; oldest-decisive synthetic tests; corrected commit/table and verified ADRs | 65 Python + 1 web, 14 live Docker tests, lint and secret scan passed; .env unchanged | M4a not started`
 
 `2026-10-13 01:54 IST | M3 | Started with passing make test; delivered validated incident API, request IDs/errors, persisted scope bounds, immutable capped evidence/timelines, five pure correlators and isolated public scenario catalog; .env unchanged | Gate passed: 60 Python + 1 web, 13 live Docker tests including real replay/contradiction checks; lint/secret scan/CI validation green | M4`
 

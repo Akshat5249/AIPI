@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from aipi_telemetry.evidence import TimelineItem, build_timeline
 from aipi_telemetry.redaction import redact
 from aipi_tools.correlators import Signal, correlate
+from aipi_tools.ranking import RETRIEVAL_VERSION
 from aipi_tools.retrieval import EvidenceBundle, EvidenceReader
 from aipi_tools.scope import Incident, IncidentCreate, ScopeDenied, ScopePolicy, ScopeRequest
 from pydantic import BaseModel
@@ -92,7 +93,7 @@ class IncidentCore:
                     )
                 )
             raise
-        key = sha256(scope.model_dump_json().encode()).hexdigest()
+        key = sha256((RETRIEVAL_VERSION + "|" + scope.model_dump_json()).encode()).hexdigest()
         # One immutable first-read snapshot per incident/scope, even under concurrent requests.
         with self.writer.begin() as db:
             lock = int(key[:15], 16)

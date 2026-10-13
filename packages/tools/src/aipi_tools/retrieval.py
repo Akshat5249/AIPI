@@ -5,10 +5,17 @@ from typing import Any
 
 from aipi_telemetry.evidence import Evidence, EvidenceType, evidence_id
 from aipi_telemetry.storage import events, logs, metrics, spans
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Table, case, create_engine, select, text
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from sqlalchemy import Table, case, create_engine, func, select, text
 from sqlalchemy.engine import Engine, make_url
 
+from aipi_tools.ranking import (
+    ERROR_SEVERITIES,
+    RETRIEVAL_VERSION,
+    RULE_METRICS,
+    RUNTIME_NAMES,
+    select_ranked,
+)
 from aipi_tools.scope import Incident, Scope, ScopeDenied, ScopePolicy, ScopeRequest, Window
 
 LIMIT = 50
@@ -20,6 +27,18 @@ SOURCES: tuple[tuple[EvidenceType, Table], ...] = (
 )
 
 
+class TypeCounts(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    event: int = Field(default=0, ge=0)
+    metric: int = Field(default=0, ge=0)
+    log: int = Field(default=0, ge=0)
+    trace: int = Field(default=0, ge=0)
+
+    @property
+    def total(self) -> int:
+        return sum(self.model_dump().values())
+
+
 class EvidenceBundle(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     source_id: str
@@ -28,6 +47,27 @@ class EvidenceBundle(BaseModel):
     snapshot_at: datetime
     truncated: bool
     items: tuple[Evidence, ...]
+    retrieval_version: str = RETRIEVAL_VERSION
+    available_counts: TypeCounts
+    dropped_counts: TypeCounts
+
+    @model_validator(mode="after")
+    def valid_counts(self) -> "EvidenceBundle":
+        selected = {
+            kind: sum(item.type == kind for item in self.items)
+            for kind in self.available_counts.model_dump()
+        }
+        expected = {
+            kind: count - selected[kind]
+            for kind, count in self.available_counts.model_dump().items()
+        }
+        if (
+            len(self.items) > LIMIT
+            or expected != self.dropped_counts.model_dump()
+            or self.truncated != (self.dropped_counts.total > 0)
+        ):
+            raise ValueError("Evidence truncation metadata is inconsistent")
+        return self
 
 
 def from_row(kind: EvidenceType, table: Table, row: dict[str, Any]) -> Evidence:
@@ -43,7 +83,7 @@ def from_row(kind: EvidenceType, table: Table, row: dict[str, Any]) -> Evidence:
     payload = {
         key: value
         for key, value in row.items()
-        if key not in {"ingested_at", "ts", "start_ts", "redactions"}
+        if key not in {"ingested_at", "ts", "start_ts", "redactions", "_relevance"}
     }
     if kind == "metric":
         summary = f"{row['metric_name']}={row['value']}"
@@ -65,27 +105,33 @@ def from_row(kind: EvidenceType, table: Table, row: dict[str, Any]) -> Evidence:
     )
 
 
-def priority(kind: EvidenceType, table: Table) -> Any:
-    """Reserve space for diagnostic signals; never use scenario labels to rank."""
+def priority(kind: EvidenceType, table: Table, scope: Scope) -> Any:
+    """Match the pure relevance tiers using only names and scoped log severity."""
+    if kind == "event":
+        return case((table.c.event_name.in_(RUNTIME_NAMES), 0), else_=3)
     if kind == "metric":
-        diagnostic = table.c.metric_name.in_(
-            [
-                "replica_lag_seconds",
-                "replica_lag_bytes",
-                "replica_replay_paused",
-                "primary_healthy",
-            ]
-        ) | (
-            (table.c.metric_name == "requests_total")
-            & table.c.labels_json["status"].as_string().in_(["500", "502", "503", "504"])
+        return case((table.c.metric_name.in_(RULE_METRICS), 1), else_=3)
+    if kind == "log":
+        return case((table.c.severity.in_(ERROR_SEVERITIES), 2), else_=3)
+    linked_error = (
+        select(logs.c.id)
+        .where(
+            logs.c.trace_id == table.c.trace_id,
+            logs.c.trace_id != "",
+            logs.c.service.in_(scope.services),
+            logs.c.ts >= scope.window.start_time,
+            logs.c.ts <= scope.window.end_time,
+            logs.c.severity.in_(ERROR_SEVERITIES),
         )
-    elif kind == "log":
-        diagnostic = table.c.severity.in_(["ERROR", "WARN", "WARNING"])
-    elif kind == "trace":
-        diagnostic = table.c.status.in_(["2", "STATUS_CODE_ERROR"])
-    else:
-        diagnostic = table.c.event_name.in_(["die", "start", "restart"])
-    return case((diagnostic, 0), else_=1)
+        .exists()
+    )
+    return case((linked_error, 2), else_=3)
+
+
+def source_reference(kind: EvidenceType, table: Table) -> Any:
+    if kind == "trace":
+        return table.name + ":" + table.c.trace_id + ":" + table.c.span_id
+    return table.name + ":" + table.c.id
 
 
 class EvidenceReader:
@@ -104,7 +150,8 @@ class EvidenceReader:
 
     def retrieve(self, incident: Incident, request: ScopeRequest) -> EvidenceBundle:
         scope = ScopePolicy().authorize(incident, request)
-        groups: list[list[Evidence]] = []
+        candidates: list[tuple[int, Evidence]] = []
+        available: dict[str, int] = {}
         with self.engine.connect() as db, db.begin():
             if db.scalar(text("SELECT current_user")) != "investigator_ro":
                 raise ValueError("Evidence retrieval identity is not investigator_ro")
@@ -125,33 +172,35 @@ class EvidenceReader:
             scope = ScopePolicy().authorize(Incident.model_validate(dict(persisted)), request)
             for kind, table in SOURCES:
                 stamp = table.c.start_ts if kind == "trace" else table.c.ts
-                identifiers = (
-                    [table.c.trace_id, table.c.span_id] if kind == "trace" else [table.c.id]
+                bounded = (
+                    table.c.service.in_(scope.services),
+                    stamp >= scope.window.start_time,
+                    stamp <= scope.window.end_time,
                 )
+                available[kind] = int(
+                    db.scalar(select(func.count()).select_from(table).where(*bounded)) or 0
+                )
+                rank = priority(kind, table, scope)
                 rows = db.execute(
-                    select(table)
-                    .where(
-                        table.c.service.in_(scope.services),
-                        stamp >= scope.window.start_time,
-                        stamp <= scope.window.end_time,
-                    )
-                    .order_by(priority(kind, table), stamp, *identifiers)
-                    .limit(LIMIT + 1)
+                    select(table, rank.label("_relevance"))
+                    .where(*bounded)
+                    .order_by(rank, stamp, source_reference(kind, table))
+                    .limit(LIMIT)
                 ).mappings()
-                groups.append([from_row(kind, table, dict(row)) for row in rows])
-        total = sum(len(group) for group in groups)
-        chosen: list[Evidence] = []
-        # Deterministic round-robin prevents noisy traces from hiding events or lag/health gauges.
-        for index in range(LIMIT + 1):
-            for group in groups:
-                if index < len(group) and len(chosen) < LIMIT:
-                    chosen.append(group[index])
-        chosen.sort(key=lambda item: (item.timestamp, item.evidence_id))
+                for row in rows:
+                    candidates.append((row["_relevance"], from_row(kind, table, dict(row))))
+        chosen = select_ranked(candidates, LIMIT)
+        dropped = {
+            kind: count - sum(item.type == kind for item in chosen)
+            for kind, count in available.items()
+        }
         return EvidenceBundle(
             source_id=str(incident.id),
             window=scope.window,
             query_params=scope,
             snapshot_at=datetime.now(UTC),
-            truncated=total > LIMIT,
-            items=tuple(chosen),
+            truncated=sum(dropped.values()) > 0,
+            items=chosen,
+            available_counts=TypeCounts.model_validate(available),
+            dropped_counts=TypeCounts.model_validate(dropped),
         )

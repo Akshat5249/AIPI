@@ -65,7 +65,8 @@ from changing replay IDs. A transaction advisory lock serializes snapshot creati
 Evidence IDs are source-derived and shared across incidents; the storage primary
 key is (incident_id, id), preserving incident ownership for future citations.
 Database triggers block updates/deletes/truncation even by accidental admin SQL.
-Diagnostic ordering and per-signal round-robin selection cap bundles at 50.
+The original per-signal round-robin selection capped bundles at 50; ADR-016
+replaces it with telemetry-only global relevance selection.
 
 The existing restricted telemetry_writer receives explicit SELECT/INSERT grants
 on M3 metadata/artifact tables. No new credential or .env change is needed; it
@@ -73,3 +74,16 @@ cannot read ground truth. Investigation retrieval itself remains read-only.
 GET /api/scenarios uses static public descriptors instead of a privileged view or
 ground-truth connection. Catalog/schema tests guard against causal-label exposure.
 The six read-only tools and their investigation audit records remain M4 work.
+
+
+## ADR-016 — Telemetry relevance before the evidence cap
+
+Prioritize runtime lifecycle names, fixed rule-supporting metric names, and error
+severity before ordinary telemetry. A span may inherit only the severity of a
+linked log in the same incident/service/time scope; status and metric values do
+not rank evidence. No scenario identifier or ground-truth dependency is involved.
+Tie order is timestamp then source_ref, consistently in SQL and global selection.
+Exact scoped COUNTs report omitted rows by type, even beyond candidate fetch limits.
+The relevance-v1 cache namespace preserves all previous immutable snapshots.
+Live tests explicitly require die(137)/start and lag/paused metrics to survive;
+crowded synthetic tests cover decisive observations at the oldest timestamp.

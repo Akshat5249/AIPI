@@ -98,6 +98,54 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
         ids = [item.evidence_id for item in first.items]
         assert first == second and ids and len(ids) <= 50
         assert ids == [item.evidence_id for item in second.items]
+        assert len(ids) == 50
+        assert first.available_counts.total == len(ids) + first.dropped_counts.total
+        if module == "scn_001_service_kill":
+            runtime = [
+                item
+                for item in first.items
+                if item.type == "event" and item.payload.get("event_domain") == "runtime"
+            ]
+            assert any(
+                item.payload.get("event_name") == "die"
+                and item.payload["attributes_json"].get("exit_code") == "137"
+                for item in runtime
+            )
+            assert any(item.payload.get("event_name") == "start" for item in runtime)
+        else:
+            assert any(
+                item.type == "metric" and item.payload.get("metric_name") == "replica_lag_seconds"
+                for item in first.items
+            )
+            assert any(
+                item.type == "metric"
+                and item.payload.get("metric_name") == "replica_replay_paused"
+                and item.payload.get("value") == 1
+                for item in first.items
+            )
+        print(
+            f"BUNDLE {module}: selected={len(ids)} available={first.available_counts.model_dump()} "
+            f"dropped={first.dropped_counts.model_dump()}"
+        )
+        for group in sorted({(item.type, item.service) for item in first.items}):
+            print(f"TYPE/SERVICE {group[0]}/{group[1]}")
+            for position, item in enumerate(first.items, 1):
+                if (item.type, item.service) != group:
+                    continue
+                if item.type == "event":
+                    detail = (
+                        f"{item.payload.get('event_name')} "
+                        f"exit_code={item.payload['attributes_json'].get('exit_code')}"
+                    )
+                elif item.type == "metric":
+                    detail = f"{item.payload.get('metric_name')}={item.payload.get('value')}"
+                else:
+                    detail = str(item.payload.get("severity", item.payload.get("operation", "")))
+                print(
+                    f"{position:02} {item.evidence_id} {item.timestamp.isoformat()} "
+                    f"{item.source_ref} {detail}"
+                )
+
         assert all(
             start <= item.timestamp <= end and item.service in current.services
             for item in first.items
@@ -203,6 +251,18 @@ def test_scope_cap_late_arrivals_and_database_immutability():
             assert response.status_code == 200, response.text
             first = EvidenceBundle.model_validate(response.json())
             assert len(first.items) == 50 and first.truncated
+            assert first.available_counts.model_dump() == {
+                "event": 1,
+                "metric": 1,
+                "log": 60,
+                "trace": 1,
+            }
+            assert first.dropped_counts.model_dump() == {
+                "event": 0,
+                "metric": 0,
+                "log": 13,
+                "trace": 0,
+            }
             assert {item.type for item in first.items} == {"log", "metric", "trace", "event"}
             assert all(
                 item.service == "api" and stamp <= item.timestamp <= current.end_time
@@ -304,7 +364,8 @@ def test_ground_truth_unreachable_from_api_role_and_retrieval():
         assert statements and all(
             "ground_truth" not in sql and "SELECT" in sql for sql in statements
         )
-        assert sum("telemetry_" in sql for sql in statements) == 4
+        assert sum("telemetry_" in sql for sql in statements) == 8
+        assert sum("LIMIT" in sql for sql in statements) == 4
         with pytest.raises(ScopeDenied):
             reader.retrieve(
                 current, ScopeRequest(incident_id=current.id, service="ground_truth.scenarios")
@@ -369,3 +430,110 @@ def test_live_incident_validation_and_error_request_ids():
             )
         missing = client.get(f"/api/incidents/{uuid4()}")
         assert missing.status_code == 404 and missing.json()["error"]["code"] == "NOT_FOUND"
+
+
+def test_live_sql_ranking_preserves_oldest_decisive_evidence_in_crowded_window():
+    lab = Lab()
+    store = TelemetryStore(url(lab, "telemetry_writer"))
+    stamp = datetime(2021, 1, 1, tzinfo=UTC) + timedelta(days=int(uuid4().hex[:4], 16))
+    prefix = uuid4().hex
+    try:
+        store.persist(
+            {
+                "logs": [
+                    {
+                        "id": f"{prefix}-log-{i:03}",
+                        "ts": stamp + timedelta(seconds=i + 1),
+                        "service": "checkout-api",
+                        "severity": "INFO",
+                        "body": "synthetic noise",
+                        "attributes_json": {"synthetic": True},
+                        "redactions": [],
+                    }
+                    for i in range(80)
+                ],
+                "events": [
+                    {
+                        "id": prefix + "-a-die",
+                        "ts": stamp,
+                        "service": "checkout-api",
+                        "event_domain": "runtime",
+                        "event_name": "die",
+                        "attributes_json": {"exit_code": "137", "synthetic": True},
+                        "redactions": [],
+                    },
+                    {
+                        "id": prefix + "-z-start",
+                        "ts": stamp,
+                        "service": "checkout-api",
+                        "event_domain": "runtime",
+                        "event_name": "start",
+                        "attributes_json": {"synthetic": True},
+                        "redactions": [],
+                    },
+                ]
+                + [
+                    {
+                        "id": f"{prefix}-heartbeat-{i:03}",
+                        "ts": stamp + timedelta(seconds=i + 1),
+                        "service": "checkout-api",
+                        "event_domain": "runtime",
+                        "event_name": "heartbeat",
+                        "attributes_json": {"synthetic": True},
+                        "redactions": [],
+                    }
+                    for i in range(60)
+                ],
+                "metrics": [
+                    {
+                        "id": prefix + name,
+                        "ts": stamp,
+                        "service": "pg-lag-probe",
+                        "metric_name": name,
+                        "value": number,
+                        "labels_json": {"synthetic": True},
+                        "redactions": [],
+                    }
+                    for name, number in (
+                        ("replica_lag_seconds", 8),
+                        ("replica_replay_paused", 1),
+                        ("replica_lag_bytes", 512),
+                        ("primary_healthy", 1),
+                    )
+                ],
+            }
+        )
+        with httpx.Client(base_url=API, timeout=20) as client:
+            current = create(
+                client, stamp, stamp + timedelta(seconds=90), "checkout-api", ("pg-lag-probe",)
+            )
+            path = f"/api/incidents/{current.id}/evidence"
+            response = client.get(path)
+            assert response.status_code == 200, response.text
+            first = EvidenceBundle.model_validate(response.json())
+            assert first == EvidenceBundle.model_validate(client.get(path).json())
+            assert len(first.items) == 50 and first.truncated
+            assert [item.payload["event_name"] for item in first.items[:2]] == ["die", "start"]
+            assert {item.payload["metric_name"] for item in first.items[2:6]} == {
+                "replica_lag_seconds",
+                "replica_replay_paused",
+                "replica_lag_bytes",
+                "primary_healthy",
+            }
+            assert all(item.timestamp == stamp for item in first.items[:6])
+            assert first.available_counts.model_dump() == {
+                "event": 62,
+                "metric": 4,
+                "log": 80,
+                "trace": 0,
+            }
+            assert first.dropped_counts.model_dump() == {
+                "event": 38,
+                "metric": 0,
+                "log": 58,
+                "trace": 0,
+            }
+            assert ReplicaLagRule.apply(first.items) and PrimaryHealthRule.apply(first.items)
+    finally:
+        store.engine.dispose()
+        lab.close()
