@@ -1,17 +1,9 @@
-"""Fixture oracle only: hidden synthetic labels are read here, never by the agent."""
+"""Compatibility oracle used by golden tests; only the scorer opens hidden labels."""
 
-import json
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
-
-
-class SyntheticTruth(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-    expected_category: str
+from aipi_evaluation.oracle import load_truth
 
 
 def expected_category(path: Path) -> str:
-    if not path.name.endswith(".truth.json"):
-        raise ValueError("Scorer accepts a separate truth file only")
-    return SyntheticTruth.model_validate(json.loads(path.read_text())).expected_category
+    return load_truth(path).expected_category

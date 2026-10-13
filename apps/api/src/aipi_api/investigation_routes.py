@@ -102,3 +102,8 @@ async def events(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@router.get("/incidents/{incident_id}/investigation", response_model=Investigation)
+def latest(incident_id: UUID, request: Request) -> Investigation:
+    return manager(request).latest(incident_id)

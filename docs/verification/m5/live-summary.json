@@ -1,0 +1,533 @@
+{
+  "code_commit": "5de61e4dce5d10dfedd7948aa62a3faa16caaca3+working-tree",
+  "repetitions": 3,
+  "scenarios": {
+    "SCN-001": {
+      "runs": 3,
+      "passed": 3,
+      "misses": [],
+      "metrics": {
+        "top1": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "top3_recall": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "evidence_precision": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "evidence_coverage": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "unsupported_claim_rate": {
+          "samples": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "contradiction_handling": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "latency_ms": {
+          "samples": [
+            2633.4825009998895,
+            2074.762042000657,
+            2184.3337930004054
+          ],
+          "mean": 2297.5261120003174,
+          "median": 2184.3337930004054,
+          "min": 2074.762042000657,
+          "max": 2633.4825009998895,
+          "variance": 58434.34242434108,
+          "stddev": 241.7319640104326
+        },
+        "useful_evidence_per_tool_call": {
+          "samples": [
+            48.875,
+            46.0,
+            42.375
+          ],
+          "mean": 45.75,
+          "median": 46.0,
+          "min": 42.375,
+          "max": 48.875,
+          "variance": 7.072916666666667,
+          "stddev": 2.659495566205491
+        }
+      }
+    },
+    "SCN-002": {
+      "runs": 3,
+      "passed": 3,
+      "misses": [],
+      "metrics": {
+        "top1": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "top3_recall": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "evidence_precision": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "evidence_coverage": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "unsupported_claim_rate": {
+          "samples": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mean": 0.0,
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "contradiction_handling": {
+          "samples": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "max": 1.0,
+          "variance": 0.0,
+          "stddev": 0.0
+        },
+        "latency_ms": {
+          "samples": [
+            2623.2641269998567,
+            877.348833000724,
+            800.1397089992679
+          ],
+          "mean": 1433.5842229999496,
+          "median": 877.348833000724,
+          "min": 800.1397089992679,
+          "max": 2623.2641269998567,
+          "variance": 708662.6784621262,
+          "stddev": 841.8210489540674
+        },
+        "useful_evidence_per_tool_call": {
+          "samples": [
+            14.777777777777779,
+            15.333333333333334,
+            14.777777777777779
+          ],
+          "mean": 14.962962962962964,
+          "median": 14.777777777777779,
+          "min": 14.777777777777779,
+          "max": 15.333333333333334,
+          "variance": 0.06858710562414261,
+          "stddev": 0.26189140043946196
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "scenario_id": "SCN-001",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 2633.4825009998895,
+        "useful_evidence_per_tool_call": 48.875,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 414,
+        "supported_pairs": 414,
+        "material_claims": 5,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "die_137",
+          "recovery",
+          "http_5xx",
+          "failed_span",
+          "gateway_error"
+        ],
+        "required_feature_count": 5,
+        "tool_calls": 8,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:49:29.538984+00:00",
+          "services": "checkout-api,gateway",
+          "start_time": "2026-10-13T19:48:40.556550+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "8efc7ba1-46b8-45e7-a1d7-d8d10e813769",
+      "created_at": "2026-10-13T19:49:35.647319Z"
+    },
+    {
+      "scenario_id": "SCN-001",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 2074.762042000657,
+        "useful_evidence_per_tool_call": 46.0,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 466,
+        "supported_pairs": 466,
+        "material_claims": 5,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "die_137",
+          "recovery",
+          "http_5xx",
+          "failed_span",
+          "gateway_error"
+        ],
+        "required_feature_count": 5,
+        "tool_calls": 8,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:50:24.114897+00:00",
+          "services": "checkout-api,gateway",
+          "start_time": "2026-10-13T19:49:35.964213+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "b62c0e7b-9fd5-4823-aff4-f42071013bb3",
+      "created_at": "2026-10-13T19:50:30.728366Z"
+    },
+    {
+      "scenario_id": "SCN-001",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 2184.3337930004054,
+        "useful_evidence_per_tool_call": 42.375,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 428,
+        "supported_pairs": 428,
+        "material_claims": 6,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "die_137",
+          "recovery",
+          "http_5xx",
+          "failed_span",
+          "gateway_error"
+        ],
+        "required_feature_count": 5,
+        "tool_calls": 8,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:51:19.477369+00:00",
+          "services": "checkout-api,gateway",
+          "start_time": "2026-10-13T19:50:31.011700+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "48f2bdc9-4ce0-4dc3-9478-5d30640332e9",
+      "created_at": "2026-10-13T19:51:24.726793Z"
+    },
+    {
+      "scenario_id": "SCN-002",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 2623.2641269998567,
+        "useful_evidence_per_tool_call": 14.777777777777779,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 183,
+        "supported_pairs": 183,
+        "material_claims": 8,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "lag_seconds",
+          "wal_backlog",
+          "replay_paused",
+          "healthy_primary",
+          "stale_read",
+          "timeout"
+        ],
+        "required_feature_count": 6,
+        "tool_calls": 9,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:52:12.258733+00:00",
+          "services": "checkout-api,orders-api,pg-lag-probe",
+          "start_time": "2026-10-13T19:51:24.957587+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "bbe30f52-ea9a-4da3-a43d-5ff6f3e24ef4",
+      "created_at": "2026-10-13T19:52:18.468483Z"
+    },
+    {
+      "scenario_id": "SCN-002",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 877.348833000724,
+        "useful_evidence_per_tool_call": 15.333333333333334,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 187,
+        "supported_pairs": 187,
+        "material_claims": 8,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "lag_seconds",
+          "wal_backlog",
+          "replay_paused",
+          "healthy_primary",
+          "stale_read",
+          "timeout"
+        ],
+        "required_feature_count": 6,
+        "tool_calls": 9,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:53:07.433773+00:00",
+          "services": "checkout-api,orders-api,pg-lag-probe",
+          "start_time": "2026-10-13T19:52:18.601600+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "c7b72134-0518-4305-afa8-7e440caaf95c",
+      "created_at": "2026-10-13T19:53:09.761847Z"
+    },
+    {
+      "scenario_id": "SCN-002",
+      "passed": true,
+      "scores": {
+        "top1": 1.0,
+        "top3_recall": 1.0,
+        "evidence_precision": 1.0,
+        "evidence_coverage": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "contradiction_handling": 1.0,
+        "latency_ms": 800.1397089992679,
+        "useful_evidence_per_tool_call": 14.777777777777779,
+        "useful_evidence_per_token": null,
+        "citation_pairs": 182,
+        "supported_pairs": 182,
+        "material_claims": 8,
+        "unsupported_claims": 0,
+        "critical_unsupported_claims": 0,
+        "covered_features": [
+          "lag_seconds",
+          "wal_backlog",
+          "replay_paused",
+          "healthy_primary",
+          "stale_read",
+          "timeout"
+        ],
+        "required_feature_count": 6,
+        "tool_calls": 9,
+        "tokens": 0
+      },
+      "experiment": {
+        "provider": "mock",
+        "model": "deterministic-mock",
+        "prompt_version": "v1",
+        "tool_version": "v1",
+        "code_commit": "5de61e4+working-tree",
+        "seed": 42,
+        "retrieval_params": {
+          "limit": 50,
+          "version": "series-floors-v2",
+          "end_time": "2026-10-13T19:53:57.423082+00:00",
+          "services": "checkout-api,orders-api,pg-lag-probe",
+          "start_time": "2026-10-13T19:53:09.968516+00:00"
+        },
+        "fixture_digest": null
+      },
+      "failures": [],
+      "mode": "recorded",
+      "investigation_id": "bc141114-677d-4d65-adff-6a4630c9edcd",
+      "created_at": "2026-10-13T19:53:59.443304Z"
+    }
+  ]
+}

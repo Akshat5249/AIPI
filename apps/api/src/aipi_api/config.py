@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     otel_exporter_otlp_endpoint: str = "http://localhost:4318"
     model_provider: Literal["mock", "anthropic", "openai"] = "mock"
     replica_database_url: SecretStr | None = None
+    scorer_url: str = "http://127.0.0.1:8001"
     runbooks_path: str = "runbooks"
     model_name: str = "deterministic-mock"
     model_api_key: SecretStr = SecretStr("")

@@ -15,6 +15,7 @@ from starlette.concurrency import run_in_threadpool
 
 from aipi_api.config import Settings
 from aipi_api.errors import ErrorEnvelope, install_errors
+from aipi_api.evaluation_routes import router as evaluation_router
 from aipi_api.incidents import IncidentCore
 from aipi_api.investigation_routes import router as investigation_router
 from aipi_api.investigations import Investigator
@@ -62,10 +63,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.store = store
     app.state.core = core
+    app.state.scorer_url = config.scorer_url
     app.state.investigator = investigator
     install_errors(app)
     app.include_router(router)
     app.include_router(investigation_router)
+    app.include_router(evaluation_router)
 
     @app.get("/healthz")
     def health() -> Health:

@@ -5,7 +5,8 @@ M0+M1 implements the observable lab and validated telemetry store. M2 adds
 verified service-kill and replica-lag scenarios. M3 adds scoped incidents, immutable
 evidence/timelines and deterministic correlators. M4 adds a six-node LangGraph
 with scoped read-only tools, deterministic mock reasoning and evidence-linked
-reports. Evaluation/replay and the dashboard follow in M5/M6; see [PROGRESS.md](PROGRESS.md).
+reports. M5 adds isolated scoring, golden/recorded replay and repeated live evaluation.
+The dashboard follows in M6; see [PROGRESS.md](PROGRESS.md).
 
 ```text
 traffic → gateway → checkout-api → PostgreSQL primary
@@ -23,6 +24,8 @@ make seed-traffic  # required seeded background workload for chaos gates
 make chaos-kill    # real SIGKILL, telemetry checks, checkout recovery
 make chaos-lag     # standby replay pause, lag/primary checks, replay recovery
 make investigate ID=<incident_uuid>  # background mock investigation + report
+make eval           # golden metrics + pure hallucination gate + scorecards
+make record-golden  # three live repeats per scenario, real fixtures and variance
 make test          # units, synthetic goldens, live chaos/reports, web tests
 make lint
 make down          # retain PostgreSQL volumes
@@ -49,3 +52,5 @@ lab reset. Never commit `.env`. See [security notes](docs/SECURITY.md).
 See [chaos operations and recovery](docs/CHAOS.md) for scenario details.
 
 See [Incident Core API](docs/API.md) for creation, scoped evidence, and error contracts.
+
+See [evaluation metrics, replay and recording](docs/EVALUATION.md).

@@ -14,9 +14,10 @@ from aipi_tools.scope import Incident
 FIXTURES = Path(__file__).parents[1] / "fixtures"
 
 
-def context(name):
-    value = json.loads((FIXTURES / f"{name}.json").read_text())
-    assert value["synthetic"] is True
+def context(name, synthetic=False):
+    root = FIXTURES / "synthetic" if synthetic else FIXTURES
+    value = json.loads((root / f"{name}.json").read_text())
+    assert isinstance(value["synthetic"], bool)
     items = tuple(Evidence.model_validate(e) for e in value["items"])
     return AgentInput(
         incident=Incident.model_validate(value["incident"]), items=items, signals=correlate(items)

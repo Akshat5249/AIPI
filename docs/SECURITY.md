@@ -62,3 +62,17 @@ require human approval and have executed=false. Poisoned logs cannot change the
 mock conclusion; separate synthetic truth files are read only by the scorer.
 Background jobs run in one API process; interrupted jobs fail on startup. This
 MVP has no authentication and should remain a loopback-only local lab.
+
+
+M5 ground-truth SELECTs are confined to the separate scorer container and scorer
+CLI/oracle module. The incident API receives a scorer URL, with no truth credential
+or truth fixture files. Golden graph replay runs in a credential-free subprocess;
+its allowlisted environment excludes scorer/DB/model secrets. Only observable
+scoped JSON goes to that process. Public evaluation responses contain metric
+scores and experiment metadata, not protected expected causal labels. The scorer
+uses default_transaction_read_only even for its chaos_admin-class truth identity;
+its artifact writer is the existing restricted telemetry_writer. Evaluation
+records have explicit FK/insertion/status-update grants; investigator_ro can read
+scores but cannot write them or access protected truth. The scorer has no public
+host port or Docker socket. Host-only recording injects fixed bounded lab faults,
+never a model/tool action. No .env regeneration is required.

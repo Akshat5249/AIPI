@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-14 00:39 IST
-**Current phase:** M4 complete — gate passed
-**Next action:** M5 Evaluation when requested; M4 verified and committed
-**Overall:** 4 / 7 phases complete
+**Last updated:** 2026-10-14 02:03 IST
+**Current phase:** M5 Evaluation DONE (gate passed)
+**Next action:** M6 Dashboard when requested
+**Overall:** 5 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -21,8 +21,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
 | M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement `37c8acc` |
-| M4 | Agents + Tools + Report | DONE (gate passed) | `make test`, `make lint`; synthetic goldens and live reports | 102 Python + 1 web; 18 live tests, none skipped; both scoped mock reports valid | M4a `afba25f`; `feat(M4b)` in this commit |
-| M5 | Evaluation | NOT STARTED | `make eval` | — | — |
+| M4 | Agents + Tools + Report | DONE (gate passed) | `make test`, `make lint`; synthetic goldens and live reports | 102 Python + 1 web; 18 live tests, none skipped; both scoped mock reports valid | M4a `afba25f`; M4b `5de61e4` |
+| M5 | Evaluation | DONE (gate passed) | `make eval`, `make record-golden`, `make test`, `make lint` | 123 Python + 1 web; 22 live tests; six repeated live reports passed final gate, variance recorded | feat(M5) in this commit |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
 | M7 | Polish | NOT STARTED | fresh-clone run of README | — | — |
 
@@ -435,11 +435,114 @@ ordered JSON/SSE events and terminal done. All tools use investigator_ro;
 live INSERT/UPDATE/ground-truth privilege refusals passed.
 
 ### M5 Evaluation
-- [ ] Metrics + hallucination gate
-- [ ] Scorecards in `eval_reports/`
-- [ ] Replay API + CLI, experiment metadata
-- [ ] `make eval`, `make record-golden`
-- [ ] **GATE:** `make eval` exits non-zero on critical hallucination / Top-1 miss
+- [x] Metrics + hallucination gate — pure citation/entailment/quoted-value predicates with adversarial tests
+- [x] Scorecards in `eval_reports/` — JSON + Markdown for goldens and all six live repeats; experiment metadata and population variance
+- [x] Replay API + CLI, experiment metadata — isolated scorer, typed public proxy, persisted golden/recorded jobs, protected window checks
+- [x] `make eval`, `make record-golden` — real make commands passed; root fixtures recorded (synthetic=false), separate truth and retained synthetic unit corpus
+- [x] **GATE:** `make eval` exits non-zero on critical hallucination / Top-1 miss — actual make CLI negatives passed; real recorded goldens and six live repeats passed
+
+M5 baseline (before new code):
+```text
+make test: 102 passed in 244.84s (0:04:04); 18 live Docker tests, none skipped
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 781ms
+.env not regenerated
+```
+
+M5 interim real verification:
+```text
+Pure/negative gates: 12 passed in 12.41s
+NEGATIVE make eval unknown: exit=2 detected=UNKNOWN_EVIDENCE_ID
+NEGATIVE make eval value: exit=2 detected=FABRICATED_VALUE
+NEGATIVE make eval cause: exit=2 detected=TOP1_MISS
+Offline tests: 96 passed, 21 deselected in 13.79s
+Replay API/isolation: 3 passed in 12.09s
+  SCN-001/SCN-002 completed Top-1=1 precision=1, scorecard persisted, no truth fields
+  API has no truth credentials or fixture files
+make lint: All checks passed!; 132 files formatted;
+  Success: no issues found in 65 source files; ESLint / tsc exit 0
+Synthetic make eval: all three Top-1/Top-3/precision/coverage 100%, unsupported 0%
+```
+
+M5 repeated live recording (real command output; `make record-golden`, exit 0):
+
+```text
+LIVE SCN-001 repeat=1 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=2633.48ms passed=True failures=()
+LIVE SCN-001 repeat=2 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=2074.76ms passed=True failures=()
+LIVE SCN-001 repeat=3 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=2184.33ms passed=True failures=()
+LIVE SCN-002 repeat=1 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=2623.26ms passed=True failures=()
+LIVE SCN-002 repeat=2 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=877.35ms passed=True failures=()
+LIVE SCN-002 repeat=3 Top-1=1.0 precision=1.0000 coverage=1.0000 unsupported=0.0000 latency=800.14ms passed=True failures=()
+Both scenarios: runs=3, passed=3, misses=[]
+```
+
+All six completed/recovered faults were evaluated through the isolated server-side
+scorer; the host read protected truth only through the scorer oracle to write
+separate truth files. Root recorded fixture sizes: SCN-001 3426 observable items,
+SCN-002 1587; poisoned kill 3427 (one added synthetic untrusted log). Original
+hand-authored bundles remain under tests/fixtures/synthetic for isolated unit tests.
+Every scorecard includes provider/model/prompt/tool/commit/seed and retrieval params.
+Live summaries with individual scores and variance are preserved in
+[JSON](docs/verification/m5/live-summary.json) and [Markdown](docs/verification/m5/live-summary.md),
+with generated per-run JSON/Markdown cards under eval_reports/.
+
+Final replay/API checks after healthy restart: `4 passed in 29.03s`:
+both real-fixture golden API jobs passed, metadata persisted, no truth returned;
+recorded replay passed protected window validation; wrong run/scenario failed;
+API has no scorer credential or truth files; evaluation.top1.count exported.
+Pure/adversarial suite including numeric strings/exponents: `16 passed in 49.13s`.
+Full gate before final critical-root hardening:
+```text
+make test: 122 passed in 380.06s (0:06:20); 22 live Docker tests, none skipped
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 1.56s
+make lint final: All checks passed!; 136 files formatted;
+  Success: no issues found in 65 source files; ESLint / tsc exit 0
+make eval (recorded real fixtures):
+  scn-001 Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=5108.18ms passed=True failures=none
+  scn-002 Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=2162.35ms passed=True failures=none
+  poisoned-log Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=3447.22ms passed=True failures=none
+Gitleaks source including real fixtures: scanned ~19848910 bytes; no leaks found
+API and scorer image inspection: both linux/arm64
+Actionlint 1.7.7: exit 0
+```
+
+Final infrastructure refinement: named scorer output volume is initialized for
+UID 10001, avoiding root-owned bind output directories in fresh Linux CI. Separate
+Dockerfile targets share a runtime stage so scorer does not require an existing
+local API image. Docker build/restart/replay checks passed for this refinement; scorer uid=10001,
+volume uid=10001, writable=True. Final replay/isolation gate after this refinement: `4 passed in 20.59s`.
+The final scorer additionally requires causal conjunction support for the critical
+root (timeouts alone cannot support primary outage); host metadata marks dirty
+checkouts explicitly. New pure-root negative test passed after JSON tuple fix.
+Scorer volume contains 3 JSON + 3 Markdown cards after real API replay.
+
+
+Final M5 gate after critical-root and Docker-volume refinements (real output):
+```text
+make test: 123 passed in 345.38s (0:05:45)
+  22 live Docker tests, none skipped
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 1.68s
+make lint: All checks passed!; 136 files already formatted
+  Success: no issues found in 65 source files; ESLint / tsc exit 0
+make eval (final critical-root gate, recorded real fixtures):
+  scn-001 Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=4272.77ms passed=True failures=none
+  scn-002 Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=2234.37ms passed=True failures=none
+  poisoned-log Top-1=100% Top-3=100% precision=100.00% coverage=100.00%
+    unsupported=0.00% latency=5211.33ms passed=True failures=none
+Gitleaks v8.24.2: scanned ~19856818 bytes (19.86 MB) in 3.27s; no leaks found
+.env checksum unchanged from start of M3
+```
+
+All six persisted live reports were re-scored through the final critical-root gate;
+each retained Top-1=1, evidence precision=1 and critical unsupported count=0.
+Experiment metadata identifies the measured uncommitted code as the M4b commit
+plus `+working-tree`; no result is relabeled as if it ran on a later commit.
+M6 has not started. GitHub-hosted CI and fresh-clone verification remain explicitly
+unverified below.
 
 ### M6 Dashboard
 - [ ] Incidents list + create
@@ -461,6 +564,51 @@ live INSERT/UPDATE/ground-truth privilege refusals passed.
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
 ```
+### F-043 — RESOLVED — Added pure root-cause negative test serialization
+- Command: evaluation/golden targeted pytest after critical-root support hardening.
+- Real output: 1 failed, 24 passed in 53.57s; tuple has no attribute remove.
+- Cause: Pydantic Python-mode dump preserves tuples; the test attempted mutable re-ranking.
+- Fix: JSON-mode dump supplies arrays for the deliberately tampered test report. Runtime implementation unchanged; make eval passed all recorded goldens with the new root check. Final full gate: 123 passed in 345.38s plus 1 web test.
+- Files: test_evaluation.py.
+
+### F-042 — RESOLVED — M5 replay check raced container restart
+- Command: final live evaluation API test launched while Compose up was still running.
+- Real output: 3 failed, 1 passed in 12.57s; server disconnected and transient 503 Scorer unavailable.
+- Cause: dependent test started before the yielded Compose operation completed.
+- Fix: await completed healthy restart, inspect services and rerun the replay/API gate sequentially.
+- Files: PROGRESS.md; no implementation change required.
+
+### F-041 — RESOLVED — Evaluation histogram metric name assertion
+- Inspection: live evaluation test metric assertion versus otlp.py (corrected before the metric assertion executed).
+- Cause/fix: histogram normalizer uses .sum/.count, not underscores; changed the exported metric assertion from evaluation.top1_count to evaluation.top1.count, matching the actual ingestion contract. Final gate rerun below.
+- Files: test_evaluation_api.py.
+
+### F-040 — RESOLVED — M5 topology test expected only M4 services
+- Command: offline pytest.
+- Real output: 1 failed, 93 passed, 18 deselected in 5.43s; extra service scorer.
+- Fix: update topology contract and assert the truth URL exists only in scorer environment.
+- Files: test_infra.py.
+
+### F-039 — RESOLVED — M5 scorer Compose insertion
+- Command: `docker compose ... build api`.
+- Real output: yaml construct errors, cycle detected at x-demo.depends_on.
+- Cause: text insertion matched the demo dependency instead of the services block.
+- Fix: anchored scorer insertion under services; preserved x-demo's collector dependency. Validate Compose before rebuilding.
+- Files: infra/docker/compose.yml.
+
+### F-038 — RESOLVED — M5 initial formatting, typing and session inspection
+- Commands: Ruff/mypy initial evaluation check; write_stdin with stale session 28139.
+- Real output: Ruff 58 errors (7 fixed), then seven remaining long literals and final numeric/test literals; new recorded API test needed its json import after Ruff had removed the previously unused import; mypy two JSON/local-variable types, then two raw-capture types; Unknown process id 28139.
+- Fix: formatter/import cleanup, explicit JSON list type and distinct Markdown cursor; resume actual sync session 70358 (resolved 90 packages). First synthetic eval: all three fixtures Top-1/Top-3/precision/coverage 100%, unsupported 0%.
+- Files: evaluation modules, PROGRESS.md.
+
+### F-037 — RESOLVED — M5 dependency resolution network restriction
+- Command: `UV_CACHE_DIR=/tmp/aipi-uv-cache uv run ruff format packages/evaluation` after manifest update.
+- Real output: failed to fetch https://pypi.org/simple/pydantic after 3 retries; DNS lookup not known.
+- Cause: uv needed to resolve changed dependencies in a network-restricted shell.
+- Fix: approved sync resolved 90 packages and installed updated evaluation; use --no-sync during edits.
+- Files: packages/evaluation/pyproject.toml, uv.lock, PROGRESS.md.
+
 ### F-036 — RESOLVED — Temporary automatic approval-review usage limit
 - Command: final Docker Gitleaks scan of /tmp/aipi-m4b-secret-scan.
 - Real result: action was not executed because automatic approval review hit its usage limit; this was explicitly a review failure, not an unsafe-action determination.
@@ -766,6 +914,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 6 | 2026-10-13 | Full-scope frozen signals, one summary per metric series, log/trace floors, deterministic severity/time/source selection; raw and candidate counts; v2 snapshots | Prevent selection bias, retain severe observations and expose omitted candidates without hidden labels | ADR-016 |
 | 7 | 2026-10-13 | Synthetic-first bundles, isolated scorer truth, six scoped SELECT/BM25 tools, supervisor audits, deterministic mock and exact scoring; optional paid providers deferred | Offline/key-free repeatability and least privilege | ADR-017 |
 | 8 | 2026-10-14 | Six-node validated LangGraph, background jobs/SSE, immutable artifacts/provenance and full witness citations; Reporter preserves verified confidence and non-mutating checks | Inspectable execution and scoped evidence resolution beyond the cap | ADR-018 |
+| 9 | 2026-10-14 | Separate scorer/credential-free replay child; bounded semantic gate; three live repeats per scenario, real fixtures with separate truth and preserved synthetic corpus | Keep ground truth out of agents/API, audit citation meaning, expose variance/misses honestly | ADR-019 |
 
 ---
 
@@ -774,26 +923,47 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M4 is verified locally with mock, including both live scenarios. M5–M7 evaluation/replay, dashboard and final polish are not started. Synthetic bundles remain golden fixtures; real reports are verification captures, not M5 recorded goldens.
+- M5 recording and replay/scoring gates are verified locally with mock. M6/M7 dashboard and polish remain unstarted. Recorded root goldens replace synthetic bundles; the original corpus is retained for unit tests.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
-- Live LLM providers not implemented/tested; no API key used. Success-target metrics remain unmeasured until M5.
+- Optional paid LLM providers remain unimplemented/untested; no API key used. M5 results measure the deterministic mock on two curated scenarios, three live repeats each; they do not measure general natural-language claim entailment or production incidents.
 
 ---
 
-## 6. SUCCESS-TARGET METRICS (fill after M5; report honestly, including misses)
+## 6. SUCCESS-TARGET METRICS (M5 measured, 2026-10-14 IST)
 
 | Metric | Target | Actual | Date measured | Notes |
 |---|---|---|---|---|
-| Root-cause Top-1 accuracy | ≥ 80% | — | — | |
-| Evidence citation precision | ≥ 90% | — | — | |
-| Unsupported critical claims | 0 | — | — | |
-| Median investigation latency | < 60 s | — | — | |
-| Scenario reproducibility | 100% | — | — | |
-| Mutating actions without approval | 0 | — | — | |
+| Root-cause Top-1 accuracy | ≥ 80% | 100% (6/6 live; both recorded goldens + poison passed) | 2026-10-14 | No misses; three distinct faults per scenario |
+| Evidence citation precision | ≥ 90% | 100% every live run | 2026-10-14 | Unique claim/evidence pairs validated by bounded semantic predicates, not ID existence alone |
+| Unsupported critical claims | 0 in golden set | 0 (live and recorded golden gate) | 2026-10-14 | Unknown ID/value/root-cause negative make gates fail as required |
+| Median investigation latency | < 60 s | 2.12955 s across six live runs | 2026-10-14 | Actual persisted investigation latency; offline replay includes credential-free child overhead |
+| Scenario reproducibility | 100% scripted | 100% (6/6 injected and recovered) | 2026-10-14 | Serialized host faults; default seed 42; no simultaneous injections |
+| Mutating actions without approval | 0 (none exist) | 0 investigation/remediation actions | 2026-10-14 | Registry read-only; recommendations require approval and executed=false |
+
+Additional metrics: Top-3 recall 100%, evidence coverage 100% (5 required kill
+families / 6 required lag families), contradiction handling 100%, unsupported
+structured-claim rate 0% on every live run. These have population variance 0.
+Mock consumes zero tokens, so per-token efficiency is **null**, not an invented
+ratio. Tool efficiency counts unique supported observations from the whole
+retrieval/verification pipeline per audited tool call, not marginal tool yield.
+
+| Scenario (n=3) | Latency samples (ms) | Mean (ms) | Median (ms) | Stddev (ms) | Population variance (ms²) | Useful evidence/call mean | Efficiency variance |
+|---|---|---|---|---|---|---|---|
+| SCN-001 | 2633.48, 2074.76, 2184.33 | 2297.53 | 2184.33 | 241.73 | 58434.34 | 45.7500 | 7.072917 |
+| SCN-002 | 2623.26, 877.35, 800.14 | 1433.58 | 877.35 | 841.82 | 708662.68 | 14.9630 | 0.068587 |
+
+Misses: **none in six measured live runs**. Replica latency varied substantially;
+retain that variance rather than selecting the fastest pass. Results apply to the
+local curated mock and implemented correlator/category claim vocabulary. Unsupported
+new prose is rejected; these are not accuracy claims for arbitrary production data
+or a general semantic-language judge. Full samples, individual metrics/versions,
+and any miss arrays are in docs/verification/m5/live-summary.json.
 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-14 02:03 IST | M5 | Pure semantic citation/quotation gate and eight metric families; scorer-only truth, credential-free golden replay process, persisted replay APIs/CLI, JSON+Markdown scorecards; real replacement fixtures with separate truth and retained synthetic corpus; three recovered live faults per scenario and population variance; native separate Docker targets and non-root scorer volume | Gate: 123 Python + 1 web, 22 live tests; all six Top-1/precision/coverage 100%, no misses; negative make gates failed correctly; lint/actionlint/secret scan passed; .env unchanged | M6 not started`
 
 `2026-10-14 00:39 IST | M4b | Six validated LangGraph nodes and repair edge; background jobs/status/artifacts, resumable SSE, full-scope witness and runbook provenance, confidence/check tamper rejection, API/CLI docs | Gate: 102 Python + 1 web; 18 live tests none skipped; both recovered scenarios with 512 resolved citations and 470 outside display; lint/actionlint/native build/secret scan passed; .env unchanged | Commit M4b; M5 not started`
 

@@ -1,6 +1,7 @@
 """Offline scope, scoring, citation repair, injection and immutable tool registry gates."""
 
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 from uuid import uuid4
 
@@ -16,7 +17,9 @@ from aipi_tools.contracts import LogsInput, RunbookInput
 from aipi_tools.registry import DESCRIPTORS, REGISTRY, ToolRunner
 from pydantic import ValidationError
 
-from tests.golden.test_agents import context
+from tests.golden.test_agents import context as fixture_context
+
+context = partial(fixture_context, synthetic=True)
 
 
 @pytest.mark.parametrize(

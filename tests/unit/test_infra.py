@@ -20,11 +20,14 @@ def test_compose_topology_and_images():
         "event-watcher",
         "traffic",
         "otel-collector",
+        "scorer",
     }
     assert services["postgres-primary"]["image"] == "postgres:16"
     assert all("platform" not in service for service in services.values())
     assert "CHAOS_PASSWORD" not in services["api"]["environment"]
     assert "POSTGRES_PASSWORD" not in services["api"]["environment"]
+    assert "SCORER_TRUTH_DATABASE_URL" not in services["api"]["environment"]
+    assert "chaos_admin" in services["scorer"]["environment"]["SCORER_TRUTH_DATABASE_URL"]
     assert services["checkout-api"]["restart"] == "unless-stopped"
 
 

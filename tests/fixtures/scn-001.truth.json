@@ -1,3 +1,11 @@
 {
-  "expected_category": "termination"
+  "expected_category": "termination",
+  "seed": 42,
+  "required_features": [
+    "die_137",
+    "recovery",
+    "http_5xx",
+    "failed_span",
+    "gateway_error"
+  ]
 }

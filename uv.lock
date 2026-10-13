@@ -81,6 +81,7 @@ version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
     { name = "aipi-agents" },
+    { name = "aipi-evaluation" },
     { name = "aipi-telemetry" },
     { name = "aipi-tools" },
     { name = "fastapi" },
@@ -91,6 +92,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aipi-agents", editable = "packages/agents" },
+    { name = "aipi-evaluation", editable = "packages/evaluation" },
     { name = "aipi-telemetry", editable = "packages/telemetry" },
     { name = "aipi-tools", editable = "packages/tools" },
     { name = "fastapi", specifier = ">=0.115,<1" },
@@ -118,11 +120,31 @@ name = "aipi-evaluation"
 version = "0.1.0"
 source = { editable = "packages/evaluation" }
 dependencies = [
+    { name = "aipi-agents" },
+    { name = "aipi-telemetry" },
+    { name = "aipi-tools" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pydantic", specifier = ">=2" }]
+requires-dist = [
+    { name = "aipi-agents", editable = "packages/agents" },
+    { name = "aipi-telemetry", editable = "packages/telemetry" },
+    { name = "aipi-tools", editable = "packages/tools" },
+    { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "psycopg", extras = ["binary"], specifier = ">=3" },
+    { name = "pydantic", specifier = ">=2" },
+    { name = "pydantic-settings", specifier = ">=2" },
+    { name = "python-dotenv", specifier = ">=1" },
+    { name = "sqlalchemy", specifier = ">=2" },
+]
 
 [[package]]
 name = "aipi-telemetry"

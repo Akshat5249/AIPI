@@ -1,3 +1,12 @@
 {
-  "expected_category": "replica_lag"
+  "expected_category": "replica_lag",
+  "seed": 42,
+  "required_features": [
+    "lag_seconds",
+    "wal_backlog",
+    "replay_paused",
+    "healthy_primary",
+    "stale_read",
+    "timeout"
+  ]
 }

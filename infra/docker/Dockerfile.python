@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm AS runtime
 ARG CODE_COMMIT=working-tree
 ENV AIPI_CODE_COMMIT=$CODE_COMMIT
 WORKDIR /app
@@ -15,3 +15,12 @@ ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 RUN useradd --create-home --uid 10001 aipi
 USER aipi
 CMD ["uvicorn", "aipi_api.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+
+
+FROM runtime AS scorer
+USER root
+RUN install -d -o 10001 -g 10001 /app/eval_reports
+COPY tests/fixtures /app/tests/fixtures
+USER aipi
+
+FROM runtime AS api

@@ -34,5 +34,9 @@ chaos-lag:
 investigate:
 	@test -n "$(ID)" || (echo "Usage: make investigate ID=<incident_id>"; exit 2)
 	uv run python scripts/investigate.py "$(ID)"
-eval record-golden demo:
+eval:
+	uv run python -m aipi_evaluation.cli $(EVAL_ARGS)
+record-golden:
+	uv run python -m aipi_evaluation.record --repeats $(or $(REPEATS),3)
+demo:
 	@echo "$@ is scheduled for its later phase; see PROGRESS.md"; exit 2

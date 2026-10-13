@@ -131,3 +131,20 @@ Invalid cursors/formats use the normal request-ID error envelope.
 the default mock. It needs no model key. A process restart marks interrupted
 jobs failed; restart an investigation with another POST. One API process is the
 MVP deployment boundary. The report routes expose no scenario ground-truth fields.
+
+## M5 evaluations
+
+POST `/api/evaluations/replay` with scenario_id SCN-001/SCN-002 returns 202 queued
+metadata. Default mode=golden replays saved observable fixtures with mock.
+Mode=recorded requires incident_id and chaos_run_id for a completed recovered
+live run; the isolated scorer validates their window and scores the report.
+GET `/api/evaluations/{id}` returns status and a typed scorecard with all metrics,
+experiment versions/provider/model/commit/seed and gate failures. Missing jobs
+return NOT_FOUND. Unknown request fields and unsupported scenarios return
+VALIDATION_ERROR. No expected root-cause or injected-fault field is returned.
+
+The incident API is a typed proxy with no scorer credential. Only the separate
+scorer reads protected run truth. Replay does not inject faults through HTTP;
+`make record-golden` performs authorized host chaos and submits recorded replay.
+`GET /api/incidents/{id}/investigation` exposes the latest typed investigation
+metadata, letting the scorer tie live report latency/usage to its persisted owner.

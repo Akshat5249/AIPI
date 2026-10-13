@@ -207,3 +207,69 @@ Recommendation citations include a retrieved scoped runbook where available.
 Nonspecific error logs/failed traces count as request symptoms for competing
 hypotheses, but lifecycle/pause counterevidence and missing direct causal checks
 prevent those secondary symptoms from outranking the verified root cause.
+
+## ADR-019 — Isolated scorer, bounded entailment and repeated recorded evaluation
+
+Evaluation truth access belongs to a separate FastAPI scorer service, using
+chaos_admin with default_transaction_read_only=on for fixed protected-run SELECTs.
+The incident API receives only a scorer URL and public typed score contracts. It
+has neither the truth credential nor golden truth fixture files. Golden agent
+replay executes in a separate Python process with an allowlisted environment and
+observable JSON on stdin; scorer/DB/model secrets are not inherited. Only the
+scorer opens the separate truth file, after the observable report is produced.
+
+POST /api/evaluations/replay supports golden replay and recorded-incident replay.
+Recorded mode validates a completed, recovered protected run against the incident
+window, then resolves report citations through scoped HTTP lookup. Fault injection
+remains the host CLI's bounded chaos operation; the API/scorer never gains a Docker
+socket or remediation tool. Evaluation jobs/experiment metadata persist in
+public.evaluation_runs with FKs to scenarios, runs and investigations. Public score
+responses omit expected causal labels. Restarted in-memory scorer jobs fail clearly.
+
+The pure hallucination gate checks all cited IDs, claim-to-evidence support,
+explicit numeric field/metric quotations, trace IDs, quoted log/deployment text,
+timeline content/time and Markdown consistency. It fails closed outside the
+implemented MVP claim vocabulary: deterministic correlator facts, fixed category
+hypotheses and approval-required read-only next checks. Semantic precision counts
+supported claim/evidence pairs, not merely existing IDs. This is an auditable
+bounded semantic gate, not a general natural-language entailment model. A new
+report vocabulary requires extending its predicates and adversarial tests.
+
+Top-1/Top-3 compare the protected category. Coverage measures the fraction of
+required witness families cited (kill: die137, recovery, 5xx, failed span, gateway
+error; lag: seconds, backlog, paused replay, healthy primary, stale read, timeout).
+Unsupported rate divides unsupported structured claims by material claim count;
+critical violations on any report surface independently fail the gate. Contradiction
+handling requires the known false lead ranked lower with correct AGAINST evidence.
+Tool efficiency divides unique supported cited observations from the whole pipeline
+by audited tool calls; per-token efficiency is null when mock uses zero tokens.
+Latency includes the credential-free child process for offline replay, and actual
+persisted investigation latency for live runs.
+
+make record-golden runs three separate recovered faults per scenario, scores them
+through the live API and records all per-run metrics, population variance/stddev,
+median/range and misses. Latest real raw scoped telemetry replaces root golden
+bundles (synthetic=false); the original hand-authored corpus remains under
+fixtures/synthetic for unit tests. The poisoned golden adds an explicitly synthetic
+untrusted log to the recorded kill window; expected labels stay in *.truth.json.
+Scorecards and repeat summaries are JSON/Markdown under ignored eval_reports;
+committed verification summaries and PROGRESS preserve real measured results.
+
+
+Scorer API scorecards persist in a named evaluation-results volume initialized
+for non-root UID 10001. Host make eval/record-golden write ./eval_reports themselves;
+this avoids Docker-created root-owned bind directories failing on fresh Linux CI.
+
+The Python Dockerfile has separate api/scorer targets sharing a runtime stage.
+The scorer target alone copies truth fixtures. This removes the implicit dependency
+on an already-built aipi-python:local image during parallel fresh-clone Compose
+builds. API/demo/migration targets continue to contain no truth fixture files.
+
+Host CLI experiment metadata marks an uncommitted checkout with +working-tree;
+clean CI/committed runs record their actual HEAD. Build metadata uses the explicit
+CODE_COMMIT argument (or working-tree) without passing git/credentials to agents.
+
+The critical root-cause surface must satisfy its causal conjunction from linked
+FOR witnesses (plus cited primary health for replica lag). Merely relevant timeout
+symptoms cannot support a top-ranked primary outage. The pure gate checks this
+without reading truth; Top-1 correctness is a separate oracle comparison.

@@ -22,6 +22,8 @@ jobs:
       - run: make setup
       - run: make lint
       - run: uv run pytest -m 'not docker'
+      - name: Golden metrics and critical hallucination gate
+        run: make eval
       - run: cd apps/web && npm test && npm run build
       - name: Build images and health smoke
         run: make up
@@ -34,5 +36,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: make down
-      # Synthetic agent goldens/schema/citation checks run in pytest; M5 adds scorecards.
+      # Golden metrics, schema/citation and adversarial CLI gates run above.
       # Publication is intentionally a no-op for this local lab.

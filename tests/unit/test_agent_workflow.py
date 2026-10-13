@@ -1,5 +1,6 @@
 """Graph repair, output isolation, empty retrieval and explicit observability tests."""
 
+from functools import partial
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,7 +15,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from tests.golden.test_agents import context
+from tests.golden.test_agents import context as fixture_context
+
+context = partial(fixture_context, synthetic=True)
 
 
 def workflow(data, producer=None):
