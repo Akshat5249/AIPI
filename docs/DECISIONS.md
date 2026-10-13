@@ -76,14 +76,64 @@ ground-truth connection. Catalog/schema tests guard against causal-label exposur
 The six read-only tools and their investigation audit records remain M4 work.
 
 
-## ADR-016 — Telemetry relevance before the evidence cap
+## ADR-016 — Full-scope correlation and summarized evidence with type floors
 
-Prioritize runtime lifecycle names, fixed rule-supporting metric names, and error
-severity before ordinary telemetry. A span may inherit only the severity of a
-linked log in the same incident/service/time scope; status and metric values do
-not rank evidence. No scenario identifier or ground-truth dependency is involved.
-Tie order is timestamp then source_ref, consistently in SQL and global selection.
-Exact scoped COUNTs report omitted rows by type, even beyond candidate fetch limits.
-The relevance-v1 cache namespace preserves all previous immutable snapshots.
-Live tests explicitly require die(137)/start and lag/paused metrics to survive;
-crowded synthetic tests cover decisive observations at the oldest timestamp.
+The initial relevance-v1 sample ranking preserved decisive metrics but let repeated
+samples consume all 50 slots and biased rule inputs. It is superseded by
+series-floors-v2. Correlators run once over **all** telemetry in the authorized,
+authoritative incident/service/time scope, before any summary or cap. Four
+parameterized SELECTs use investigator_ro in one repeatable-read transaction.
+There is no silent per-source limit; database timeouts fail explicitly. The
+current local MVP materializes up to a six-hour scoped window in memory; larger
+production workloads should replace this with equivalent SQL aggregates.
+
+Full-scope signals are frozen with the first evidence snapshot. Selection never
+changes `/signals`, including when selected-only correlation misses a rule or
+creates a sampling false positive. `capped_rules` exposes that selected-only
+diagnostic; it is not used for investigation signals. All full-scope cited raw
+observations are also persisted immutably, independently of the 50 display items,
+and can be resolved through the scoped evidence-by-ID endpoint. No citation may
+escape the frozen incident/service/time boundary. Late telemetry cannot change
+saved signals, summaries, or IDs.
+
+Each (service, metric_name, canonical labels_json) series becomes one metric
+summary: first/last/min/max values, sample count, first/last timestamps and source
+references, plus chronological paused/healthy transitions. The normalizer stores
+histogram sample data in labels_json.histogram; this reserved sample-data key is
+excluded from series identity, while genuine route/resource labels remain. Summary source_ref
+hashes the series identity and ordered scoped sample source references, so a
+changed membership creates a new immutable version. IDs still follow exactly
+`ev_ + sha256(type|source_ref)[:16]`; sample IDs are unchanged. Summaries preserve
+conflicting health values (min/max), rather than suggesting a healthy primary
+from the last recovered sample. Summary-aware pure rules retain those semantics.
+
+Selection reserves up to ten ERROR/FATAL/WARN/WARNING logs and five error/slow
+traces (slow >=250 ms), subject to available qualifying observations. Runtime
+lifecycle events and summaries of the fixed rule-metric name list occupy the
+remaining space first, then additional severe logs/error or slow traces, then
+ordinary telemetry. Severity order is FATAL, ERROR, WARN/WARNING, ordinary;
+traces inherit the strongest linked scoped log severity, error status, or slow
+threshold. Ties use timestamp then source_ref. This extends the earlier feature
+allowlist with trace status/duration to meet the explicit error/slow floor.
+Metric values, free-text causal labels, scenario IDs and ground truth never rank.
+
+If protected events/series plus floors exceed 50, keeping them all is impossible.
+Reserve the floors and take protected items in deterministic priority order;
+report omitted candidates by type. Fewer than ten severe logs or five qualifying
+traces results in a floor up to availability, never fabricated observations.
+`raw_counts` counts rows; `available_counts` counts summary candidates (metric
+series instead of samples); `dropped_counts` counts candidates omitted by the cap.
+Compression is not counted as dropped evidence. The v2 cache namespace leaves
+previous immutable snapshots intact.
+
+Live tests retain kill die(137)/start, gateway ERROR logs, replica lag/pause/health
+summaries, stale-read WARN logs and ReplicaReadTimeout evidence. A stale read
+already exhausts three bounded retries; its log/span now explicitly identifies
+that application retry deadline, without implying a primary or network outage.
+The ErrorSpikeRule adds matching-operation span-p95 latency versus early-window
+baseline, completing its documented error-rate/latency behavior. Live windows
+include 30 seconds of steady pre-fault telemetry for an honest baseline. The kill
+verifier compares the /checkout 503 counter only, avoiding unrelated /orders
+series at identical export timestamps. Offline crowded windows prove floors,
+oldest decisive retention, series transitions, stable IDs, and full-scope rule
+invariance even when a particular witness falls outside the displayed bundle.

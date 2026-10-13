@@ -111,3 +111,16 @@ def test_error_spike_does_not_compare_different_services_or_label_series():
         1,
     )
     assert not ErrorSpikeRule.apply((first, other_route))
+
+
+def test_error_spike_latency_compares_matching_operations():
+    spans = tuple(
+        ev("trace", {"status": "0", "operation": "read", "duration_ms": 2 if i < 2 else 300}, i)
+        for i in range(4)
+    )
+    assert ErrorSpikeRule.apply(spans)
+    mismatched = tuple(
+        e.model_copy(update={"payload": {**e.payload, "operation": "write"}}) if i >= 2 else e
+        for i, e in enumerate(spans)
+    )
+    assert not ErrorSpikeRule.apply(mismatched)

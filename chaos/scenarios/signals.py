@@ -31,7 +31,7 @@ def error_counter(lab: Lab, since: datetime | None = None) -> float:
                 db,
                 "SELECT COALESCE((SELECT value FROM telemetry_metrics "
                 "WHERE service='gateway' AND metric_name='requests_total' "
-                "AND labels_json->>'status'='503' "
+                "AND labels_json->>'status'='503' AND labels_json->>'route'='/checkout' "
                 "AND ts >= COALESCE(%s, now()-interval '6 seconds') "
                 "ORDER BY ts DESC LIMIT 1),0)",
                 (since,),

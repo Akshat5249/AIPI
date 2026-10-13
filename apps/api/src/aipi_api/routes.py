@@ -3,6 +3,7 @@
 from typing import Annotated, Literal, cast
 from uuid import UUID
 
+from aipi_telemetry.evidence import Evidence
 from aipi_tools.correlators import Signal
 from aipi_tools.retrieval import EvidenceBundle
 from aipi_tools.scope import Incident, IncidentCreate, ScopeRequest, Service
@@ -72,6 +73,16 @@ def get_incident(incident_id: UUID, store: Core) -> Incident:
 @router.get("/incidents/{incident_id}/evidence")
 def get_evidence(request: Request, scope: ScopeInput, store: Core) -> EvidenceBundle:
     return store.retrieve(scope, request.state.request_id)
+
+
+@router.get("/incidents/{incident_id}/evidence/{evidence_id}")
+def get_evidence_item(
+    request: Request,
+    scope: ScopeInput,
+    store: Core,
+    evidence_id: str,
+) -> Evidence:
+    return store.evidence_item(scope, request.state.request_id, evidence_id)
 
 
 @router.get("/incidents/{incident_id}/timeline")

@@ -73,7 +73,7 @@ def test_relevance_then_timestamp_then_source_reference_not_evidence_id():
         assert select_ranked(rank_candidates(order)) == expected
 
 
-def test_values_status_and_hidden_labels_never_affect_rank():
+def test_metric_values_and_hidden_labels_never_affect_rank():
     first = item(
         "metric", "telemetry_metrics:a", 0, {"metric_name": "replica_lag_seconds", "value": 0}
     )
@@ -89,7 +89,8 @@ def test_values_status_and_hidden_labels_never_affect_rank():
     )
     assert relevance(first) == relevance(changed) == 1
     trace = item("trace", "telemetry_spans:a:b", 0, {"trace_id": "a", "status": "2"})
-    assert relevance(trace) == relevance(trace.model_copy(update={"payload": {"status": "0"}})) == 3
+    assert relevance(trace) == 2
+    assert relevance(trace.model_copy(update={"payload": {"status": "0"}})) == 3
     error = item("log", "telemetry_logs:error", 1, {"trace_id": "a", "severity": "ERROR"})
     assert [rank for rank, _ in rank_candidates((trace, error))] == [2, 2]
     with pytest.raises(ValueError):

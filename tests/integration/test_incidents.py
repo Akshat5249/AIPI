@@ -3,6 +3,7 @@
 import json
 import subprocess
 import sys
+import time
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -11,6 +12,7 @@ import psycopg
 import pytest
 from aipi_telemetry.storage import TelemetryStore
 from aipi_tools.correlators import PrimaryHealthRule, ProcessExitRule, ReplicaLagRule
+from aipi_tools.ranking import error_or_slow
 from aipi_tools.retrieval import EvidenceBundle, EvidenceReader
 from aipi_tools.scope import Incident, ScopeDenied, ScopeRequest
 from sqlalchemy import event, text
@@ -76,7 +78,9 @@ def create(client, start, end, service, related=()):
     ],
 )
 def test_live_incident_evidence_replay_and_correlations(module, service, related):
-    start = datetime.now(UTC)
+    # Allow the previous recovered scenario to leave the baseline window entirely.
+    time.sleep(30)
+    start = datetime.now(UTC) - timedelta(seconds=30)
     command = subprocess.run(
         [sys.executable, "-m", f"chaos.scenarios.{module}"],
         cwd=ROOT,
@@ -91,6 +95,15 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
     with httpx.Client(base_url=API, timeout=20) as client:
         current = create(client, start, end, service, related)
         path = f"/api/incidents/{current.id}"
+        read_lab = Lab()
+        uncapped_reader = EvidenceReader(url(read_lab, "investigator_ro"))
+        try:
+            before_selection = uncapped_reader.retrieve_snapshot(
+                current, ScopeRequest(incident_id=current.id)
+            ).bundle.signals
+        finally:
+            uncapped_reader.engine.dispose()
+            read_lab.close()
         first_response = client.get(path + "/evidence")
         assert first_response.status_code == 200, first_response.text
         first = EvidenceBundle.model_validate(first_response.json())
@@ -120,9 +133,70 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
             assert any(
                 item.type == "metric"
                 and item.payload.get("metric_name") == "replica_replay_paused"
-                and item.payload.get("value") == 1
+                and item.payload.get("max") == 1
                 for item in first.items
             )
+        full_rules = {result.rule for result in first.signals}
+        before_rules = {result.rule for result in before_selection}
+        assert before_rules == full_rules
+        assert full_rules == {s["rule"] for s in client.get(path + "/signals").json()}
+        assert first.signals == second.signals
+        if module == "scn_002_replica_lag":
+            assert {
+                "ReplicaLagRule",
+                "PrimaryHealthRule",
+                "DownstreamTimeoutRule",
+                "ErrorSpikeRule",
+            } <= full_rules
+            assert any(
+                e.type == "log" and "stale replica read" in e.summary.lower() for e in first.items
+            )
+            assert any(
+                e.type in {"log", "trace"} and "timeout" in str(e.payload).lower()
+                for e in first.items
+            )
+        else:
+            assert any(
+                e.type == "log" and e.service == "gateway" and e.payload.get("severity") == "ERROR"
+                for e in first.items
+            )
+        assert sum(error_or_slow(e) for e in first.items) >= 5
+        qualifying_logs = [
+            e
+            for e in first.items
+            if e.type == "log"
+            and e.payload.get("severity") in {"ERROR", "FATAL", "WARN", "WARNING"}
+        ]
+        print(
+            f"RULES before_cap={sorted(before_rules)} after_cap={sorted(full_rules)} "
+            f"selected_only={sorted(first.capped_rules)} severe_logs={len(qualifying_logs)} "
+            f"raw={first.raw_counts.model_dump()}"
+        )
+        verification_lab = Lab()
+        with admin(verification_lab) as db:
+            persisted_ids = {
+                row[0]
+                for row in db.execute(
+                    "SELECT id FROM evidence WHERE incident_id=%s", (current.id,)
+                ).fetchall()
+            }
+            assert {eid for result in first.signals for eid in result.evidence_ids} <= persisted_ids
+        verification_lab.close()
+        witness_id = next(
+            eid for signal in first.signals for eid in signal.evidence_ids if eid not in ids
+        )
+        witness_response = client.get(path + "/evidence/" + witness_id)
+        assert (
+            witness_response.status_code == 200
+            and witness_response.json()["evidence_id"] == witness_id
+        )
+        assert client.get(path + "/evidence/ev_0000000000000000").status_code == 404
+        assert (
+            client.get(
+                path + "/evidence/" + witness_id, params={"service": "ground_truth"}
+            ).status_code
+            == 403
+        )
         print(
             f"BUNDLE {module}: selected={len(ids)} available={first.available_counts.model_dump()} "
             f"dropped={first.dropped_counts.model_dump()}"
@@ -138,7 +212,11 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
                         f"exit_code={item.payload['attributes_json'].get('exit_code')}"
                     )
                 elif item.type == "metric":
-                    detail = f"{item.payload.get('metric_name')}={item.payload.get('value')}"
+                    detail = (
+                        f"{item.payload.get('metric_name')} first={item.payload.get('first')} "
+                        f"last={item.payload.get('last')} min={item.payload.get('min')} "
+                        f"max={item.payload.get('max')} n={item.payload.get('sample_count')}"
+                    )
                 else:
                     detail = str(item.payload.get("severity", item.payload.get("operation", "")))
                 print(
@@ -364,8 +442,8 @@ def test_ground_truth_unreachable_from_api_role_and_retrieval():
         assert statements and all(
             "ground_truth" not in sql and "SELECT" in sql for sql in statements
         )
-        assert sum("telemetry_" in sql for sql in statements) == 8
-        assert sum("LIMIT" in sql for sql in statements) == 4
+        assert sum("telemetry_" in sql for sql in statements) == 4
+        assert sum("LIMIT" in sql for sql in statements) == 0
         with pytest.raises(ScopeDenied):
             reader.retrieve(
                 current, ScopeRequest(incident_id=current.id, service="ground_truth.scenarios")

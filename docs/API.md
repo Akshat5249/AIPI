@@ -10,6 +10,7 @@ agents, model calls, or remediation endpoints in M3.
 | GET | /api/incidents | Most recent 100 incidents; optional service/status filters |
 | GET | /api/incidents/{id} | Immutable incident metadata |
 | GET | /api/incidents/{id}/evidence | Immutable evidence bundle, at most 50 items |
+| GET | /api/incidents/{id}/evidence/{evidence_id} | One frozen bundle item or full-scope signal citation, subject to the same scope |
 | GET | /api/incidents/{id}/timeline | Chronological observations with evidence IDs |
 | GET | /api/incidents/{id}/signals | Deterministic, evidence-citing correlator signals |
 | GET | /api/scenarios | Static public catalog: id, name, description only |
@@ -43,26 +44,42 @@ incident bounds before selecting telemetry; it cannot trust a caller's enlarged
 in-memory metadata. The API has no incident update/delete route in this phase.
 
 Evidence bundles contain `source_id`, `window`, `query_params`, `snapshot_at`,
-`truncated`, `available_counts`, `dropped_counts`, `retrieval_version`, and `items`. IDs are `ev_` plus the first 16 hexadecimal SHA-256
-characters of `type|source_ref`. Source references identify telemetry rows
-(trace sources include both trace_id and span_id). Every item carries type,
-service, timestamp, source_ref, deterministic summary, payload, redactions.
+`truncated`, `raw_counts`, `available_counts`, `dropped_counts`, `retrieval_version`,
+`correlation_source` (full_scope), `signals`, `capped_rules`, and `items` (at most 50).
+IDs are `ev_` plus the first 16 hexadecimal SHA-256 characters of `type|source_ref`.
+Each item carries type, service, timestamp, source_ref, summary, payload and redactions.
 
-The four signal queries and four scoped COUNT queries run with investigator_ro
-in one repeatable-read transaction. Each signal fetches at most 50 candidates.
-Relevance tiers are runtime event names (die/start/restart/deploy), a fixed list
-of rule-supporting metric names, ERROR/FATAL/WARN/WARNING severity, then the rest.
-Traces inherit an error tier only from a linked, scoped log with that severity;
-span status is never a ranking input. Neither metric values nor status labels,
-scenario IDs, hidden causal labels, or ground-truth tables affect ranking.
+Four parameterized telemetry SELECTs run with investigator_ro in one repeatable-read
+transaction over the full authorized scope. Correlation runs **before** summarization
+and selection; `/signals` returns these frozen full-scope results. `capped_rules`
+only diagnoses which rules would fire on the selected items, and is never the
+source for `/signals`. All cited observations are persisted, including raw samples
+or logs beyond the display cap. Retrieve these through the evidence-by-ID endpoint;
+it permits only a displayed item or citation from this exact frozen scope.
 
-Both SQL and the final global cap break ties by timestamp then source_ref.
-The evidence response preserves relevance order; the timeline remains chronological.
-`available_counts` and `dropped_counts` report exact counts by event/metric/log/trace,
-including rows excluded by per-source candidate limits. `truncated` is true when
-the sum of dropped counts is positive. Counts are frozen with the snapshot.
-The policy version is part of the cache key: existing immutable snapshots remain
-stored, and relevance-v1 gets a separate snapshot without overwriting old evidence.
+Metric samples become one summary per service/name/canonical-label series (excluding
+the reserved histogram sample-data key from labels), containing
+`first`, `last`, `min`, `max`, `sample_count`, first/last timestamps/source references
+and paused/healthy `transitions` with timestamp/from/to. The source reference starts
+`telemetry_metrics:series:` and hashes series identity plus ordered scoped sample
+references. Same samples and scope produce identical IDs on replay; changed sample
+membership requires a new source version. Conflicting primary health is preserved.
+
+Inside the 50-item cap, reserve up to 10 severe logs and 5 error/slow traces, then
+prioritize runtime lifecycle events and fixed rule-metric summaries in remaining
+space. Fill with additional severe/error/slow observations, then ordinary telemetry.
+Severity order is FATAL, ERROR, WARN/WARNING, ordinary; a trace inherits linked scoped
+log severity or its error status/slow duration (>=250 ms). Ties use timestamp then
+source_ref. Selection uses telemetry features only, without scenario/ground-truth
+access. Metric values and causal labels do not rank candidates. Floors are bounded
+by availability; if protected observations cannot all fit, dropped counts expose it.
+
+`raw_counts` counts source rows, `available_counts` counts post-summary candidates,
+and `dropped_counts` counts candidates omitted by type. Collapsing metric samples is
+summarization rather than truncation. `truncated` is true when dropped counts sum
+to a positive number. Metadata is frozen with the snapshot. The series-floors-v2
+cache namespace preserves previous immutable snapshots and original raw-source IDs.
+The evidence response preserves selection order; the timeline stays chronological.
 
 The first retrieval for a normalized incident/service/window scope is persisted
 atomically under an advisory lock. Repeated requests return that exact snapshot,

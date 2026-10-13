@@ -3,9 +3,9 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-13 14:25 IST
-**Current phase:** M3 prioritization follow-up complete (gate passed)
-**Next action:** M4a (not started); relevance and truncation gate passed
+**Last updated:** 2026-10-13 21:46 IST
+**Current phase:** M3 selection/correlation refinement DONE (gate passed)
+**Next action:** M4a (not started); full-scope correlation and selection refinement passed
 **Overall:** 3 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
@@ -20,7 +20,7 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 |---|---|---|---|---|---|
 | M0+M1 | Foundation + Observability | DONE (gate passed) | `make up`, `make test`, `make lint` | Healthy native arm64 lab; follow-up audit: 21 Python + 1 web tests passed | `ea3aee2`; audit `e01c082` |
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
-| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 65 Python + 1 web passed; decisive signals retained with exact drop counts and stable IDs | `60790a4`; prioritization follow-up in this commit |
+| M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement in this commit |
 | M4 | Agents + Tools + Report | NOT STARTED | `make test` (golden suite) | — | — |
 | M5 | Evaluation | NOT STARTED | `make eval` | — | — |
 | M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
@@ -241,7 +241,7 @@ no setup-env or .env regeneration command was executed. Retrieval uses only
 investigator_ro; application writes are explicit SELECT/INSERT grants to the
 existing writer. No agents, LLM adapters, LangGraph, or mutating tools were added.
 
-M3 prioritization follow-up (before M4a):
+M3 prioritization follow-up (historical relevance-v1; superseded by the refinement below):
 
 - Global relevance tiers use lifecycle names, a fixed metric-name list, and severity;
   traces inherit only linked scoped log severity. No metric values, span status,
@@ -294,6 +294,62 @@ ADR-007 through ADR-015 were confirmed by definition entries, not merely mention
 matches. PROGRESS Decisions table rows 1–6 are contiguous and well formed. M4a,
 agents, LLM adapters and LangGraph remain not started.
 
+M3 selection/correlation refinement (before M4a):
+
+- [x] Confirmed old `/signals` correlated capped evidence; replaced it with frozen full-scope correlation under investigator_ro, before summary/cap. All cited raw sources are persisted immutably and resolvable through scoped evidence-by-ID.
+- [x] One summary per metric series with first/last/min/max/count, sample timestamps/references and paused/healthy transitions. Histogram sample data is excluded from series labels; genuine labels remain. Raw evidence IDs retain the hash formula; summary IDs version ordered source membership.
+- [x] Floors reserve up to 10 severe logs and 5 actual error/slow traces within 50. Protected lifecycle events and rule-metric summaries take remaining slots first. Insufficient observations/overflow are explicit; no evidence is fabricated.
+- [x] Offline crowded tests cover oldest decisive observations, 100-sample series compression, severity/time/source determinism, transitions/conflicting health, protected overflow and a rule witness excluded from presentation.
+- [x] Live rule equality is checked between independent full-scope retrieval before selection and API signals after selection. Selected-only `capped_rules` is diagnostic and never drives investigation signals.
+- [x] Existing stale-read retry exhaustion now emits explicit ReplicaReadTimeout log/span telemetry; ErrorSpikeRule completes matching-operation span-latency p95 baseline detection. Kill metric verification compares the same /checkout series.
+- ADR-016 and API contract document the refinement. `.env` is unchanged; no agents, models, LangGraph or M4a implementation.
+
+Final real output (complete 100-item inventory and gate stdout in
+[docs/verification/evidence-selection-live.txt](docs/verification/evidence-selection-live.txt)):
+
+```text
+PATH=<Node 25>/bin:$PATH PYTEST_ADDOPTS='-v -s --tb=short' make test
+SCN-001 incident c2afb9c3-b398-4626-9542-ca1028420663:
+  raw={event:2, metric:1662, log:294, trace:1429}
+  summary candidates={event:2, metric:67, log:294, trace:1429}
+  selected={event:2, metric:12, log:10, trace:26} total=50
+  dropped candidates={event:0, metric:55, log:284, trace:1403}
+  die(137) ev_1ac10a5e77a28cc1; start ev_422156b45c2c49c4
+  10 gateway ERROR logs retained; >=5 actual error/slow traces
+  before_cap=[ErrorSpikeRule, ProcessExitRule]
+  after_cap=[ErrorSpikeRule, ProcessExitRule]
+  selected_only=[ProcessExitRule] (diagnostic; never drives API signals)
+  identical_ids=true; chaos_recovery=verified
+SCN-002 incident dfa53bdb-c2aa-40b3-b913-73188e7f37a5:
+  raw={event:0, metric:621, log:180, trace:711}
+  summary candidates={event:0, metric:27, log:180, trace:711}
+  selected={event:0, metric:11, log:10, trace:29} total=50
+  dropped candidates={event:0, metric:16, log:170, trace:682}
+  lag_seconds summary: first=0 last=0 min=0 max=10.259077 samples=23
+  paused summary: first=0 last=0 min=0 max=1 samples=23
+  primary health summary: first=1 last=1 min=1 max=1 samples=23
+  stale-read WARN + ReplicaReadTimeout log/span retained; >=5 error/slow traces
+  before_cap=after_cap=[DownstreamTimeoutRule, ErrorSpikeRule,
+    PrimaryHealthRule, ReplicaLagRule]
+  primary outage contradicted; identical_ids=true; chaos_recovery=verified
+71 passed, 1 warning in 162.28s (0:02:42); 14 Docker tests, none skipped
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 1.11s
+make lint: All checks passed!; 84 files already formatted;
+  Success: no issues found in 33 source files; ESLint/tsc exit 0
+.env unchanged: True
+Gitleaks v8.24.2: scanned ~586816 bytes (586.82 KB); no leaks found
+Scanner image: linux/arm64
+```
+
+The independent reader's full-scope rule names match published signals before/after
+selection for both scenarios, and cached IDs/signals match exactly on repeated calls.
+All signal citations exist in immutable evidence storage; evidence-by-ID lookup is
+verified for an omitted witness and rejects unknown IDs/out-of-scope services.
+The offline adverse-window test intentionally omits a timeout witness from the 50
+items while preserving the full-scope DownstreamTimeoutRule and its saved citation.
+Severe-log and trace floors are availability-bounded, with deterministic overflow
+and candidate drop counts documented in ADR-016. M4a remains not started.
+
 ### M4 Agents + Tools + Report
 - [ ] 6 read-only tools + registry test (no mutating tool)
 - [ ] LLM adapters (mock / anthropic / openai)
@@ -333,6 +389,62 @@ agents, LLM adapters and LangGraph remain not started.
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
 ```
+### F-029 — Secret scan referenced nonexistent configuration    Status: RESOLVED
+- Phase/step: M3 refinement pre-commit scan
+- Command: `docker run --rm -v /tmp/aipi-selection-secret-scan:/repo zricethezav/gitleaks:v8.24.2 dir /repo --config /repo/.gitleaks.toml --redact`
+- Error (real): `unable to load gitleaks config ... no such file or directory`
+- Suspected cause: this repository uses the default scanner configuration.
+- Tried / fix: reran the previously verified ghcr.io scanner invocation with defaults; scanned ~586816 bytes (586.82 KB), no leaks found.
+- Files touched: PROGRESS.md
+
+### F-028 — Unused diagnostic correlator import    Status: RESOLVED
+- Phase/step: M3 refinement lint
+- Command: `make lint`
+- Error (real): `F401 aipi_tools.correlators.correlate imported but unused`
+- Suspected cause: live test switched to checking persisted full-scope signals.
+- Tried / fix: remove the unused import.
+- Files touched: test_incidents.py, PROGRESS.md
+
+### F-026 — Live correlation and counter-series mismatches    Status: RESOLVED
+- Phase/step: M3 refinement first live gate
+- Command: `uv run pytest tests/integration/test_incidents.py -v -s --tb=short`
+- Error (real): `2 failed, 4 passed in 70.88s`; kill recovered but `Timed out: exported 5xx metric increase`; replica selected-only rules had extra ErrorSpikeRule versus full scope.
+- Suspected cause: gateway counter query mixed /orders and /checkout series with identical timestamps; capped error-biased samples distorted correlation.
+- Tried / fix: narrow kill verifier to /checkout; freeze full-scope signals and compare before selection against API after selection. Add missing span-latency baseline check and include 30 seconds of steady telemetry in live windows.
+- Files touched: signals.py, correlators.py, test_correlators.py, test_incidents.py, PROGRESS.md
+
+### F-027 — Inspection used nonexistent normalization path    Status: RESOLVED
+- Phase/step: M3 refinement inspection
+- Command: `rg -n 'counter|value|metric' packages/telemetry/src/aipi_telemetry/normalize.py`
+- Error (real): `No such file or directory`
+- Suspected cause: storage/ingestion modules have different filenames.
+- Tried / fix: inspect actual metric labels with an allowlisted read-only query instead.
+- Files touched: PROGRESS.md
+
+### F-025 — JSON union numeric typing    Status: RESOLVED
+- Phase/step: M3 refinement mypy
+- Command: `uv run mypy --strict packages apps/api services/demo-services/src chaos`
+- Error (trimmed, real): `Found 3 errors in 2 files`; JSON union incompatible with float/int and inferred payload dict.
+- Suspected cause: strict typing needs numeric narrowing and explicit JsonValue annotations.
+- Tried / fix: validate numeric sample/count types and annotate summary payload/transitions.
+- Files touched: metric_summaries.py, correlators.py, PROGRESS.md
+
+### F-024 — Long live inventory diagnostic line    Status: RESOLVED
+- Phase/step: M3 selection refinement lint
+- Command: `make lint`
+- Error (real): `E501 Line too long (154 > 100)` at test_incidents.py:159
+- Suspected cause: expanded raw/full-rule diagnostic string.
+- Tried / fix: split the diagnostic into adjacent strings; rerun lint.
+- Files touched: tests/integration/test_incidents.py, PROGRESS.md
+
+### F-023 — Inspection used nonexistent demo module paths    Status: RESOLVED
+- Phase/step: M3 refinement inspection
+- Command: `cat services/demo-services/src/aipi_demo/orders.py services/demo-services/src/aipi_demo/gateway.py`
+- Error (real): `No such file or directory`
+- Suspected cause: demo endpoints share app.py.
+- Tried / fix: `rg --files services/demo-services/src`; read app.py instead.
+- Files touched: PROGRESS.md
+
 ### F-001 — <short title>            Status: OPEN | RESOLVED
 - Phase/step:
 - Command:
@@ -535,7 +647,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 3 | 2026-10-13 | Native multiarch images, pinned Collector; host HTTP check for shell-free Collector | Apple Silicon compatibility and actual health verification | ADR-013 |
 | 4 | 2026-10-13 | Bounded manual-kill observation and explicit start; restricted replay function grants | Verified Docker behavior and least privilege | ADR-014 |
 | 5 | 2026-10-13 | Explicit related-service allowlists; immutable per-scope snapshots; existing restricted writer persists metadata; static public catalog | Correlation across declared dependencies, stable replay despite late data, no credential regeneration or privileged API reads | ADR-015 |
-| 6 | 2026-10-13 | Global telemetry relevance tiers; time/source tie order; exact dropped counts; versioned snapshots | Preserve decisive evidence and expose truncation without hidden labels | ADR-016 |
+| 6 | 2026-10-13 | Full-scope frozen signals, one summary per metric series, log/trace floors, deterministic severity/time/source selection; raw and candidate counts; v2 snapshots | Prevent selection bias, retain severe observations and expose omitted candidates without hidden labels | ADR-016 |
 
 ---
 
@@ -564,6 +676,8 @@ List anything not run (e.g. Docker tests skipped because Docker is unavailable, 
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-13 21:46 IST | M3 refinement | Frozen full-scope correlation and cited sources; versioned metric-series summaries (histogram data excluded); severe-log/error-slow-trace floors; latency baseline and route-specific chaos verifier; updated ADR-016 | 71 Python + 1 web, 14 live Docker tests, lint and secret scan passed; .env unchanged | M4a not started`
 
 `2026-10-13 14:25 IST | M3 follow-up | Replaced round-robin cap with telemetry relevance and time/source ties; exact dropped counts; versioned immutable snapshots; printed all 100 live items; oldest-decisive synthetic tests; corrected commit/table and verified ADRs | 65 Python + 1 web, 14 live Docker tests, lint and secret scan passed; .env unchanged | M4a not started`
 

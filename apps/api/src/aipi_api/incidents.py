@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from uuid import UUID, uuid4
 
-from aipi_telemetry.evidence import TimelineItem, build_timeline
+from aipi_telemetry.evidence import Evidence, TimelineItem, build_timeline
 from aipi_telemetry.redaction import redact
-from aipi_tools.correlators import Signal, correlate
+from aipi_tools.correlators import Signal
 from aipi_tools.ranking import RETRIEVAL_VERSION
 from aipi_tools.retrieval import EvidenceBundle, EvidenceReader
 from aipi_tools.scope import Incident, IncidentCreate, ScopeDenied, ScopePolicy, ScopeRequest
@@ -105,22 +105,26 @@ class IncidentCore:
             )
             if cached is not None:
                 return EvidenceBundle.model_validate(cached)
-            result = self.reader.retrieve(incident, request)
-            for item in result.items:
+            snapshot = self.reader.retrieve_snapshot(incident, request)
+            result = snapshot.bundle
+            retained = {item.evidence_id: item for item in result.items + snapshot.witnesses}
+            if retained:
                 db.execute(
-                    insert(evidence)
-                    .values(
-                        incident_id=incident.id,
-                        id=item.evidence_id,
-                        type=item.type,
-                        service=item.service,
-                        timestamp=item.timestamp,
-                        source_ref=item.source_ref,
-                        summary=item.summary,
-                        payload_json=item.model_dump(mode="json")["payload"],
-                        redactions=item.model_dump(mode="json")["redactions"],
-                    )
-                    .on_conflict_do_nothing()
+                    insert(evidence).on_conflict_do_nothing(),
+                    [
+                        dict(
+                            incident_id=incident.id,
+                            id=item.evidence_id,
+                            type=item.type,
+                            service=item.service,
+                            timestamp=item.timestamp,
+                            source_ref=item.source_ref,
+                            summary=item.summary,
+                            payload_json=item.model_dump(mode="json")["payload"],
+                            redactions=item.model_dump(mode="json")["redactions"],
+                        )
+                        for item in retained.values()
+                    ],
                 )
             db.execute(
                 insert(bundles).values(
@@ -140,4 +144,39 @@ class IncidentCore:
         )
 
     def signals(self, request: ScopeRequest, request_id: str) -> tuple[Signal, ...]:
-        return correlate(self.retrieve(request, request_id).items)
+        return self.retrieve(request, request_id).signals
+
+    def evidence_item(self, request: ScopeRequest, request_id: str, item_id: str) -> Evidence:
+        """Resolve only an item or full-scope rule citation in this exact frozen scope."""
+        bundle = self.retrieve(request, request_id)
+        permitted = {e.evidence_id for e in bundle.items} | {
+            eid for result in bundle.signals for eid in result.evidence_ids
+        }
+        if item_id not in permitted:
+            raise MissingIncident("Evidence not found in incident scope")
+        with self.reader.engine.connect() as db:
+            row = (
+                db.execute(
+                    select(evidence).where(
+                        evidence.c.incident_id == request.incident_id,
+                        evidence.c.id == item_id,
+                        evidence.c.service.in_(bundle.query_params.services),
+                        evidence.c.timestamp >= bundle.window.start_time,
+                        evidence.c.timestamp <= bundle.window.end_time,
+                    )
+                )
+                .mappings()
+                .first()
+            )
+        if row is None:
+            raise MissingIncident("Evidence not found in incident scope")
+        return Evidence(
+            evidence_id=row["id"],
+            type=row["type"],
+            service=row["service"],
+            timestamp=row["timestamp"],
+            source_ref=row["source_ref"],
+            summary=row["summary"],
+            payload=row["payload_json"],
+            redactions=row["redactions"],
+        )

@@ -151,8 +151,16 @@ def create_app() -> FastAPI:
                         )
                         return Order(id=row[0], product=row[1], quantity=row[2], status=row[3])
                     await asyncio.sleep(0.1)
-                span.set_status(Status(StatusCode.ERROR, "Order not visible on replica"))
-                telemetry.logger.warning("stale replica read", extra={"order.id": str(order_id)})
+                span.set_status(Status(StatusCode.ERROR, "Replica read retry deadline exceeded"))
+                span.set_attribute("error.type", "ReplicaReadTimeout")
+                telemetry.logger.warning(
+                    "stale replica read",
+                    extra={
+                        "order.id": str(order_id),
+                        "error.type": "ReplicaReadTimeout",
+                        "retry.count": 3,
+                    },
+                )
                 raise HTTPException(404, "Order not visible on replica")
         except HTTPException as exc:
             status = exc.status_code

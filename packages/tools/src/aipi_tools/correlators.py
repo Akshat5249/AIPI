@@ -22,8 +22,8 @@ def metric(item: Evidence, name: str) -> bool:
     return item.type == "metric" and item.payload.get("metric_name") == name
 
 
-def value(item: Evidence) -> float:
-    number = item.payload.get("value")
+def value(item: Evidence, aggregate: str = "max") -> float:
+    number = item.payload.get(aggregate, item.payload.get("value"))
     return float(number) if isinstance(number, (int, float)) else 0
 
 
@@ -83,6 +83,19 @@ class ErrorSpikeRule:
                     groups.setdefault(key, []).append(item)
             for key in sorted(groups):
                 samples = sorted(groups[key], key=lambda e: (e.timestamp, e.evidence_id))
+                if len(samples) == 1 and samples[0].payload.get("aggregation") == "series_summary":
+                    item = samples[0]
+                    if (
+                        isinstance(item.payload["sample_count"], int)
+                        and item.payload["sample_count"] >= 2
+                        and value(item, "last") > value(item, "first") * 2
+                        and value(item, "last") > 0
+                    ):
+                        return (
+                            signal(
+                                "ErrorSpikeRule", f"{name} exceeds early-window baseline", (item,)
+                            ),
+                        )
                 if len(samples) >= 2:
                     first, last = samples[0], samples[-1]
                     if value(last) > value(first) * 2 and value(last) > 0:
@@ -114,6 +127,35 @@ class ErrorSpikeRule:
                             tuple(spans),
                         ),
                     )
+        # Latency compares matching operations, never a mix of HTTP and DB spans.
+        groups_latency: dict[tuple[str, str], list[Evidence]] = {}
+        for item in items:
+            if item.type == "trace":
+                key = (item.service, str(item.payload.get("operation", "")))
+                groups_latency.setdefault(key, []).append(item)
+        for key in sorted(groups_latency):
+            samples = sorted(groups_latency[key], key=lambda e: (e.timestamp, e.source_ref))
+            if len(samples) < 4:
+                continue
+            half = len(samples) // 2
+
+            def p95(group: list[Evidence]) -> float:
+                values = sorted(
+                    float(str(e.payload.get("duration_ms", 0)))
+                    for e in group
+                    if isinstance(e.payload.get("duration_ms", 0), (float, int))
+                )
+                return values[min(len(values) - 1, int(len(values) * 0.95))] if values else 0
+
+            baseline, later = p95(samples[:half]), p95(samples[half:])
+            if baseline > 0 and later >= 250 and later > baseline * 2:
+                return (
+                    signal(
+                        "ErrorSpikeRule",
+                        "Span latency p95 rises versus early-window baseline",
+                        tuple(samples),
+                    ),
+                )
         return ()
 
 
@@ -124,7 +166,13 @@ class ReplicaLagRule:
         backlog = tuple(e for e in items if metric(e, "replica_lag_bytes") and value(e) > 0)
         paused = tuple(e for e in items if metric(e, "replica_replay_paused") and value(e) == 1)
         health = tuple(e for e in items if metric(e, "primary_healthy"))
-        if lag and backlog and paused and health and all(value(e) == 1 for e in health):
+        if (
+            lag
+            and backlog
+            and paused
+            and health
+            and all(value(e, "min") == value(e, "max") == 1 for e in health)
+        ):
             return (
                 signal(
                     "ReplicaLagRule",
@@ -160,7 +208,7 @@ class PrimaryHealthRule:
     @staticmethod
     def apply(items: tuple[Evidence, ...]) -> tuple[Signal, ...]:
         health = tuple(e for e in items if metric(e, "primary_healthy"))
-        if health and all(value(e) == 1 for e in health):
+        if health and all(value(e, "min") == value(e, "max") == 1 for e in health):
             return (
                 signal(
                     "PrimaryHealthRule",
