@@ -1,10 +1,10 @@
+import {useEffect, useState} from 'react';
+import {IncidentDetail} from './IncidentDetail';
+import {IncidentsPage} from './IncidentsPage';
+import {EvaluationPage} from './EvaluationPage';
 export function App() {
-  return <main>
-    <p className="banner">Read-only investigation — no remediation is executed.</p>
-    <h1>AI Production Incident Investigator</h1>
-    <p>Foundation and observability lab</p>
-    <p>Telemetry is collected from the checkout and orders request paths.
-       Incident investigation and evaluation arrive in later phases.</p>
-    <a href="http://localhost:8000/docs">View API schema</a>
-  </main>;
+  const [route, setRoute] = useState(location.hash.slice(1) || '/incidents');
+  useEffect(() => {const changed = () => {setRoute(location.hash.slice(1) || '/incidents');window.scrollTo(0, 0);};window.addEventListener('hashchange', changed);return () => window.removeEventListener('hashchange', changed);}, []);
+  const [path, query] = route.split('?'), evaluation = path === '/evaluations', incidentId = path.startsWith('/incidents/') ? path.slice('/incidents/'.length) : undefined;
+  return <div className="app-shell"><aside className="sidebar"><a className="brand" href="#/incidents"><span className="brand-mark" aria-hidden="true">▥</span><span>AIPI<small>Incident investigator</small></span></a><span className="nav-label">WORKSPACE</span><nav aria-label="Main navigation"><a href="#/incidents" className={!evaluation ? 'active' : ''} aria-current={!evaluation ? 'page' : undefined}><span aria-hidden="true">▤</span>Incidents<span className="nav-arrow">↗</span></a><a href="#/evaluations" className={evaluation ? 'active' : ''} aria-current={evaluation ? 'page' : undefined}><span aria-hidden="true">◈</span>Evaluation<span className="nav-arrow">↗</span></a></nav><div className="sidebar-bottom"><span className="local-badge"><i/>Local lab</span><p>Evidence before inference.<br/>People before action.</p><span className="mono">MVP / MOCK PROVIDER</span></div></aside><div className="workspace"><div className="topbar"><span>AI Production Incident Investigator</span><a href="http://localhost:8000/docs" target="_blank" rel="noreferrer">API reference ↗</a></div><div className="banner" role="note"><span aria-hidden="true">◇</span>Read-only investigation — no remediation is executed.</div><main>{evaluation ? <EvaluationPage params={new URLSearchParams(query)}/> : incidentId ? <IncidentDetail key={incidentId} id={incidentId}/> : <IncidentsPage/>}</main><footer>AIPI <span>Observable evidence. Inspectable reasoning.</span></footer></div></div>;
 }

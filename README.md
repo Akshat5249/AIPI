@@ -6,7 +6,8 @@ verified service-kill and replica-lag scenarios. M3 adds scoped incidents, immut
 evidence/timelines and deterministic correlators. M4 adds a six-node LangGraph
 with scoped read-only tools, deterministic mock reasoning and evidence-linked
 reports. M5 adds isolated scoring, golden/recorded replay and repeated live evaluation.
-The dashboard follows in M6; see [PROGRESS.md](PROGRESS.md).
+M6 adds the incident dashboard, scoped evidence drawer, resumable agent trace,
+Markdown export and post-score evaluation view. See [PROGRESS.md](PROGRESS.md).
 
 ```text
 traffic → gateway → checkout-api → PostgreSQL primary
@@ -54,3 +55,11 @@ See [chaos operations and recovery](docs/CHAOS.md) for scenario details.
 See [Incident Core API](docs/API.md) for creation, scoped evidence, and error contracts.
 
 See [evaluation metrics, replay and recording](docs/EVALUATION.md).
+
+Dashboard: open http://localhost:5173, create an incident with the observed service
+and time window, then start its read-only investigation. The detail tabs expose
+timeline, evidence, ranked hypotheses, report and live execution. Citations outside
+the 50-item display bundle still resolve within the incident. Evaluation can replay
+a saved golden or score the completed live incident with the recovered chaos run
+ID. Ground truth is revealed only after scoring. See [dashboard notes](apps/web/README.md)
+and the [measured M6 UI gate](docs/verification/m6/README.md).

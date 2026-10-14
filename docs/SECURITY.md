@@ -76,3 +76,15 @@ records have explicit FK/insertion/status-update grants; investigator_ro can rea
 scores but cannot write them or access protected truth. The scorer has no public
 host port or Docker socket. Host-only recording injects fixed bounded lab faults,
 never a model/tool action. No .env regeneration is required.
+
+### Dashboard boundary (M6)
+
+Only the Evaluation page may request the terminal evaluation truth disclosure.
+The scorer refuses disclosure before scoring; job/scorecard responses remain
+score-only. Neither API nor web receives the truth DB credential. Incident and
+investigation components select known fields, strip protected fields from payload
+JSON and escape telemetry as React text. No dangerouslySetInnerHTML or external
+telemetry-driven links exist. Evidence IDs resolve only through the owning incident.
+The web /api proxy does not change host API exposure: 127.0.0.1:8000 remains the
+only API host binding. The exact read-only banner appears on every page, and all
+recommendations remain approval-required and not executed.

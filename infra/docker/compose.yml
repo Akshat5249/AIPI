@@ -164,6 +164,10 @@ services:
     depends_on:
       gateway: {condition: service_healthy}
   web:
+    depends_on:
+      api: {condition: service_healthy}
+    environment:
+      API_PROXY_TARGET: http://api:8000
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.web

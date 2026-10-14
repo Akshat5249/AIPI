@@ -148,3 +148,21 @@ scorer reads protected run truth. Replay does not inject faults through HTTP;
 `make record-golden` performs authorized host chaos and submits recorded replay.
 `GET /api/incidents/{id}/investigation` exposes the latest typed investigation
 metadata, letting the scorer tie live report latency/usage to its persisted owner.
+
+## M6 dashboard and evaluation disclosure
+
+The dashboard uses a same-origin `/api` proxy (Vite on the host forwards to
+127.0.0.1:8000; the web container forwards to api:8000). API and web host ports
+remain bound to 127.0.0.1. SSE is unbuffered and resumes with Last-Event-ID and
+`?after=N`; the browser suppresses duplicate event sequences and stops at done.
+
+GET `/api/evaluations/{id}/ground-truth` is a separate scorer-backed evaluation
+route. It returns evaluation_id, scenario_id, expected_root_cause,
+required_evidence, seed and source only after a terminal scored evaluation exists.
+Queued/running jobs and failed jobs without a scorecard return 409; missing IDs
+return 404. The scorer reads the separate golden truth file or validates the
+completed protected live run; the public API only proxies its typed response.
+The existing job/scorecard GET remains score-only. Investigation, incident,
+evidence and scenario routes still contain no ground-truth fields or credentials.
+Only the Evaluation page calls this disclosure route. It displays the label after
+scoring; the agent never receives it.

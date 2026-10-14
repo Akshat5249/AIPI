@@ -1,4 +1,4 @@
-"""Public score/replay contracts contain metrics, never protected causal labels."""
+"""Score/replay contracts and a separate terminal-only evaluation truth disclosure."""
 
 from datetime import datetime
 from typing import Literal
@@ -80,3 +80,14 @@ class EvaluationJob(Strict):
     completed_at: datetime | None = None
     scorecard: Scorecard | None = None
     error: str | None = None
+
+
+class EvaluationTruth(Strict):
+    """Evaluation-only disclosure; never included in jobs, reports or agent inputs."""
+
+    evaluation_id: UUID
+    scenario_id: ScenarioID
+    expected_root_cause: str
+    required_evidence: tuple[str, ...]
+    seed: int
+    source: Literal["golden", "recorded"]

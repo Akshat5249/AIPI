@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-14 02:03 IST
-**Current phase:** M5 Evaluation DONE (gate passed)
-**Next action:** M6 Dashboard when requested
-**Overall:** 5 / 7 phases complete
+**Last updated:** 2026-10-14 22:20 IST
+**Current phase:** M6 Dashboard DONE (gate passed)
+**Next action:** M7 Polish when requested
+**Overall:** 6 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -22,8 +22,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 | M2 | Chaos Lab | DONE (gate passed) | `make chaos-kill`, `make chaos-lag`, `make test`, `make lint` | Both live scenarios recovered; 33 Python + 1 web tests passed | `4b73c8c` |
 | M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement `37c8acc` |
 | M4 | Agents + Tools + Report | DONE (gate passed) | `make test`, `make lint`; synthetic goldens and live reports | 102 Python + 1 web; 18 live tests, none skipped; both scoped mock reports valid | M4a `afba25f`; M4b `5de61e4` |
-| M5 | Evaluation | DONE (gate passed) | `make eval`, `make record-golden`, `make test`, `make lint` | 123 Python + 1 web; 22 live tests; six repeated live reports passed final gate, variance recorded | feat(M5) in this commit |
-| M6 | Dashboard | NOT STARTED | `make demo` + web tests | — | — |
+| M5 | Evaluation | DONE (gate passed) | `make eval`, `make record-golden`, `make test`, `make lint` | 123 Python + 1 web; 22 live tests; six repeated live reports passed final gate, variance recorded | `4a95ed9` |
+| M6 | Dashboard | DONE (gate passed) | `make test`, `make lint`, `make up`; live UI gate | 128 Python + 26 web verified; 22 live tests; real browser incident-to-recorded-evaluation passed | feat(M6) in this commit |
 | M7 | Polish | NOT STARTED | fresh-clone run of README | — | — |
 
 ---
@@ -545,11 +545,109 @@ M6 has not started. GitHub-hosted CI and fresh-clone verification remain explici
 unverified below.
 
 ### M6 Dashboard
-- [ ] Incidents list + create
-- [ ] Detail tabs: Timeline, Evidence, Hypotheses, Report, Agent Trace
-- [ ] Evaluation page
-- [ ] Vitest tests + Dockerfile/Compose service
-- [ ] **GATE:** full demo path without manual DB edits
+
+Baseline before implementation (existing .env preserved):
+```text
+make test: 123 passed in 303.39s (0:05:03); 22 live Docker tests, none skipped
+Vitest: Test Files 1 passed (1); Tests 1 passed (1); Duration 667ms
+```
+- [x] Incidents list + create — explicit scope, time validation and status badges; frontend tests passed
+- [x] Detail tabs: Timeline, Evidence, Hypotheses, Report, Agent Trace — all visited with real data; live SSE then terminal completion, scoped outside-ID drawer verified
+- [x] Evaluation page — scorecards and terminal-only scorer truth; unit disclosure gates passed
+- [x] Vitest tests + Dockerfile/Compose service — 25 frontend tests; native arm64 web healthy; loopback host/proxy verified
+- [x] **GATE:** full demo path without manual DB edits — real kill, UI creation/investigation/evidence/report/export/recorded evaluation passed; final suite green
+
+Interim M6 verification:
+```text
+Frontend: 25 passed (4 files); TypeScript and ESLint exit 0
+Scorer disclosure guards: 5 passed in 2.20s
+Live replay/disclosure/API isolation: 4 passed in 26.95s
+make lint: All checks passed!; 137 files already formatted;
+  Success: no issues found in 65 source files; ESLint / tsc exit 0
+make build-web: 34 modules transformed; built in 474ms
+make up: Preserving existing .env; API/gateway/web/Collector healthy
+make seed-traffic: Container aipi-traffic-1 Healthy
+```
+
+Browser validation caught and repaired a native-date submission issue before
+the real chaos gate; test incident 4b8442fe-19ff-4461-a3a8-f40a13868ed0 is not a
+gate result. The corrected UI rejected both reversed and >6-hour windows.
+No manual DB edits or .env regeneration were performed.
+
+Live UI gate (2026-10-14, Apple Silicon, after fresh make up + seed-traffic):
+```text
+make chaos-kill: exit 0
+run_id=fffb2290-6bb3-4a6c-a3cf-86bde8019dd4
+passed=true; recovery_status=verified
+runtime die 2026-10-14T16:03:57.562460+00:00 exit_code=137
+runtime start 2026-10-14T16:04:05.956130+00:00
+gateway_5xx_requests=68; gateway_failed_spans=246; gateway_error_logs=79
+UI incident=57bccb03-2f6b-4997-b7dc-f2e8a381d716
+stored window=2026-10-14T16:03:25Z–2026-10-14T16:04:14Z
+service scope=checkout-api + gateway
+investigation=6bf83863-05aa-4f74-9721-f2d41b98cbf3 completed
+root=Checkout service process terminated; confidence=0.96
+bundle=50; cited=333; outside_bundle_count=313
+SSE: Live then Complete; event_count=24; last_seq=24; node_completed=6; tool_completed=8
+latency_ms=1719.520501000261; input/output_tokens=0/0; estimated_cost=0.0
+UI outside lookup ev_193db7bbd0a520e9: gateway requests_total=7, HTTP status=503
+UI evidence filters: type=log + service=gateway -> filteredLogRows=10
+Markdown export matches stored report: True
+export_sha256=ae43f82f235302e2abe86e2febed22eb2f713a50cadfca123c7be431100187d2
+UI EVALUATION 177f9e21-e2fc-4d86-ae37-e159011765be completed, passed=true
+Top-1=1; Top-3=1; precision=1; coverage=1; unsupported_rate=0
+contradiction_handling=1; critical_unsupported_claims=0
+useful_evidence_per_tool_call=41.625; citation_pairs=supported_pairs=424
+Job remains score-only: True
+make lint: All checks passed!; 139 files already formatted;
+  Success: no issues found in 65 source files; ESLint / tsc exit 0
+make build-web: 35 modules transformed; built in 454ms
+API / scorer / web images: linux/arm64; Compose config --quiet: exit 0
+```
+
+The incident was created and investigated in the browser; its recorded replay was
+submitted in the Evaluation page using the actual recovered host run ID. Ground
+truth appeared only after scoring through the separate scorer-backed disclosure.
+The report preserves FOR/AGAINST evidence; the dependency false lead ranks lower
+at 20%, contradicted by the die event. Recommendations display Requires human
+approval and Not executed. Escape closes the drawer and restores focus to its
+citation. No mutating investigation/remediation control exists.
+
+Real screenshots (workspace paths):
+- docs/verification/m6/01-incidents.jpg (desktop incidents)
+- docs/verification/m6/02-timeline.jpg (real scoped window)
+- docs/verification/m6/03-agent-trace-full.jpg (all execution events and usage)
+- docs/verification/m6/04-hypotheses.jpg (ranked FOR/AGAINST)
+- docs/verification/m6/05-outside-bundle.jpg (resolved scoped payload + redactions)
+- docs/verification/m6/06-evidence-logs.jpg (ten filtered gateway logs)
+- docs/verification/m6/07-report.jpg (Facts / Hypotheses / Recommendations)
+- docs/verification/m6/08-evaluation.jpg (passed recorded scorecard + post-score truth)
+
+The actual downloaded Markdown, scorecard JSON, incident/usage metadata and all
+outside-ID references are preserved in docs/verification/m6/. Final full test gate:
+```text
+make test: 128 passed in 392.29s (0:06:32); 22 live Docker tests, none skipped
+Vitest: Test Files 4 passed (4); Tests 25 passed (25); Duration 1.77s
+.env checksum unchanged from start of M6
+```
+Follow-up trace accessibility/readability verification after the full suite:
+```text
+Frontend: Test Files 4 passed (4); Tests 26 passed (26); Duration 2.67s
+TypeScript / ESLint: exit 0
+Production build: 35 modules transformed; built in 442ms
+Docker web rebuild --no-deps --wait: Container aipi-web-1 Healthy
+Native UI trace labels include runtime_events_query, logs_query, trace_lookup,
+  metric_query, db_replication_status and runbook_search
+Gitleaks v8.24.2: scanned ~19995886 bytes (20 MB) in 3.82s; no leaks found
+```
+
+Trace event summaries now have accessible names and show tool identities directly.
+Per-event duration renders only when the event payload provides it; the existing
+live events do not include that field, so no per-event durations are invented.
+Actual overall latency, tokens and cost are shown from investigation metadata.
+The full backend suite was not repeated for this frontend-only presentation change;
+the complete updated frontend suite, build, healthy container and real trace UI
+were verified. Final source scan includes this refinement. M7 remains unstarted.
 
 ### M7 Polish
 - [ ] README (quickstart, architecture, demo script)
@@ -564,6 +662,31 @@ unverified below.
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
 ```
+### F-047 — RESOLVED — M6 native date values versus submitted scope
+- Action: browser fill of datetime-local fields followed by Create incident during validation checks.
+- Real output: locator.fill deadline for Window start (21:00:00 normalized to 21:00); test incident 4b8442fe-19ff-4461-a3a8-f40a13868ed0 stored defaults 15:25:48Z–15:40:48Z despite visible date changes.
+- Cause: native browser input updates did not reliably reach React onChange state through the automation path.
+- Fix: read and validate native date values via FormData at submit and keep native date inputs uncontrolled; add a native-input regression test and repeat the UI checks. This test incident is not a chaos/evaluation gate result.
+- Files: IncidentsPage.tsx, components.test.tsx.
+
+### F-046 — RESOLVED — M6 report section accessible names
+- Command: cd apps/web && npm test.
+- Real output: 1 failed, 22 passed; unable to find region named Facts (actual name: 01 Facts).
+- Fix: mark decorative section numbers aria-hidden, leaving meaningful region names Facts/Hypotheses/Recommendations.
+- Files: components.tsx.
+
+### F-045 — RESOLVED — M6 Python generic syntax lint
+- Command: ruff check packages/evaluation apps/api --fix.
+- Real output: Found 2 errors (1 fixed, 1 remaining); UP047 generic function forward should use type parameters.
+- Fix: use Python 3.12 type-parameter syntax for the typed scorer proxy; checks follow.
+- Files: evaluation_routes.py, server.py.
+
+### F-044 — RESOLVED — M6 initial TypeScript check
+- Command: cd apps/web && npm run typecheck.
+- Real output: TS2322 string is not assignable to UUID template type; TS2580 Cannot find name process in vite.config.ts.
+- Fix: annotate stream request ID as string and use Vite loadEnv for the proxy setting; npm run typecheck and npm run lint both exit 0.
+- Files: stream.ts, vite.config.ts.
+
 ### F-043 — RESOLVED — Added pure root-cause negative test serialization
 - Command: evaluation/golden targeted pytest after critical-root support hardening.
 - Real output: 1 failed, 24 passed in 53.57s; tuple has no attribute remove.
@@ -915,6 +1038,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 7 | 2026-10-13 | Synthetic-first bundles, isolated scorer truth, six scoped SELECT/BM25 tools, supervisor audits, deterministic mock and exact scoring; optional paid providers deferred | Offline/key-free repeatability and least privilege | ADR-017 |
 | 8 | 2026-10-14 | Six-node validated LangGraph, background jobs/SSE, immutable artifacts/provenance and full witness citations; Reporter preserves verified confidence and non-mutating checks | Inspectable execution and scoped evidence resolution beyond the cap | ADR-018 |
 | 9 | 2026-10-14 | Separate scorer/credential-free replay child; bounded semantic gate; three live repeats per scenario, real fixtures with separate truth and preserved synthetic corpus | Keep ground truth out of agents/API, audit citation meaning, expose variance/misses honestly | ADR-019 |
+| 10 | 2026-10-14 | Same-origin dashboard proxy, resumable SSE and a separate terminal-only scorer disclosure endpoint | Keep API loopback-bound and truth exclusive to post-score evaluation, resolve full-scope citations in UI | ADR-020 |
 
 ---
 
@@ -923,7 +1047,7 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M5 recording and replay/scoring gates are verified locally with mock. M6/M7 dashboard and polish remain unstarted. Recorded root goldens replace synthetic bundles; the original corpus is retained for unit tests.
+- M5 recording and replay/scoring gates are verified locally with mock. M6 local browser flow is verified; M7 polish remains unstarted. Recorded root goldens replace synthetic bundles; the original corpus is retained for unit tests.
 - Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
 - Optional paid LLM providers remain unimplemented/untested; no API key used. M5 results measure the deterministic mock on two curated scenarios, three live repeats each; they do not measure general natural-language claim entailment or production incidents.
 
@@ -962,6 +1086,8 @@ and any miss arrays are in docs/verification/m5/live-summary.json.
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-14 22:20 IST | M6 | Incident list/form and scoped detail tabs, outside-bundle drawer, Markdown export, resumable SSE, runtime API validation and request-ID errors; separate terminal-only scorer truth disclosure; native date submission fixed from browser feedback | 128 Python + 26 web verified, 22 live tests; real kill -> UI create/investigate/report/export -> recorded evaluation passed, 333 resolved cites / 313 outside; lint/build and arm64 health/secret scan passed; .env unchanged | M7 not started`
 
 `2026-10-14 02:03 IST | M5 | Pure semantic citation/quotation gate and eight metric families; scorer-only truth, credential-free golden replay process, persisted replay APIs/CLI, JSON+Markdown scorecards; real replacement fixtures with separate truth and retained synthetic corpus; three recovered live faults per scenario and population variance; native separate Docker targets and non-root scorer volume | Gate: 123 Python + 1 web, 22 live tests; all six Top-1/precision/coverage 100%, no misses; negative make gates failed correctly; lint/actionlint/secret scan passed; .env unchanged | M6 not started`
 

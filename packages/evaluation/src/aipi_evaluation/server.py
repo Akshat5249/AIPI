@@ -7,7 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID, uuid4
 
+import httpx
 from aipi_telemetry.instrumentation import configure
+from aipi_tools.scope import Incident
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from opentelemetry import metrics
 from psycopg.types.json import Jsonb
@@ -16,9 +18,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-from aipi_evaluation.contracts import EvaluationJob, ReplayRequest
+from aipi_evaluation.contracts import EvaluationJob, EvaluationTruth, ReplayRequest
 from aipi_evaluation.live import live_replay
-from aipi_evaluation.oracle import TruthReader
+from aipi_evaluation.oracle import TruthReader, load_truth
 from aipi_evaluation.replay import replay, write_scorecard
 
 
@@ -93,6 +95,45 @@ class Scorer:
         values = dict(row)
         values["scorecard"] = values.pop("metrics_json")
         return EvaluationJob.model_validate(values)
+
+    def disclosure(self, identifier: UUID) -> EvaluationTruth:
+        """Read oracle only for an already scored terminal evaluation, through this route."""
+        job = self.get(identifier)
+        if job.status not in {"completed", "failed"} or job.scorecard is None:
+            raise HTTPException(409, "Ground truth unavailable until scoring completes")
+        with self.writer.connect() as db:
+            body = db.scalar(
+                text("SELECT request_json FROM evaluation_runs WHERE id=:id"),
+                {"id": identifier},
+            )
+        request = ReplayRequest.model_validate(body)
+        if request.mode == "golden":
+            name = "scn-001" if request.scenario_id == "SCN-001" else "scn-002"
+            oracle = load_truth(Path(self.config.fixtures) / f"{name}.truth.json")
+            label = {
+                "termination": "checkout-api process/container forcibly terminated",
+                "replica_lag": "PostgreSQL replica WAL replay paused, causing replication lag",
+            }[oracle.expected_category]
+        else:
+            if request.incident_id is None or request.chaos_run_id is None:
+                raise HTTPException(409, "Invalid scored run")
+            with httpx.Client(base_url=self.config.api_url, timeout=15) as client:
+                response = client.get(f"/api/incidents/{request.incident_id}")
+                response.raise_for_status()
+                incident = Incident.model_validate(response.json())
+            protected = self.truth.run(
+                request.chaos_run_id, request.scenario_id, incident.start_time, incident.end_time
+            )
+            oracle = protected.truth()
+            label = protected.expected_root_cause
+        return EvaluationTruth(
+            evaluation_id=identifier,
+            scenario_id=job.scenario_id,
+            expected_root_cause=label,
+            required_evidence=oracle.required_features,
+            seed=oracle.seed,
+            source=request.mode,
+        )
 
     def run(self, identifier: UUID, request: ReplayRequest) -> None:
         try:
@@ -182,5 +223,9 @@ def create_app(config: ScorerSettings | None = None) -> FastAPI:
     @app.get("/evaluations/{identifier}", response_model=EvaluationJob)
     def get(identifier: UUID) -> EvaluationJob:
         return scorer.get(identifier)
+
+    @app.get("/evaluations/{identifier}/ground-truth", response_model=EvaluationTruth)
+    def disclosure(identifier: UUID) -> EvaluationTruth:
+        return scorer.disclosure(identifier)
 
     return app

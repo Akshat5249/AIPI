@@ -273,3 +273,38 @@ The critical root-cause surface must satisfy its causal conjunction from linked
 FOR witnesses (plus cited primary health for replica lag). Merely relevant timeout
 symptoms cannot support a top-ranked primary outage. The pure gate checks this
 without reading truth; Top-1 correctness is a separate oracle comparison.
+
+## ADR-020 — Dashboard scope, resumable trace and terminal evaluation disclosure
+
+Status: Accepted (2026-10-14)
+
+Build the dashboard with React 18, TypeScript, Vite and plain CSS. Hash routes
+provide incidents, incident detail and evaluation without adding a routing/UI
+framework. Incident creation declares service dependencies and a positive window
+of at most six hours; it does not infer scope from a hidden scenario label.
+
+The web service proxies /api to the private Compose API address; host Vite defaults
+to 127.0.0.1:8000. Both published ports stay bound to 127.0.0.1. Fetch-based SSE
+allows request-ID error envelopes, Last-Event-ID resumption, heartbeat handling,
+duplicate suppression, abort on unmount and explicit terminal completion. A dropped
+connection retries with bounded delay. No remediation control exists in the UI.
+
+Citations beyond the display bundle resolve through the incident evidence-by-ID
+endpoint and carry an outside-bundle marker. Telemetry is text, never HTML. Payload
+rendering discards protected oracle fields defensively; API results are checked at
+runtime, and malformed responses produce a request-ID error rather than crashing.
+The evidence drawer supports Escape, focus trapping and focus restoration.
+
+M5's job responses deliberately remain score-only. To fulfill the dashboard's
+post-evaluation truth reveal, add a distinct GET /api/evaluations/{id}/ground-truth
+proxy to the existing isolated scorer. It refuses queued/running/unscored jobs and
+reads truth only after terminal scoring. Golden disclosures come from *.truth.json;
+recorded disclosures require the matching completed recovered protected run/window.
+No truth field is added to incident/report/tool/agent state, and the API gains no
+truth credential or DB privileges. Only the Evaluation page requests/displays it.
+
+A live UI gate starts with make up and seed-traffic, injects the real local fault,
+creates its incident in the browser, investigates, opens evidence outside the cap,
+exports the report, and scores the actual recovered run through the evaluation UI.
+Screenshots and observed output are recorded in PROGRESS.md. Paid providers and
+production hosting/authentication remain outside this local MVP gate.

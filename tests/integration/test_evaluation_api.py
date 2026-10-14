@@ -40,6 +40,12 @@ def test_golden_replay_api_and_persisted_metrics(scenario):
             )
         )
         assert client.get(f"/api/evaluations/{job.id}").json() == job.model_dump(mode="json")
+        disclosure = client.get(f"/api/evaluations/{job.id}/ground-truth")
+        assert disclosure.status_code == 200, disclosure.text
+        truth = disclosure.json()
+        assert truth["evaluation_id"] == str(job.id) and truth["source"] == "golden"
+        assert truth["expected_root_cause"] and truth["required_evidence"]
+        assert "ground_truth" not in client.get("/api/scenarios").text
         assert client.get(f"/api/evaluations/{uuid4()}").status_code == 404
         for body in (
             {"scenario_id": "SCN-999"},

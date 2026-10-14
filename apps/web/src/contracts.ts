@@ -1,0 +1,23 @@
+/** Runtime shape checks for API results used by the dashboard; unknown fields are not rendered. */
+type RecordValue = Record<string, unknown>;
+const object = (v: unknown): v is RecordValue => !!v && typeof v === 'object' && !Array.isArray(v);
+const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(s => typeof s === 'string');
+const number = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const fields = (v: RecordValue, keys: string[]) => keys.every(k => typeof v[k] === 'string');
+const array = (v: unknown, check: (v: unknown) => boolean) => Array.isArray(v) && v.every(check);
+const status = (v: unknown) => typeof v === 'string' && ['queued', 'running', 'completed', 'failed'].includes(v);
+export const incidentContract = (v: unknown) => object(v) && fields(v, ['id', 'title', 'service', 'start_time', 'end_time', 'symptom', 'status', 'created_at']) && strings(v.related_services);
+export const incidentListContract = (v: unknown) => array(v, incidentContract);
+export const evidenceContract = (v: unknown) => object(v) && fields(v, ['evidence_id', 'type', 'service', 'timestamp', 'source_ref', 'summary']) && ['event', 'metric', 'log', 'trace', 'runbook'].includes(String(v.type)) && object(v.payload) && array(v.redactions, r => object(r) && fields(r, ['field', 'rule']));
+const counts = (v: unknown) => object(v) && Object.values(v).every(number);
+export const bundleContract = (v: unknown) => object(v) && array(v.items, evidenceContract) && typeof v.truncated === 'boolean' && typeof v.retrieval_version === 'string' && counts(v.raw_counts) && counts(v.dropped_counts) && counts(v.available_counts);
+const timelineItem = (v: unknown) => object(v) && fields(v, ['ts', 'label']) && strings(v.evidence_ids);
+export const timelineContract = (v: unknown) => object(v) && array(v.items, timelineItem) && typeof v.truncated === 'boolean';
+const hypothesis = (v: unknown) => object(v) && fields(v, ['id', 'statement', 'category', 'falsification_condition']) && number(v.rank) && number(v.confidence) && v.confidence >= 0 && v.confidence <= 1 && strings(v.for) && strings(v.against) && strings(v.expected_evidence) && strings(v.missing);
+const recommendation = (v: unknown) => object(v) && fields(v, ['id', 'statement', 'approval_status']) && strings(v.evidence_ids) && v.requires_approval === true && v.executed === false;
+export const reportContract = (v: unknown) => object(v) && object(v.root_cause) && fields(v.root_cause, ['statement', 'hypothesis_id']) && number(v.root_cause.confidence) && array(v.claims, c => object(c) && fields(c, ['claim_id', 'kind', 'text']) && strings(c.evidence_ids)) && array(v.timeline, timelineItem) && array(v.ranked_hypotheses, hypothesis) && strings(v.unresolved_questions) && array(v.recommendations, recommendation) && typeof v.markdown === 'string';
+export const investigationContract = (v: unknown) => object(v) && fields(v, ['id', 'incident_id', 'provider', 'model', 'created_at', 'prompt_version', 'tool_version', 'code_commit']) && status(v.status) && number(v.input_tokens) && number(v.output_tokens) && number(v.estimated_cost) && (v.latency_ms === null || number(v.latency_ms));
+export const scenarioContract = (v: unknown) => array(v, s => object(s) && fields(s, ['id', 'name', 'description']));
+const scorecard = (v: unknown) => object(v) && typeof v.passed === 'boolean' && fields(v, ['scenario_id', 'created_at', 'mode']) && strings(v.failures) && object(v.scores) && ['top1', 'top3_recall', 'evidence_precision', 'evidence_coverage', 'unsupported_claim_rate', 'contradiction_handling', 'latency_ms', 'useful_evidence_per_tool_call', 'tool_calls', 'tokens', 'critical_unsupported_claims'].every(k => number((v.scores as RecordValue)[k])) && object(v.experiment) && fields(v.experiment, ['provider', 'model', 'prompt_version', 'tool_version', 'code_commit']) && number(v.experiment.seed);
+export const evaluationContract = (v: unknown) => object(v) && fields(v, ['id', 'scenario_id', 'created_at']) && status(v.status) && (v.scorecard === null || scorecard(v.scorecard));
+export const truthContract = (v: unknown) => object(v) && fields(v, ['evaluation_id', 'scenario_id', 'expected_root_cause', 'source']) && strings(v.required_evidence) && number(v.seed);
