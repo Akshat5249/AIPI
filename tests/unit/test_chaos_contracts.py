@@ -80,3 +80,32 @@ def test_overlapping_run_never_injects(monkeypatch) -> None:
         runner.run_scenario(SPEC, inject, MagicMock(), MagicMock())
     inject.assert_not_called()
     lab.close.assert_called_once()
+
+
+@pytest.mark.parametrize("status", [404, 200, 503])
+def test_replica_pause_probes_every_new_order_and_requires_stale_reads(monkeypatch, status):
+    from uuid import uuid4
+
+    from aipi_demo.contracts import Order
+
+    from chaos.scenarios import scn_002_replica_lag as scenario
+    from chaos.scenarios.runner import Run
+
+    lab = MagicMock()
+    lab.create_order.side_effect = [
+        Order(id=uuid4(), product="book", quantity=1) for _ in range(10)
+    ]
+    lab.client.get.return_value.status_code = status
+    monkeypatch.setattr(
+        scenario, "scalar", lambda db, sql: "paused" if "pause_state" in sql else True
+    )
+    monkeypatch.setattr(scenario.time, "sleep", lambda seconds: None)
+    run = Run(id=uuid4(), spec=scenario.SPEC)
+    if status == 404:
+        scenario.inject(lab, run)
+        assert lab.client.get.call_count == 10
+        assert run.observations["stale_read_probes"] == 10
+        assert all(run.observations["direct_primary_health_samples"])
+    else:
+        with pytest.raises(ChaosError, match="expected stale read"):
+            scenario.inject(lab, run)

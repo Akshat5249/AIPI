@@ -1,6 +1,6 @@
-name: aipi
+name: ${COMPOSE_PROJECT_NAME:-aipi}
 x-python: &python
-  image: aipi-python:local
+  image: ${COMPOSE_PROJECT_NAME:-aipi}-python:local
   build:
     context: ../..
     dockerfile: infra/docker/Dockerfile.python
@@ -22,8 +22,10 @@ x-otel-env: &otel-env
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
 services:
   postgres-primary:
+    init: true
+    stop_grace_period: 60s
     image: postgres:16
-    command: [postgres, -c, wal_level=replica, -c, max_wal_senders=10, -c, max_replication_slots=10]
+    command: [postgres, -c, wal_level=replica, -c, wal_keep_size=512MB, -c, max_wal_senders=10, -c, max_replication_slots=10]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: aipi
@@ -34,7 +36,7 @@ services:
       INVESTIGATOR_PASSWORD: ${INVESTIGATOR_PASSWORD:?run make setup-env}
       TELEMETRY_WRITER_PASSWORD: ${TELEMETRY_WRITER_PASSWORD:?run make setup-env}
       CHAOS_PASSWORD: ${CHAOS_PASSWORD:?run make setup-env}
-    ports: ['127.0.0.1:5432:5432']
+    ports: ['127.0.0.1:${AIPI_DB_PORT:-5432}:5432']
     volumes:
       - primary-data:/var/lib/postgresql/data
       - ../postgres/init-primary.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
@@ -44,13 +46,15 @@ services:
       timeout: 3s
       retries: 30
   postgres-replica:
+    init: true
+    stop_grace_period: 60s
     image: postgres:16
     entrypoint: [bash, /replica-entrypoint.sh]
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run make setup-env}
       REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:?run make setup-env}
       PGDATA: /var/lib/postgresql/data
-    ports: ['127.0.0.1:5433:5432']
+    ports: ['127.0.0.1:${AIPI_REPLICA_PORT:-5433}:5432']
     volumes:
       - replica-data:/var/lib/postgresql/data
       - ../postgres/replica-entrypoint.sh:/replica-entrypoint.sh:ro
@@ -83,12 +87,12 @@ services:
       MODEL_NAME: ${MODEL_NAME:-deterministic-mock}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       REDACT_EMAILS: ${REDACT_EMAILS:-true}
-    ports: ['127.0.0.1:8000:8000']
+    ports: ['127.0.0.1:${AIPI_API_PORT:-8000}:8000']
     depends_on:
       migrate: {condition: service_completed_successfully}
   scorer:
     <<: *python
-    image: aipi-scorer:local
+    image: ${COMPOSE_PROJECT_NAME:-aipi}-scorer:local
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.python
@@ -107,7 +111,7 @@ services:
     image: otel/opentelemetry-collector-contrib:0.123.0
     command: [--config=/etc/otelcol/config.yml]
     volumes: ['../otel/collector.yml:/etc/otelcol/config.yml:ro']
-    ports: ['127.0.0.1:4318:4318', '127.0.0.1:13133:13133']
+    ports: ['127.0.0.1:${AIPI_COLLECTOR_PORT:-4318}:4318', '127.0.0.1:${AIPI_COLLECTOR_HEALTH_PORT:-13133}:13133']
     depends_on:
       api: {condition: service_healthy}
   gateway:
@@ -115,7 +119,7 @@ services:
     environment:
       <<: *otel-env
       SERVICE_NAME: gateway
-    ports: ['127.0.0.1:8080:8000']
+    ports: ['127.0.0.1:${AIPI_GATEWAY_PORT:-8080}:8000']
     depends_on:
       checkout-api: {condition: service_healthy}
       orders-api: {condition: service_healthy}
@@ -153,6 +157,7 @@ services:
     environment:
       <<: *otel-env
       SERVICE_NAME: event-watcher
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-aipi}
   traffic:
     <<: *demo
     profiles: [traffic]
@@ -160,10 +165,11 @@ services:
       <<: *otel-env
       SERVICE_NAME: traffic
       TRAFFIC_SEED: ${TRAFFIC_SEED:-42}
-      TRAFFIC_RPS: ${TRAFFIC_RPS:-2}
+      TRAFFIC_RPS: ${TRAFFIC_RPS:-1}
     depends_on:
       gateway: {condition: service_healthy}
   web:
+    image: ${COMPOSE_PROJECT_NAME:-aipi}-web:local
     depends_on:
       api: {condition: service_healthy}
     environment:
@@ -171,7 +177,7 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.web
-    ports: ['127.0.0.1:5173:5173']
+    ports: ['127.0.0.1:${AIPI_WEB_PORT:-5173}:5173']
     healthcheck:
       test: [CMD, node, -e, "fetch('http://localhost:5173/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 5s

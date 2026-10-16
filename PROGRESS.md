@@ -3,10 +3,10 @@
 > Source of truth for "where are we and where is it broken".
 > Codex: update this file at the END of every phase and every time a command fails. Follow this format exactly. Never mark anything done unless you ran the verification command and saw it pass. Paste real command output (trimmed), not summaries.
 
-**Last updated:** 2026-10-14 22:20 IST
-**Current phase:** M6 Dashboard DONE (gate passed)
-**Next action:** M7 Polish when requested
-**Overall:** 6 / 7 phases complete
+**Last updated:** 2026-10-17 03:43 IST
+**Current phase:** M7 Polish DONE (isolated fresh-clone gate passed)
+**Next action:** No further build phase. Preserve the original main replica; any F052 reseed requires separate authorization. Do not push.
+**Overall:** 7 / 7 phases complete
 **Docker available:** yes — Docker Desktop aarch64; daemon access requires sandbox escalation
 **LLM provider:** mock
 
@@ -23,8 +23,8 @@ Status values: `NOT STARTED` · `IN PROGRESS` · `BLOCKED` · `PARTIAL` · `DONE
 | M3 | Incident Core | DONE (gate passed) | `make test`, `make lint`; live incident replay/isolation tests | 71 Python + 1 web passed; full-scope rules invariant to cap; metric summaries, type floors and stable IDs | `60790a4`; prioritization `b98c640`; refinement `37c8acc` |
 | M4 | Agents + Tools + Report | DONE (gate passed) | `make test`, `make lint`; synthetic goldens and live reports | 102 Python + 1 web; 18 live tests, none skipped; both scoped mock reports valid | M4a `afba25f`; M4b `5de61e4` |
 | M5 | Evaluation | DONE (gate passed) | `make eval`, `make record-golden`, `make test`, `make lint` | 123 Python + 1 web; 22 live tests; six repeated live reports passed final gate, variance recorded | `4a95ed9` |
-| M6 | Dashboard | DONE (gate passed) | `make test`, `make lint`, `make up`; live UI gate | 128 Python + 26 web verified; 22 live tests; real browser incident-to-recorded-evaluation passed | feat(M6) in this commit |
-| M7 | Polish | NOT STARTED | fresh-clone run of README | — | — |
+| M6 | Dashboard | DONE (gate passed) | `make test`, `make lint`, `make up`; live UI gate | 128 Python + 26 web verified; 22 live tests; real browser incident-to-recorded-evaluation passed | `9e9a840` |
+| M7 | Polish | DONE (gate passed) | fresh-clone README; two consecutive `make test`; lint/actionlint/full-history scan | 140 Python + 26 UI twice; 24 live tests each; original replica preserved (F052) | `feat(M7)` phase commit |
 
 ---
 
@@ -647,17 +647,159 @@ live events do not include that field, so no per-event durations are invented.
 Actual overall latency, tokens and cost are shown from investigation metadata.
 The full backend suite was not repeated for this frontend-only presentation change;
 the complete updated frontend suite, build, healthy container and real trace UI
-were verified. Final source scan includes this refinement. M7 remains unstarted.
+were verified. The M6 source scan included that refinement; M7 had not started at that checkpoint.
 
 ### M7 Polish
-- [ ] README (quickstart, architecture, demo script)
-- [ ] docs/ (ARCHITECTURE, API, TELEMETRY, EVALUATION, SECURITY, DEPLOYMENT, DECISIONS, DEMO_GUIDE)
-- [ ] `make demo`, CI complete (gitleaks, hallucination gate, smoke test)
-- [ ] **GATE:** fresh clone works exactly as documented
+- [x] README — actual topology, generated private .env setup, isolated-port variant, warm demo, safety, qualified M5 results and limitations
+- [x] docs/ — current implementation references completed; threat table and ADR-001…023; original numbered specs explicitly labeled historical requirements
+- [x] `make demo` and CI — fresh clone real incident/investigation/recorded score + 3 golden gates passed; local actionlint and full-history scanner passed; GitHub CI not run
+- [x] **GATE:** README clone/setup/demo passed with new credentials/project/ports; current source matched tested clone (173 non-document files)
+
+- [x] Test hygiene — exact source IDs + unique markers in finally; controlled failure/sentinel proof; legacy future-row before/after recorded
+- [x] Replay timeout — 90 seconds with job ID/status/elapsed diagnostics
+- [x] Push readiness — ignored secrets/dependencies/caches, MIT, two 7.524 MB fixtures retained with rationale; maximum historical blob 7,524,096 bytes; no 100 MB blobs
+- [x] Two consecutive final `make test` runs and final lint — 140 Python + 26 UI each; 355.71s / 383.50s Python; 24 live Docker tests each, none skipped
+
+Initial README fresh-clone output (2026-10-17 IST):
+
+```text
+clone: /tmp/aipi-m7-clone.59TjeJ/aipi (HEAD 9e9a840 + non-ignored candidate overlay)
+Python 3.12.0; uv 0.11.21; node v25.9.0
+make setup-env: Created private .env with generated lab credentials
+make setup: frozen workspace installed; npm added 254 packages; 0 vulnerabilities
+make demo: project aipi-fresh-check, ports 15432/15433/18000/18080/15173/14318/23133
+all Compose services healthy; all images inspected linux/arm64
+run d09b059c-1278-436a-abf3-0d759cb05a6d passed=true recovery_status=verified
+die 2026-10-16T20:53:58.008488Z exit_code=137 -> start 20:54:06.411873Z
+67 foreground gateway 5xx; 266 failed spans; 86 error logs; 503 counter +86
+Incident ID: be582099-c886-409f-a4fc-bb62ad7dae80
+UI URL: http://127.0.0.1:15173/#/incidents/be582099-c886-409f-a4fc-bb62ad7dae80
+investigation d5785365-f04f-4db7-b14f-8d047dd05d17 completed, persisted latency 7714.169086 ms
+evaluation de7253e5-2900-4d63-948a-ddc19c43304d passed=true
+Top-1/Top-3/precision/coverage/contradiction=1; unsupported=0; 446/446 pairs supported
+scn-001 Top-1=100% Top-3=100% precision=100.00% unsupported=0.00% latency=8486.23ms passed=True
+scn-002 Top-1=100% Top-3=100% precision=100.00% unsupported=0.00% latency=1428.13ms passed=True
+poisoned-log Top-1=100% Top-3=100% precision=100.00% unsupported=0.00% latency=3998.41ms passed=True
+```
+
+This is a separate smoke measurement, not a replacement for section 6's n=3
+experiment. No existing .env or volume was copied into the clone. Main volumes
+were retained when stopping its project; fresh clone resources use another project.
+The final candidate additionally validates every demo API response with the
+existing Pydantic contracts and prints an incident URL without an unused tab query.
+Its second demo also passed: incident f9d05374-ad06-4b08-8958-d7fb90762474,
+investigation 31dc11d3-a4a8-4858-a9bf-babdae8a7752, evaluation
+5871e18a-dddb-4000-9b00-de758554f9a9; 402/402 supported citation pairs, zero
+unsupported claims, persisted investigation latency 4987.098961 ms. The final
+golden replay latencies were 4363.94 / 2858.13 / 4131.30 ms, all passed.
+
+First consecutive isolated final run: `133 passed in 395.35s (0:06:35)`;
+Vitest `4 passed (4)` files, `26 passed (26)`, duration 1.07s. All 23 Docker
+integration tests passed, none skipped. Second consecutive run failed (F050); this does not count as a two-pass gate.
+
+```text
+Targeted test hygiene + golden replay: 5 passed, 6 deselected in 17.35s
+Controlled failure cleanup: 4 owned rows removed; unrelated sentinel retained
+make lint: All checks passed!; 148 files already formatted;
+  Success: no issues found in 66 source files; ESLint + tsc exit 0
+offline mock suite: 110 passed, 23 deselected in 210.35s
+actionlint 1.7.7: exit 0 (GitHub CI has NOT run)
+gitleaks 8.24.2 full history --log-opts=--all: 12 commits, 20.20 MB, no leaks found
+candidate non-ignored source scan: 20.05 MB, no leaks found
+largest tracked/historical blob: 7,524,096 bytes (poisoned-log.json); 0 >=100 MB
+tracked environment files: .env.example only; original .env checksum: OK
+```
+
+Final M7 gate (current source; prior candidate failures above are retained honestly):
+
+```text
+clone /tmp/aipi-m7-release-clone.OfjsPE/aipi
+project aipi-fresh-check-1792187061; new .env generated; original .env checksum OK
+make setup-env / make setup / make demo: exit 0
+live demo incident 9eab8cfe-f38f-4b97-aa64-c74712bd0757
+investigation 0d1e3e90-4eb5-4575-841c-d6f7a8196aef, persisted latency 4842.606586 ms
+evaluation b8aa2f3f-b18d-4869-8909-2fba6689a92b: passed; 342/342 supported pairs
+Top-1/Top-3/precision/coverage/contradiction=1; unsupported=0; failures=[]
+golden SCN-001 / SCN-002 / poison: all passed (5816.52 / 1747.64 / 5317.31 ms)
+focused live evidence: 2 passed in 105.37s; requests 1.21s / 0.31s; IDs/rules stable
+make test #1: 140 passed in 355.71s; Vitest 4 files / 26 tests passed in 2.68s
+make test #2: 140 passed in 383.50s; Vitest 4 files / 26 tests passed in 1.68s
+  24 Docker tests each, none skipped; consecutive, no source/cache changes between
+make lint: All checks passed!; 151 files already formatted;
+  Success: no issues found in 66 source files; ESLint and tsc exit 0
+actionlint 1.7.7: exit 0; GitHub CI has NOT run
+full-history gitleaks --log-opts=--all: 12 pre-phase commits / 20.20 MB / no leaks
+final non-ignored candidate scan: 20.24 MB / no leaks
+native project api/scorer/web images: linux/arm64
+both PG containers init=true; wal_keep_size=512MB; crash-recovery events=0 / 0
+current code/data/config versus tested clone: 173 files, differences=[]
+current documentation local links: PASS; git diff --check: exit 0
+```
+
+Exact logs are under docs/verification/m7. These are local mock software gates;
+section 6's historical n=3-per-scenario experiment is unchanged. F052 is outside
+this isolated gate: the original standby requests an evicted WAL segment. No
+original volume was reset/removed and no .env was regenerated. Its separate plan
+is in docs/verification/m7/replica-recovery-plan.md and requires new permission
+before a replica-only reseed. This does not claim the old lab is healthy.
 
 ---
 
 ## 3. FAILURE LOG (newest first)
+
+### F053 — Ingest throughput and second-run live timeouts
+- **Status:** RESOLVED — final 140 Python + 26 UI suites passed twice consecutively
+- **Command:** second final-clone `make test`
+- **Error:** SCN-001 `/evidence` HTTP read timeout at 20s; SCN-002 recovery failed; Collector logged OTLP metrics/traces HTTP timeouts and retries. Interrupted already-failed run: 2 failed, 22 passed in 370.43s. No new PostgreSQL orphan-crash events in the diagnostic interval.
+- **Fix:** bounded true bulk INSERTs (500 rows), preserve shape/order/idempotency and transaction atomicity; nominal default background workload 1 cycle/s; foreground fault probes and all evidence/rule assertions unchanged. The live evidence HTTP budget matches the UI (60s), printing actual elapsed time even on failure; SQL statement limits unchanged. Recovery errors now retain safe ChaosError details.
+- **Verification:** 14 targeted storage/chaos unit tests passed, including real SQL batching/first-value/rollback tests. Final reruns use fail-fast diagnostics without reducing passing-suite coverage. The focused post-batching regression passed both real scenarios in 105.37s: evidence HTTP 1.21s / 0.31s, full-scope rules invariant, 50 IDs identical on repeat. Host memory diagnostics measured 8 GiB RAM and ~7.5 GiB swap use; one-time clean VM page-cache release reduced Cached from ~4.3 GiB to ~0.7 GiB without deleting files or changing persistent settings. Host recovery client budget is 15s, SQL limits unchanged.
+- **Files:** TelemetryStore, default traffic configuration/example, recovery diagnostics, bulk SQL tests, ADR-023.
+
+
+### F052 — Retained replica requires an authorized reseed
+- **Status:** OPEN — existing-volume constraint; no reset performed
+- **Command:** restored main `make test`; read-only LSN/receiver diagnostics
+- **Error:** `requested WAL segment 0000000100000004000000F5 has already been removed`; receiver empty, replay backlog 89,969,640 bytes, replay age ~1942s. Tools could not observe a WAL receiver and new orders could not become visible within 30 seconds.
+- **Cause:** retained standby missed WAL during earlier interruptions; restarting/resuming cannot recover a removed segment. Both PG containers now have init=true and the live orphan test passed (1 passed in 4.52s), with no new orphan crashes observed.
+- **Fix prepared:** primary now retains 512 MB WAL for bounded interruptions; existing stale replica needs a new base backup. Do not reset/reseed its retained volume without explicit authorization. Preserve the main project stopped and perform final software gates in a new isolated clone/project.
+- **Files:** Compose retention, infra contract, DEPLOYMENT / ADR-022. No existing .env or volume reset.
+
+
+### F051 — PostgreSQL PID-1 adoption causes spurious crash recovery
+- **Status:** RESOLVED — init enabled; both final suites had zero crash-recovery events
+- **Command:** full suite after F050; targeted Docker logs; disposable tmpfs reproduction
+- **Error:** replica `server process ... terminated by signal 13: Broken pipe`; primary previously `server process ... exited with exit code 2`. PostgreSQL was PID 1; OOMKilled=false and only ~20 database connections.
+- **Cause / fix:** a failing orphan health client is adopted by PostgreSQL PID 1 and treated as a crashed database child. Add Docker init:true to both PG containers and 60s graceful shutdown; no data reset. A separate tmpfs container reproduced orphan exit 2 causing crash recovery. Strengthen regression to keep one SQL backend connection alive across the orphan exit (postmaster start time is insufficient).
+- **Files:** Compose, infra contracts, live session survival test, ADR-022 / DEPLOYMENT.
+- **Reproduction:** two network-none/tmpfs containers, no persistent volume: init=false → new_crash_recoveries=1; init=true → 0. PostgreSQL postmaster start time was identical in both, confirming why the regression must hold a real backend session. Current retry interrupted after already-failed cases (`2 failed, 21 passed in 282.84s`); the restored main attempt exposed F052; final gates passed in the isolated project.
+
+
+### F050 — M7 second isolated run: connection handshake and sparse lag symptoms
+- **Status:** RESOLVED — both focused cases and final repeated full suites passed
+- **Command:** second consecutive `make test` in aipi-fresh-check
+- **Error:** SCN-001 `Lab database unavailable`; SCN-002 `ErrorSpikeRule` absent. Interrupted after recovered faults to inspect failures: `2 failed, 22 passed in 236.23s`.
+- **Cause / fix:** no PostgreSQL crash reported in that interval. Add exception type/SQLSTATE without driver text and a bounded 10-second host handshake (SQL remains 5s). SCN-002 formerly probed only one stale order, so its error/latency spike depended on background scheduling. Probe all ten fresh orders and require actual 404s, then retain ten seconds of primary health samples. No correlator threshold or scope change.
+- **Files:** Lab connector, SCN-002 runner, host connection redaction and foreground symptom tests; ADR-021 / CHAOS docs.
+- **Verification:** 17 targeted unit tests passed after correcting the new test stub's required Order fields; both real evidence regressions then passed in 103.65s. SCN-001 rules ProcessExitRule/ErrorSpikeRule; SCN-002 ErrorSpikeRule/ReplicaLagRule/DownstreamTimeoutRule/PrimaryHealthRule. All 50 IDs identical on repeat; recovery verified for both. That candidate had 137 Python cases; the final 140-case gate is recorded above.
+
+
+### F049 — M7 restart before the new web image was built
+- **Status:** RESOLVED (make up rebuilt images; targeted tests passed)
+- **Command:** `docker compose ... up -d --no-build --wait`
+- **Error:** `No such image: aipi-web:local` after naming the image explicitly for project isolation.
+- **Cause / fix:** old image used the Compose-generated tag; build the candidate images with `make up` before restarting or verifying tests.
+- **Files:** `infra/docker/compose.yml`
+- **Verification:** early targeted retry ran during the rebuild (4 HTTP failures, 1 cleanup proof passed); after health, the same target passed all 5 tests in 17.35s.
+
+
+### F048 — M7 baseline database outage / audit invocation
+- **Status:** RESOLVED for source defect via F051; retained missing-WAL state remains separately OPEN in F052
+- **Command:** `make test`; `uv run python scripts/cleanup_legacy_synthetic.py`
+- **Error:** `13 failed, 115 passed in 435.56s`; PostgreSQL `server process exited with exit code 2`, then `database system is not yet accepting connections`. Direct script invocation could not import `chaos`.
+- **Cause:** PostgreSQL server interruption during baseline; underlying exit cause unconfirmed. Automatic WAL recovery completed without a reset. Audit initially used a full-table count; now constrained by indexed service/time predicates.
+- **Tried / fix:** paused producers/reconnecting applications during recovery; resumed existing volumes. Run host scripts with `python -m scripts...`. No audit deletion succeeded during outage. Exact one-time cleanup then removed 3523 logs, 1392 events, 116 metrics and 28 spans; after counts all zero.
+- **Files:** synthetic test teardown and `scripts/cleanup_legacy_synthetic.py`; no credential or volume reset.
+- **Follow-up:** full retry interrupted after 6 failed / 11 passed in 212.13s when retained PostgreSQL again entered recovery (backend exit code 2); no second success claimed. Offline mock suite independently passed 110 tests (23 Docker tests deselected) in 210.35s. Main project stopped with volumes retained to run the isolated fresh-clone gate alone; host Data volume had 7.7–7.8 GiB free. The later controlled diagnosis is in F051 (PID-1 orphan adoption).
 
 Add an entry whenever a command, test, or build fails and is not fixed immediately. Keep it until resolved, then mark `RESOLVED` (don't delete).
 
@@ -1039,6 +1181,9 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 | 8 | 2026-10-14 | Six-node validated LangGraph, background jobs/SSE, immutable artifacts/provenance and full witness citations; Reporter preserves verified confidence and non-mutating checks | Inspectable execution and scoped evidence resolution beyond the cap | ADR-018 |
 | 9 | 2026-10-14 | Separate scorer/credential-free replay child; bounded semantic gate; three live repeats per scenario, real fixtures with separate truth and preserved synthetic corpus | Keep ground truth out of agents/API, audit citation meaning, expose variance/misses honestly | ADR-019 |
 | 10 | 2026-10-14 | Same-origin dashboard proxy, resumable SSE and a separate terminal-only scorer disclosure endpoint | Keep API loopback-bound and truth exclusive to post-score evaluation, resolve full-scope citations in UI | ADR-020 |
+| 11 | 2026-10-17 | Project/port-isolated fresh-clone demo, exact marked source teardown, replay timeout diagnostics, full-history CI scan and retained large recorded JSON fixtures | Preserve existing lab credentials/volumes; verify documented setup without selection or truth leakage | ADR-021 |
+| 12 | 2026-10-17 | PostgreSQL init process and 512 MB WAL retention; original lost-WAL replica preserved for explicit recovery approval | Reproduced orphan-client crashes; retain bounded outage WAL without resetting retained data | ADR-022 |
+| 13 | 2026-10-17 | Bounded bulk ingest, order-preserving idempotency/atomicity tests, one-cycle background default and measured bounded HTTP waits | Avoid ingest backlog on the measured 8 GiB host while keeping every scenario/evidence assertion | ADR-023 |
 
 ---
 
@@ -1047,8 +1192,8 @@ Anything that differs from the master prompt or the docs. Mirror major ones in `
 List anything not run (e.g. Docker tests skipped because Docker is unavailable, live LLM adapters untested). Be explicit so nothing is assumed working.
 
 - GitHub-hosted CI was not executed; workflow passed local actionlint, YAML contract tests, and corresponding local build/test/Compose gates.
-- M5 recording and replay/scoring gates are verified locally with mock. M6 local browser flow is verified; M7 polish remains unstarted. Recorded root goldens replace synthetic bundles; the original corpus is retained for unit tests.
-- Fresh-clone verification remains the M7 gate; this machine's documented `make setup` and M0+M1 commands were verified.
+- M5/M6 historical mock/browser gates remain recorded. M7 final source passed the isolated README clone/demo and two consecutive complete suites; original synthetic fixtures remain for unit tests.
+- Fresh-clone verification uses HEAD plus the uncommitted candidate overlay so no phase commit precedes its gate; see docs/verification/m7. Original main replica reseeding was NOT performed: F052 requires a new base backup after missing WAL, and the user forbids touching existing volumes. Main remains stopped/preserved. The passing M7 gate uses separate new project volumes.
 - Optional paid LLM providers remain unimplemented/untested; no API key used. M5 results measure the deterministic mock on two curated scenarios, three live repeats each; they do not measure general natural-language claim entailment or production incidents.
 
 ---
@@ -1086,6 +1231,10 @@ and any miss arrays are in docs/verification/m5/live-summary.json.
 ---
 
 ## 7. LOG (append one line per work session, newest first)
+
+`2026-10-17 03:43 IST | M7 | Exact synthetic cleanup/failure teardown; bounded safe diagnostics; README + current docs/ADRs; real demo and isolated ports; PID-1 reaping/WAL retention; bulk ingest/default 1 cycle; complete mock CI definition/local gates | 140 Python + 26 UI twice, 24 live each, lint/types/actionlint/full-history scan passed; clone demo 342/342 pairs; original .env unchanged and all original volumes retained; main lost-WAL replica F052 not reseeded | Commit feat(M7); no push; GitHub CI unrun`
+
+
 
 `2026-10-14 22:20 IST | M6 | Incident list/form and scoped detail tabs, outside-bundle drawer, Markdown export, resumable SSE, runtime API validation and request-ID errors; separate terminal-only scorer truth disclosure; native date submission fixed from browser feedback | 128 Python + 26 web verified, 22 live tests; real kill -> UI create/investigate/report/export -> recorded evaluation passed, 333 resolved cites / 313 outside; lint/build and arm64 health/secret scan passed; .env unchanged | M7 not started`
 

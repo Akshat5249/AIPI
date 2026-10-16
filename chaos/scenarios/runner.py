@@ -97,7 +97,9 @@ def run_scenario(spec: ScenarioSpec, inject: Step, recover: Step, verify: Step) 
                             recovery_status = "verified"
                         except BaseException as exc:
                             recovery_status = "failed"
-                            error = "Recovery failed: " + type(exc).__name__
+                            error = "Recovery failed: " + (
+                                str(exc) if isinstance(exc, ChaosError) else type(exc).__name__
+                            )
                 if error is None:
                     try:
                         verify(lab, run)

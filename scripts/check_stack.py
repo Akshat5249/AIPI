@@ -3,11 +3,14 @@
 import time
 import urllib.request
 
+from chaos.scenarios.target import LabTarget
+
+target = LabTarget.from_env()
 for url in (
-    "http://localhost:8000/readyz",
-    "http://localhost:8080/readyz",
-    "http://localhost:5173/healthz",
-    "http://localhost:13133/",
+    target.api + "/readyz",
+    f"http://127.0.0.1:{target.gateway_port}/readyz",
+    target.web + "/healthz",
+    f"http://127.0.0.1:{target.collector_health_port}/",
 ):
     for attempt in range(30):
         try:

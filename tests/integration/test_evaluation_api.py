@@ -11,6 +11,7 @@ import pytest
 from aipi_evaluation.contracts import EvaluationJob
 
 from chaos.scenarios.lab import Lab
+from chaos.scenarios.target import LabTarget
 from tests.integration.test_incidents import API, admin
 
 pytestmark = pytest.mark.docker
@@ -23,11 +24,21 @@ def test_golden_replay_api_and_persisted_metrics(scenario):
         assert response.status_code == 202, response.text
         job = EvaluationJob.model_validate(response.json())
         assert job.status == "queued"
-        deadline = time.monotonic() + 30
+        started = time.monotonic()
+        deadline = started + 90
         while job.status in {"queued", "running"} and time.monotonic() < deadline:
             time.sleep(0.1)
             job = EvaluationJob.model_validate(client.get(f"/api/evaluations/{job.id}").json())
-        assert job.status == "completed" and job.scorecard and job.scorecard.passed
+        elapsed = time.monotonic() - started
+        if job.status in {"queued", "running"}:
+            print(
+                f"REPLAY TIMEOUT scenario={scenario} job={job.id} status={job.status} "
+                f"elapsed={elapsed:.2f}s deadline=90s",
+                flush=True,
+            )
+        assert job.status == "completed" and job.scorecard and job.scorecard.passed, (
+            f"job={job.id} status={job.status} elapsed={elapsed:.2f}s"
+        )
         assert job.scorecard.scores.top1 == job.scorecard.scores.evidence_precision == 1
         public = job.model_dump_json()
         assert all(
@@ -88,6 +99,8 @@ def test_api_container_has_no_scorer_secret_or_truth_fixtures():
     command = [
         "docker",
         "compose",
+        "--project-name",
+        LabTarget.from_env().project,
         "--env-file",
         ".env",
         "-f",

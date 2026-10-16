@@ -20,9 +20,10 @@ from sqlalchemy.engine import URL
 from sqlalchemy.exc import ProgrammingError
 
 from chaos.scenarios.lab import ROOT, Lab
+from chaos.scenarios.target import LabTarget
 
 pytestmark = pytest.mark.docker
-API = "http://127.0.0.1:8000"
+API = LabTarget.from_env().api
 
 
 def url(lab, role):
@@ -35,7 +36,7 @@ def url(lab, role):
         username=role,
         password=lab.env[key],
         host="127.0.0.1",
-        port=5432,
+        port=lab.target.db_port,
         database="aipi",
     ).render_as_string(hide_password=False)
 
@@ -44,7 +45,7 @@ def admin(lab):
     try:
         return psycopg.connect(
             host="127.0.0.1",
-            port=5432,
+            port=lab.target.db_port,
             dbname="aipi",
             user="postgres",
             password=lab.env["POSTGRES_PASSWORD"],
@@ -92,7 +93,7 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
     assert command.returncode == 0, command.stdout
     observed = json.loads(command.stdout)
     end = datetime.now(UTC)
-    with httpx.Client(base_url=API, timeout=20) as client:
+    with httpx.Client(base_url=API, timeout=60) as client:
         current = create(client, start, end, service, related)
         path = f"/api/incidents/{current.id}"
         read_lab = Lab()
@@ -104,7 +105,15 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
         finally:
             uncapped_reader.engine.dispose()
             read_lab.close()
-        first_response = client.get(path + "/evidence")
+        retrieval_started = time.monotonic()
+        try:
+            first_response = client.get(path + "/evidence")
+        finally:
+            print(
+                f"EVIDENCE REQUEST incident={current.id} "
+                f"elapsed={time.monotonic() - retrieval_started:.2f}s deadline=60s",
+                flush=True,
+            )
         assert first_response.status_code == 200, first_response.text
         first = EvidenceBundle.model_validate(first_response.json())
         second = EvidenceBundle.model_validate(client.get(path + "/evidence").json())
@@ -255,11 +264,47 @@ def test_live_incident_evidence_replay_and_correlations(module, service, related
         )
 
 
-def test_scope_cap_late_arrivals_and_database_immutability():
+@pytest.fixture
+def synthetic_window(monkeypatch):
+    """Own synthetic rows by a unique marker; administrator cleanup also runs on failure."""
     lab = Lab()
     store = TelemetryStore(url(lab, "telemetry_writer"))
+    marker = uuid4().hex
+    created = {kind: [] for kind in ("logs", "events", "metrics", "traces")}
+    original_persist = store.persist
+
+    def persist(rows):
+        for kind, items in rows.items():
+            for item in items:
+                key = "trace_id" if kind == "traces" else "id"
+                created[kind].append(item[key])
+        return original_persist(rows)
+
+    monkeypatch.setattr(store, "persist", persist)
+    try:
+        yield lab, store, marker
+    finally:
+        try:
+            with admin(lab) as db, db.transaction():
+                for kind, table, column, key in (
+                    ("logs", "telemetry_logs", "attributes_json", "id"),
+                    ("events", "telemetry_events", "attributes_json", "id"),
+                    ("metrics", "telemetry_metrics", "labels_json", "id"),
+                    ("traces", "telemetry_spans", "attributes_json", "trace_id"),
+                ):
+                    # Exact source IDs plus the unique marker, including any late arrival.
+                    db.execute(
+                        f"DELETE FROM {table} WHERE {key}=ANY(%s) AND {column}->>'test_run'=%s",
+                        (created[kind], marker),
+                    )
+        finally:
+            store.engine.dispose()
+            lab.close()
+
+
+def test_scope_cap_late_arrivals_and_database_immutability(synthetic_window):
+    lab, store, prefix = synthetic_window
     stamp = datetime(2020, 1, 1, tzinfo=UTC) + timedelta(days=int(uuid4().hex[:4], 16))
-    prefix = uuid4().hex
     logs = [
         {
             "id": f"{prefix}-{index}",
@@ -267,7 +312,7 @@ def test_scope_cap_late_arrivals_and_database_immutability():
             "service": "api",
             "severity": "INFO",
             "body": "synthetic cap check",
-            "attributes_json": {"synthetic": True},
+            "attributes_json": {"synthetic": True, "test_run": prefix},
             "redactions": [],
         }
         for index in range(60)
@@ -286,7 +331,7 @@ def test_scope_cap_late_arrivals_and_database_immutability():
                     "service": "api",
                     "event_domain": "runtime",
                     "event_name": "start",
-                    "attributes_json": {},
+                    "attributes_json": {"test_run": prefix},
                     "redactions": [],
                 }
             ],
@@ -297,7 +342,7 @@ def test_scope_cap_late_arrivals_and_database_immutability():
                     "service": "api",
                     "metric_name": "test_gauge",
                     "value": 1,
-                    "labels_json": {},
+                    "labels_json": {"test_run": prefix},
                     "redactions": [],
                 }
             ],
@@ -310,98 +355,92 @@ def test_scope_cap_late_arrivals_and_database_immutability():
                     "status": "0",
                     "start_ts": stamp,
                     "duration_ms": 1,
-                    "attributes_json": {},
+                    "attributes_json": {"test_run": prefix},
                     "redactions": [],
                 }
             ],
         }
     )
-    try:
-        with httpx.Client(base_url=API, timeout=20) as client:
-            current = create(client, stamp, stamp + timedelta(seconds=60), "api")
-            path = f"/api/incidents/{current.id}"
-            assert client.get(path).json()["id"] == str(current.id)
-            assert any(
-                row["id"] == str(current.id)
-                for row in client.get("/api/incidents?service=api&status=open").json()
-            )
-            response = client.get(path + "/evidence")
-            assert response.status_code == 200, response.text
-            first = EvidenceBundle.model_validate(response.json())
-            assert len(first.items) == 50 and first.truncated
-            assert first.available_counts.model_dump() == {
-                "event": 1,
-                "metric": 1,
-                "log": 60,
-                "trace": 1,
-            }
-            assert first.dropped_counts.model_dump() == {
-                "event": 0,
-                "metric": 0,
-                "log": 13,
-                "trace": 0,
-            }
-            assert {item.type for item in first.items} == {"log", "metric", "trace", "event"}
-            assert all(
-                item.service == "api" and stamp <= item.timestamp <= current.end_time
-                for item in first.items
-            )
-            # Late arrival sorts before all original logs, but cannot alter the persisted snapshot.
-            store.persist({"logs": [{**logs[0], "id": prefix + "late", "severity": "ERROR"}]})
-            assert first == EvidenceBundle.model_validate(client.get(path + "/evidence").json())
-            for suffix in ("evidence", "timeline", "signals"):
-                denied = client.get(
-                    path + "/" + suffix,
-                    params={"service": "gateway"},
-                    headers={"X-Request-ID": "scope-denial"},
-                )
-                assert denied.status_code == 403
-                assert denied.json()["error"]["code"] == "SCOPE_POLICY_DENIED"
-                assert (
-                    denied.json()["error"]["request_id"]
-                    == denied.headers["x-request-id"]
-                    == "scope-denial"
-                )
+    with httpx.Client(base_url=API, timeout=20) as client:
+        current = create(client, stamp, stamp + timedelta(seconds=60), "api")
+        path = f"/api/incidents/{current.id}"
+        assert client.get(path).json()["id"] == str(current.id)
+        assert any(
+            row["id"] == str(current.id)
+            for row in client.get("/api/incidents?service=api&status=open").json()
+        )
+        response = client.get(path + "/evidence")
+        assert response.status_code == 200, response.text
+        first = EvidenceBundle.model_validate(response.json())
+        assert len(first.items) == 50 and first.truncated
+        assert first.available_counts.model_dump() == {
+            "event": 1,
+            "metric": 1,
+            "log": 60,
+            "trace": 1,
+        }
+        assert first.dropped_counts.model_dump() == {
+            "event": 0,
+            "metric": 0,
+            "log": 13,
+            "trace": 0,
+        }
+        assert {item.type for item in first.items} == {"log", "metric", "trace", "event"}
+        assert all(
+            item.service == "api" and stamp <= item.timestamp <= current.end_time
+            for item in first.items
+        )
+        # Late arrival sorts before all original logs, but cannot alter the persisted snapshot.
+        store.persist({"logs": [{**logs[0], "id": prefix + "late", "severity": "ERROR"}]})
+        assert first == EvidenceBundle.model_validate(client.get(path + "/evidence").json())
+        for suffix in ("evidence", "timeline", "signals"):
             denied = client.get(
-                path + "/evidence",
-                params={"start_time": (stamp - timedelta(seconds=1)).isoformat()},
+                path + "/" + suffix,
+                params={"service": "gateway"},
+                headers={"X-Request-ID": "scope-denial"},
             )
             assert denied.status_code == 403
-            narrow = client.get(
-                path + "/evidence",
-                params={"start_time": (stamp + timedelta(seconds=55)).isoformat()},
-            )
-            assert narrow.status_code == 200 and len(narrow.json()["items"]) == 5
-            assert narrow.json()["truncated"] is False
-        with admin(lab) as db:
+            assert denied.json()["error"]["code"] == "SCOPE_POLICY_DENIED"
             assert (
-                db.execute(
-                    "SELECT count(*) FROM scope_denials WHERE incident_id=%s", (current.id,)
-                ).fetchone()[0]
-                == 4
+                denied.json()["error"]["request_id"]
+                == denied.headers["x-request-id"]
+                == "scope-denial"
             )
-            for table in ("evidence", "evidence_bundles"):
-                with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
-                    db.execute(f"DELETE FROM {table} WHERE incident_id=%s", (current.id,))
-                with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
-                    db.execute(f"TRUNCATE {table} CASCADE")
+        denied = client.get(
+            path + "/evidence",
+            params={"start_time": (stamp - timedelta(seconds=1)).isoformat()},
+        )
+        assert denied.status_code == 403
+        narrow = client.get(
+            path + "/evidence",
+            params={"start_time": (stamp + timedelta(seconds=55)).isoformat()},
+        )
+        assert narrow.status_code == 200 and len(narrow.json()["items"]) == 5
+        assert narrow.json()["truncated"] is False
+    with admin(lab) as db:
+        assert (
+            db.execute(
+                "SELECT count(*) FROM scope_denials WHERE incident_id=%s", (current.id,)
+            ).fetchone()[0]
+            == 4
+        )
+        for table in ("evidence", "evidence_bundles"):
             with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
-                db.execute(
-                    "UPDATE evidence SET summary='rewrite' WHERE incident_id=%s", (current.id,)
-                )
-        with lab.connect("investigator_ro") as db:
-            for query in (
-                "UPDATE evidence SET summary='x'",
-                "DELETE FROM incidents",
-                "INSERT INTO scope_denials(id) VALUES (gen_random_uuid())",
+                db.execute(f"DELETE FROM {table} WHERE incident_id=%s", (current.id,))
+            with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
+                db.execute(f"TRUNCATE {table} CASCADE")
+        with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
+            db.execute("UPDATE evidence SET summary='rewrite' WHERE incident_id=%s", (current.id,))
+    with lab.connect("investigator_ro") as db:
+        for query in (
+            "UPDATE evidence SET summary='x'",
+            "DELETE FROM incidents",
+            "INSERT INTO scope_denials(id) VALUES (gen_random_uuid())",
+        ):
+            with pytest.raises(
+                (psycopg.errors.InsufficientPrivilege, psycopg.errors.ReadOnlySqlTransaction)
             ):
-                with pytest.raises(
-                    (psycopg.errors.InsufficientPrivilege, psycopg.errors.ReadOnlySqlTransaction)
-                ):
-                    db.execute(query)
-    finally:
-        store.engine.dispose()
-        lab.close()
+                db.execute(query)
 
 
 def test_ground_truth_unreachable_from_api_role_and_retrieval():
@@ -510,108 +549,197 @@ def test_live_incident_validation_and_error_request_ids():
         assert missing.status_code == 404 and missing.json()["error"]["code"] == "NOT_FOUND"
 
 
-def test_live_sql_ranking_preserves_oldest_decisive_evidence_in_crowded_window():
-    lab = Lab()
-    store = TelemetryStore(url(lab, "telemetry_writer"))
+def test_live_sql_ranking_preserves_oldest_decisive_evidence_in_crowded_window(synthetic_window):
+    lab, store, prefix = synthetic_window
     stamp = datetime(2021, 1, 1, tzinfo=UTC) + timedelta(days=int(uuid4().hex[:4], 16))
-    prefix = uuid4().hex
+    store.persist(
+        {
+            "logs": [
+                {
+                    "id": f"{prefix}-log-{i:03}",
+                    "ts": stamp + timedelta(seconds=i + 1),
+                    "service": "checkout-api",
+                    "severity": "INFO",
+                    "body": "synthetic noise",
+                    "attributes_json": {"synthetic": True, "test_run": prefix},
+                    "redactions": [],
+                }
+                for i in range(80)
+            ],
+            "events": [
+                {
+                    "id": prefix + "-a-die",
+                    "ts": stamp,
+                    "service": "checkout-api",
+                    "event_domain": "runtime",
+                    "event_name": "die",
+                    "attributes_json": {"exit_code": "137", "synthetic": True, "test_run": prefix},
+                    "redactions": [],
+                },
+                {
+                    "id": prefix + "-z-start",
+                    "ts": stamp,
+                    "service": "checkout-api",
+                    "event_domain": "runtime",
+                    "event_name": "start",
+                    "attributes_json": {"synthetic": True, "test_run": prefix},
+                    "redactions": [],
+                },
+            ]
+            + [
+                {
+                    "id": f"{prefix}-heartbeat-{i:03}",
+                    "ts": stamp + timedelta(seconds=i + 1),
+                    "service": "checkout-api",
+                    "event_domain": "runtime",
+                    "event_name": "heartbeat",
+                    "attributes_json": {"synthetic": True, "test_run": prefix},
+                    "redactions": [],
+                }
+                for i in range(60)
+            ],
+            "metrics": [
+                {
+                    "id": prefix + name,
+                    "ts": stamp,
+                    "service": "pg-lag-probe",
+                    "metric_name": name,
+                    "value": number,
+                    "labels_json": {"synthetic": True, "test_run": prefix},
+                    "redactions": [],
+                }
+                for name, number in (
+                    ("replica_lag_seconds", 8),
+                    ("replica_replay_paused", 1),
+                    ("replica_lag_bytes", 512),
+                    ("primary_healthy", 1),
+                )
+            ],
+        }
+    )
+    with httpx.Client(base_url=API, timeout=20) as client:
+        current = create(
+            client, stamp, stamp + timedelta(seconds=90), "checkout-api", ("pg-lag-probe",)
+        )
+        path = f"/api/incidents/{current.id}/evidence"
+        response = client.get(path)
+        assert response.status_code == 200, response.text
+        first = EvidenceBundle.model_validate(response.json())
+        assert first == EvidenceBundle.model_validate(client.get(path).json())
+        assert len(first.items) == 50 and first.truncated
+        assert [item.payload["event_name"] for item in first.items[:2]] == ["die", "start"]
+        assert {item.payload["metric_name"] for item in first.items[2:6]} == {
+            "replica_lag_seconds",
+            "replica_replay_paused",
+            "replica_lag_bytes",
+            "primary_healthy",
+        }
+        assert all(item.timestamp == stamp for item in first.items[:6])
+        assert first.available_counts.model_dump() == {
+            "event": 62,
+            "metric": 4,
+            "log": 80,
+            "trace": 0,
+        }
+        assert first.dropped_counts.model_dump() == {
+            "event": 38,
+            "metric": 0,
+            "log": 58,
+            "trace": 0,
+        }
+        assert ReplicaLagRule.apply(first.items) and PrimaryHealthRule.apply(first.items)
+
+
+def test_synthetic_cleanup_on_failure_preserves_unrelated_rows(monkeypatch):
+    """Exercise failure teardown and a same-window sentinel, using actual admin permissions."""
+    generator = synthetic_window.__wrapped__(monkeypatch)
+    lab, store, marker = next(generator)
+    sentinel = uuid4().hex
+    stamp = datetime(2191, 1, 1, tzinfo=UTC)
+    rows = {
+        "logs": [
+            {
+                "id": marker,
+                "ts": stamp,
+                "service": "api",
+                "severity": "INFO",
+                "body": "teardown proof",
+                "attributes_json": {"test_run": marker},
+                "redactions": [],
+            }
+        ],
+        "events": [
+            {
+                "id": marker,
+                "ts": stamp,
+                "service": "api",
+                "event_domain": "runtime",
+                "event_name": "start",
+                "attributes_json": {"test_run": marker},
+                "redactions": [],
+            }
+        ],
+        "metrics": [
+            {
+                "id": marker,
+                "ts": stamp,
+                "service": "api",
+                "metric_name": "test_gauge",
+                "value": 1,
+                "labels_json": {"test_run": marker},
+                "redactions": [],
+            }
+        ],
+        "traces": [
+            {
+                "trace_id": marker,
+                "span_id": marker[:16],
+                "service": "api",
+                "operation": "teardown proof",
+                "status": "0",
+                "start_ts": stamp,
+                "duration_ms": 1,
+                "attributes_json": {"test_run": marker},
+                "redactions": [],
+            }
+        ],
+    }
     try:
+        store.persist(rows)
+        # The sentinel shares timestamp/service/body, but belongs to a different run.
         store.persist(
             {
                 "logs": [
-                    {
-                        "id": f"{prefix}-log-{i:03}",
-                        "ts": stamp + timedelta(seconds=i + 1),
-                        "service": "checkout-api",
-                        "severity": "INFO",
-                        "body": "synthetic noise",
-                        "attributes_json": {"synthetic": True},
-                        "redactions": [],
-                    }
-                    for i in range(80)
-                ],
-                "events": [
-                    {
-                        "id": prefix + "-a-die",
-                        "ts": stamp,
-                        "service": "checkout-api",
-                        "event_domain": "runtime",
-                        "event_name": "die",
-                        "attributes_json": {"exit_code": "137", "synthetic": True},
-                        "redactions": [],
-                    },
-                    {
-                        "id": prefix + "-z-start",
-                        "ts": stamp,
-                        "service": "checkout-api",
-                        "event_domain": "runtime",
-                        "event_name": "start",
-                        "attributes_json": {"synthetic": True},
-                        "redactions": [],
-                    },
+                    {**rows["logs"][0], "id": sentinel, "attributes_json": {"test_run": sentinel}}
                 ]
-                + [
-                    {
-                        "id": f"{prefix}-heartbeat-{i:03}",
-                        "ts": stamp + timedelta(seconds=i + 1),
-                        "service": "checkout-api",
-                        "event_domain": "runtime",
-                        "event_name": "heartbeat",
-                        "attributes_json": {"synthetic": True},
-                        "redactions": [],
-                    }
-                    for i in range(60)
-                ],
-                "metrics": [
-                    {
-                        "id": prefix + name,
-                        "ts": stamp,
-                        "service": "pg-lag-probe",
-                        "metric_name": name,
-                        "value": number,
-                        "labels_json": {"synthetic": True},
-                        "redactions": [],
-                    }
-                    for name, number in (
-                        ("replica_lag_seconds", 8),
-                        ("replica_replay_paused", 1),
-                        ("replica_lag_bytes", 512),
-                        ("primary_healthy", 1),
-                    )
-                ],
             }
         )
-        with httpx.Client(base_url=API, timeout=20) as client:
-            current = create(
-                client, stamp, stamp + timedelta(seconds=90), "checkout-api", ("pg-lag-probe",)
+        with pytest.raises(AssertionError, match="controlled failure"):
+            generator.throw(AssertionError("controlled failure"))
+        with admin(lab) as db:
+            for table, key in (
+                ("logs", "id"),
+                ("events", "id"),
+                ("metrics", "id"),
+                ("spans", "trace_id"),
+            ):
+                assert (
+                    db.execute(
+                        f"SELECT count(*) FROM telemetry_{table} WHERE {key}=%s", (marker,)
+                    ).fetchone()[0]
+                    == 0
+                )
+            assert (
+                db.execute(
+                    "SELECT count(*) FROM telemetry_logs WHERE id=%s", (sentinel,)
+                ).fetchone()[0]
+                == 1
             )
-            path = f"/api/incidents/{current.id}/evidence"
-            response = client.get(path)
-            assert response.status_code == 200, response.text
-            first = EvidenceBundle.model_validate(response.json())
-            assert first == EvidenceBundle.model_validate(client.get(path).json())
-            assert len(first.items) == 50 and first.truncated
-            assert [item.payload["event_name"] for item in first.items[:2]] == ["die", "start"]
-            assert {item.payload["metric_name"] for item in first.items[2:6]} == {
-                "replica_lag_seconds",
-                "replica_replay_paused",
-                "replica_lag_bytes",
-                "primary_healthy",
-            }
-            assert all(item.timestamp == stamp for item in first.items[:6])
-            assert first.available_counts.model_dump() == {
-                "event": 62,
-                "metric": 4,
-                "log": 80,
-                "trace": 0,
-            }
-            assert first.dropped_counts.model_dump() == {
-                "event": 38,
-                "metric": 0,
-                "log": 58,
-                "trace": 0,
-            }
-            assert ReplicaLagRule.apply(first.items) and PrimaryHealthRule.apply(first.items)
+        print("Synthetic failure cleanup: 4 owned rows removed; unrelated sentinel retained")
     finally:
-        store.engine.dispose()
-        lab.close()
+        generator.close()
+        with admin(lab) as db:
+            db.execute(
+                "DELETE FROM telemetry_logs WHERE id=%s AND attributes_json->>'test_run'=%s",
+                (sentinel, sentinel),
+            )

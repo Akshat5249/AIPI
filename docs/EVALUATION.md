@@ -32,8 +32,9 @@ The scorer is a separate Compose service. Only it receives the protected truth
 URL; neither public API nor investigator tools do. Golden agent replay is in a
 credential-free subprocess and gets only observable JSON. Recorded replay reads
 a completed protected run server-side after the report, checking the incident
-covers that run and recovery succeeded. Returned API scores contain no expected
-causal labels. Fault injection is host-only, never a model/tool action.
+covers that run and recovery succeeded. Returned job/scorecard API scores contain no expected
+causal labels; the separate terminal-only /ground-truth route discloses the label
+to the Evaluation page after scoring. Fault injection is host-only, never a model/tool action.
 
 POST `/api/evaluations/replay` accepts `{"scenario_id":"SCN-001"}` for golden,
 or `{"scenario_id":"SCN-002","mode":"recorded","incident_id":"...", "chaos_run_id":"..."}`
@@ -54,3 +55,11 @@ make eval EVAL_ARGS="--report-override /tmp/report.json --output /tmp/scorecards
 The override is scored against SCN-002's scoped golden evidence. Unit tests invoke
 this actual make command separately for unknown ID, fabricated metric and wrong
 root cause, and assert both failure exit and the relevant failure code.
+
+
+Results are the deterministic mock on **two curated scenarios, n=3 each**, not
+real-LLM accuracy figures. The measured six runs, variance and no-miss record are
+in PROGRESS.md section 6 and verification/m5/live-summary.json. Optional paid
+adapters are unimplemented. New smoke/golden replay latencies are separate
+verification measurements and do not replace that experiment. GitHub CI has not
+run; local actionlint/tests do not establish a hosted CI result.

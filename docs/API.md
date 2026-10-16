@@ -1,8 +1,9 @@
-# Incident Core API (M3)
+# API
 
 The public API listens on http://localhost:8000. OpenAPI is at `/docs`.
-No authentication is provided in this local MVP. There are no investigation
-agents, model calls, or remediation endpoints in M3.
+No authentication is provided in this local MVP. Investigations use the deterministic
+mock by default; there are no remediation endpoints. Host ports are configurable
+for isolated projects; all remain loopback-only.
 
 | Method | Endpoint | Response |
 |---|---|---|
@@ -41,7 +42,7 @@ query parameters. They may narrow the stored incident scope. Another service,
 an earlier start, or a later end returns 403 SCOPE_POLICY_DENIED and creates a
 sanitized scope_denials audit row. The reader independently reloads authoritative
 incident bounds before selecting telemetry; it cannot trust a caller's enlarged
-in-memory metadata. The API has no incident update/delete route in this phase.
+in-memory metadata. The API has no incident update/delete route in this MVP.
 
 Evidence bundles contain `source_id`, `window`, `query_params`, `snapshot_at`,
 `truncated`, `raw_counts`, `available_counts`, `dropped_counts`, `retrieval_version`,

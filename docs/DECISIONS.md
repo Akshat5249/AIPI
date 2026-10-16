@@ -2,22 +2,51 @@
 
 The master prompt takes precedence over the original design pack.
 
-- ADR-001: LangGraph orchestration (implementation deferred to M4).
-- ADR-002: PostgreSQL-first storage; operational simplicity.
-- ADR-003: OpenTelemetry standard for logs, metrics, and traces.
-- ADR-004: Read-only investigation tools; no remediation execution.
-- ADR-005: Two deterministic chaos scenarios with hidden ground truth (M2).
-- ADR-006: No Kafka in the first slice.
-- ADR-007: Collector → API OTLP JSON ingest; central validation/redaction.
-- ADR-008: Mock LLM is the default for tests, CI, and base demo (M4).
-- ADR-009: Ground truth isolated in a restricted schema owned by chaos_admin.
-- ADR-010: Keyword/BM25 runbook search, no vector database (M4).
+## ADR-001 — LangGraph orchestration; six validated nodes implemented in M4
+
+Accepted. LangGraph orchestration; six validated nodes implemented in M4.
+
+## ADR-002 — PostgreSQL-first storage; operational simplicity
+
+Accepted. PostgreSQL-first storage; operational simplicity.
+
+## ADR-003 — OpenTelemetry standard for logs, metrics, and traces
+
+Accepted. OpenTelemetry standard for logs, metrics, and traces.
+
+## ADR-004 — Read-only investigation tools; no remediation execution
+
+Accepted. Read-only investigation tools; no remediation execution.
+
+## ADR-005 — Two deterministic chaos scenarios with hidden ground truth (M2)
+
+Accepted. Two deterministic chaos scenarios with hidden ground truth (M2).
+
+## ADR-006 — No Kafka in the first slice
+
+Accepted. No Kafka in the first slice.
+
+## ADR-007 — Collector → API OTLP JSON ingest; central validation/redaction
+
+Accepted. Collector → API OTLP JSON ingest; central validation/redaction.
+
+## ADR-008 — Mock LLM is the default for tests, CI, and base demo (M4)
+
+Accepted. Mock LLM is the default for tests, CI, and base demo (M4).
+
+## ADR-009 — Ground truth isolated in a restricted schema owned by chaos_admin
+
+Accepted. Ground truth isolated in a restricted schema owned by chaos_admin.
+
+## ADR-010 — Keyword/BM25 runbook search, no vector database (M4)
+
+Accepted. Keyword/BM25 runbook search, no vector database (M4).
 
 ## ADR-011: M0+M1 phase boundary
 
-Build the web shell and Python package placeholders now; implement agents,
-incident tables, chaos scenarios, and the full dashboard in their assigned phases.
-Later Makefile commands fail with an explicit phase message until implemented.
+The foundation phase established a web shell and Python package placeholders;
+M2–M6 subsequently implemented the chaos, incidents, agents, evaluation and full
+dashboard. The completed Makefile targets now execute those features.
 Traffic runs in an opt-in Compose profile via `make seed-traffic` to keep a quiet
 baseline available before fault-injection tests. All worker services expose health.
 
@@ -193,7 +222,7 @@ explicitly on startup. SSE streams ordered persisted events with seq IDs, a
 Last-Event-ID/after cursor, heartbeat and terminal done event; format=json provides
 an ordered snapshot. Tokens/cost are zero for mock; actual latency, source count,
 confidence and tool failures are instrumented. Paid adapters remain optional and
-unimplemented. The M5 scorer/replay and dashboard remain future phase gates.
+unimplemented. The M5 isolated scorer/replay and M6 dashboard are now implemented; their boundaries are recorded below.
 
 LangGraph API usage was checked against its official Graph API documentation:
 https://docs.langchain.com/oss/python/langgraph/graph-api. Locked version 1.2.15
@@ -308,3 +337,103 @@ creates its incident in the browser, investigates, opens evidence outside the ca
 exports the report, and scores the actual recovered run through the evaluation UI.
 Screenshots and observed output are recorded in PROGRESS.md. Paid providers and
 production hosting/authentication remain outside this local MVP gate.
+
+
+## ADR-021 — Repeatable local demo, isolated clone and exact synthetic cleanup
+
+Status: Accepted (2026-10-17)
+
+make demo performs health/build, seed, baseline, bounded service kill/recovery,
+scoped incident/investigation and recorded scorer replay, then the golden gate.
+It prints incident and evaluation URLs. Fault injection remains host-only.
+
+Optional process port overrides and a validated aipi-prefixed Compose project
+isolate fresh-clone checks without changing retained credentials/volumes. Images,
+networks, volumes, inspected containers and watcher event filters use the chosen
+project. Host API/DB/health utilities and integration tests use those same ports.
+All published ports remain loopback-only. CI keeps default project/ports in its
+isolated runner; local actionlint is not represented as a GitHub CI run.
+
+Two old synthetic tests shared UUID-prefixed sources but leaked their telemetry.
+Both now mark rows with a unique test_run, record exact source IDs before inserts,
+and delete only matching IDs plus marker with the administrator in fixture finally,
+even when an assertion fails. A failure/same-window-sentinel integration test checks
+that unrelated data survives. The one-time legacy cleanup additionally requires
+future timestamps (>now+1 day), UUID source shape, exact old test payload/signature
+and matching per-run prefixes. It neither truncates tables nor resets volumes.
+Golden replay polling now allows 90 seconds and prints status/elapsed on timeout.
+
+Large recorded observable fixtures stay uncompressed JSON to preserve reviewable
+raw witnesses and direct golden replay without a second decompression format.
+Their exact sizes and full-history secret-scan results are recorded under M7
+verification. Synthetic truth stays separate, and mock-only measurements are
+explicitly qualified throughout current implementation documentation.
+
+
+Repeated M7 live suites exposed a sparse SCN-002 symptom burst: only one foreground
+read made ErrorSpikeRule depend on background scheduling and baseline latency.
+The host runner now reads all ten new orders while replay is paused and requires
+ten actual HTTP 404 stale responses, then retains its ten-second health sampling.
+The correlator thresholds and scope/selection logic are unchanged. A bounded
+ten-second host DB handshake replaces five seconds on this machine; SQL statement
+timeout remains five seconds. Connection failures include only exception type and
+SQLSTATE, never driver text/credentials. Invalid credentials still fail directly.
+
+
+## ADR-022 — PostgreSQL init reaping and bounded WAL retention
+
+Status: Accepted (2026-10-17)
+
+M7 identified PID-1 process adoption as a crash mechanism: a disposable
+network-isolated tmpfs PostgreSQL container reproduced an orphaned client exit 2
+causing crash recovery. Both PG services now use Compose init:true and a 60-second
+shutdown grace. Init reaps orphaned health clients rather than leaving them to
+PostgreSQL's postmaster. The integration test keeps a DB session open across an
+orphan exit and verifies the same backend survives; postmaster start time alone
+would not detect internal crash recovery. No retained data volume is reset.
+
+References: [Docker init semantics](https://docs.docker.com/reference/compose-file/services/#init)
+and [firsthand PostgreSQL diagnosis](https://www.cybertec-postgresql.com/en/docker-sudden-death-for-postgresql/).
+
+
+The retained pre-M7 standby subsequently reported an evicted required WAL segment
+and no active WAL receiver. Init prevents the reproduced orphan-crash mechanism;
+it cannot reconstruct an already removed WAL segment. Preserve that old volume
+under the operator's explicit constraint. Fresh deployments retain 512 MB of WAL
+for bounded interruptions; long outages still need a base backup/reseed. The final
+fresh-clone gate uses another new project, without replacing retained data.
+
+
+## ADR-023 — Bounded bulk ingest and a leaner default background workload
+
+Status: Accepted (2026-10-17)
+
+Repeated M7 runs exposed Collector HTTP export retries/timeouts and an evidence
+request exceeding 20 seconds. TelemetryStore previously issued one INSERT per
+row inside its transaction. It now uses at most 500 rows per statement, grouping
+only consecutive equal column shapes so optional fields and first-observation
+order are preserved. ON CONFLICT DO NOTHING and the transaction across every
+chunk keep idempotency and atomic rollback. SQL tests verify 1201 rows use three
+statements, duplicate IDs preserve first values, and a late bad row rolls back
+all earlier chunks. No retrieval cap, rule threshold or evidence-ID formula changes.
+
+The default traffic setting is one cycle per second, matching the CI overlay,
+and remains configurable. SCN-001 has its own foreground failure probes; SCN-002
+now requires ten actual stale-read probes. Their decisive telemetry does not
+depend on background scheduling. The existing n=3 M5 result tables retain their
+historical measurement/configuration; these new smoke runs do not replace them.
+Recovery errors retain safe ChaosError detail so a failed health/metric wait is
+identifiable without exposing database driver text or credentials.
+
+
+Live evidence HTTP tests now use the same 60-second request budget as the dashboard
+and print measured elapsed time even on failure; SQL statement limits remain
+unchanged. This replaces an arbitrary 20-second client deadline, not an evidence
+or rule assertion. Golden replay keeps its separately requested 90-second deadline.
+
+
+The host recovery HTTP client uses a bounded 15-second timeout (previously eight);
+measured ReadTimeout occurred during recovery after a healthy check. Required
+health, stale-read and evidence assertions are unchanged. M7 diagnostics measured
+8 GiB host RAM, about 7.5 GiB swap use and 4.3 GiB clean VM filesystem cache;
+a one-time cache release deletes no file data and changes no persistent setting.

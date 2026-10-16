@@ -54,7 +54,9 @@ def test_live_tools_durable_audit_and_readonly_privileges():
             )
         )
     replica = (
-        make_url(url(lab, "investigator_ro")).set(port=5433).render_as_string(hide_password=False)
+        make_url(url(lab, "investigator_ro"))
+        .set(port=lab.target.replica_port)
+        .render_as_string(hide_password=False)
     )
     backend = SQLBackend(core.reader, Path("runbooks"), replica)
     statements = []

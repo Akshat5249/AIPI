@@ -1,0 +1,2 @@
+{"phase": "before", "cutoff": "2026-10-17T20:44:20.979905+00:00", "legacy_prefixes": 50, "counts": {"logs": 3523, "events": 1392, "metrics": 116, "spans": 28}, "apply": true}
+{"phase": "after", "cutoff": "2026-10-17T20:44:20.979905+00:00", "legacy_prefixes": 50, "counts": {"logs": 0, "events": 0, "metrics": 0, "spans": 0}, "apply": true}

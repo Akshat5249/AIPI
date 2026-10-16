@@ -15,10 +15,10 @@ jobs:
         with: {version: '0.11.21', enable-cache: true, python-version: '3.12'}
       - uses: actions/setup-node@v4
         with: {node-version: '25', cache: npm, cache-dependency-path: apps/web/package-lock.json}
-      - name: Secret scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Full-history secret scan
+        run: >-
+          docker run --rm -v "$PWD:/repo:ro" ghcr.io/gitleaks/gitleaks:v8.24.2
+          git /repo --redact --no-banner --log-opts=--all
       - run: make setup
       - run: make lint
       - run: uv run pytest -m 'not docker'
@@ -37,4 +37,5 @@ jobs:
         if: always()
         run: make down
       # Golden metrics, schema/citation and adversarial CLI gates run above.
-      # Publication is intentionally a no-op for this local lab.
+      - name: Publication disabled for the local lab
+        run: echo "All gates required; publishing/deployment is intentionally disabled."

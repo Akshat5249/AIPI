@@ -9,7 +9,8 @@ make chaos-kill
 make chaos-lag
 ```
 
-Run scenarios sequentially. They validate the fixed `aipi` Compose project,
+Run scenarios sequentially. They validate the explicitly configured `aipi`-prefixed Compose project
+(default `aipi`, isolated overrides documented in README),
 healthy demo services, steady successful traffic, and primary/standby roles.
 A session advisory lock rejects overlapping runs. Both commands print validated
 JSON observations and exit nonzero on a failed verification or recovery.
@@ -22,7 +23,8 @@ container if needed. The restart policy remains `unless-stopped`.
 
 SCN-002 pauses WAL replay on the standby with the restricted `chaos_admin` role,
 waits for actual paused state, writes ten orders to the healthy primary, observes
-a stale replica read, and holds the pause for ten seconds. Verification requires
+ten foreground stale replica reads (HTTP 404), and holds the pause for another
+ten seconds. This ensures observable symptoms independently of background timing. Verification requires
 at least three lag samples, a rise of two seconds, a maximum of four seconds,
 positive WAL backlog, paused telemetry, and healthy primary samples. Recovery
 resumes replay, verifies the newly written order is visible, and waits for fresh

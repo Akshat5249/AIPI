@@ -9,6 +9,9 @@ import psycopg
 import pytest
 from dotenv import dotenv_values
 
+from chaos.scenarios.target import LabTarget
+
+target = LabTarget.from_env()
 pytestmark = pytest.mark.docker
 
 
@@ -22,7 +25,7 @@ def connect(role: str = "investigator_ro", *, replica: bool = False) -> psycopg.
     try:
         return psycopg.connect(
             host="127.0.0.1",
-            port=5433 if replica else 5432,
+            port=target.replica_port if replica else target.db_port,
             dbname="aipi",
             user=role,
             password=env[key],
@@ -47,7 +50,7 @@ def eventually(check, timeout: float = 25):
 def test_request_has_correlated_trace_log_metric_and_replica_read() -> None:
     product = "gate-" + uuid4().hex[:8]
     response = httpx.post(
-        "http://localhost:8080/checkout", json={"product": product, "quantity": 2}
+        f"http://127.0.0.1:{target.gateway_port}/checkout", json={"product": product, "quantity": 2}
     )
     assert response.status_code == 200, response.text
     order = response.json()
@@ -93,7 +96,12 @@ def test_request_has_correlated_trace_log_metric_and_replica_read() -> None:
                 "AND metric_name='primary_healthy' AND value=1"
             ).fetchone()[0]
         )
-    eventually(lambda: httpx.get("http://localhost:8080/orders/" + order["id"]).status_code == 200)
+    eventually(
+        lambda: (
+            httpx.get(f"http://127.0.0.1:{target.gateway_port}/orders/" + order["id"]).status_code
+            == 200
+        )
+    )
     with connect(replica=True) as replica:
         assert replica.execute("SELECT pg_is_in_recovery()").fetchone()[0]
 
@@ -142,7 +150,7 @@ def test_ingestion_redacts_before_storage_and_retries_are_idempotent() -> None:
         ]
     }
     for _ in range(2):
-        response = httpx.post("http://localhost:4318/v1/logs", json=payload)
+        response = httpx.post(f"http://127.0.0.1:{target.collector_port}/v1/logs", json=payload)
         assert response.status_code == 200, response.text
     with connect() as db:
 
@@ -178,9 +186,16 @@ def test_runtime_watcher_events_preserve_target_and_original_timestamp() -> None
 
 
 def test_normal_work_emits_worker_signals_and_web_readiness() -> None:
-    assert httpx.get("http://localhost:5173/readyz").status_code == 200
-    order = httpx.post("http://localhost:8080/checkout", json={"product": "audit"}).json()
-    eventually(lambda: httpx.get("http://localhost:8080/orders/" + order["id"]).status_code == 200)
+    assert httpx.get(f"http://127.0.0.1:{target.web_port}/readyz").status_code == 200
+    order = httpx.post(
+        f"http://127.0.0.1:{target.gateway_port}/checkout", json={"product": "audit"}
+    ).json()
+    eventually(
+        lambda: (
+            httpx.get(f"http://127.0.0.1:{target.gateway_port}/orders/" + order["id"]).status_code
+            == 200
+        )
+    )
     with connect() as db:
         for service in ("gateway", "checkout-api", "orders-api", "pg-lag-probe", "event-watcher"):
             for table, timestamp in (
@@ -196,3 +211,48 @@ def test_normal_work_emits_worker_signals_and_web_readiness() -> None:
                         (service,),
                     ).fetchone()[0]
                 )
+
+
+def test_postgres_init_reaps_failing_healthcheck_orphans():
+    """An orphaned client exit must not be mistaken for a PostgreSQL worker crash."""
+    import subprocess
+
+    from chaos.scenarios.lab import Lab
+
+    lab = Lab()
+    try:
+        for service, replica in (("postgres-primary", False), ("postgres-replica", True)):
+            command = [
+                "docker",
+                "compose",
+                "--project-name",
+                lab.target.project,
+                "--env-file",
+                ".env",
+                "-f",
+                "infra/docker/compose.yml",
+            ]
+            with connect(replica=replica) as db:
+                before = db.execute("SELECT pg_backend_pid()").fetchone()[0]
+                subprocess.run(
+                    command
+                    + [
+                        "exec",
+                        "-T",
+                        service,
+                        "sh",
+                        "-c",
+                        "(sleep 0.2; exit 2) >/dev/null 2>&1 & exit 0",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                time.sleep(1)
+                # Postmaster itself survives internal crash recovery; an existing
+                # backend connection is the stronger assertion (it would be killed).
+                assert db.execute("SELECT pg_backend_pid()").fetchone()[0] == before
+        print("Both PostgreSQL sessions survived orphaned health-client exit 2")
+    finally:
+        lab.close()

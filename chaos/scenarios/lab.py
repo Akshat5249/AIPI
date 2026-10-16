@@ -15,6 +15,7 @@ from dotenv import dotenv_values
 from pydantic import BaseModel
 
 from chaos.scenarios.contracts import ChaosError
+from chaos.scenarios.target import LabTarget
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -45,12 +46,15 @@ class Container(BaseModel):
 
 
 class Lab:
-    """Uses host loopback ports and the fixed aipi Compose project only."""
+    """Uses loopback ports and verifies every container against its explicit lab project."""
 
     def __init__(self, seed: int = 42) -> None:
+        self.target = LabTarget.from_env()
         self.env = dotenv_values(ROOT / ".env")
         self.rng = random.Random(seed)
-        self.client = httpx.Client(base_url="http://127.0.0.1:8080", timeout=8)
+        self.client = httpx.Client(
+            base_url=f"http://127.0.0.1:{self.target.gateway_port}", timeout=15
+        )
 
     def close(self) -> None:
         self.client.close()
@@ -60,16 +64,18 @@ class Lab:
         try:
             return psycopg.connect(
                 host="127.0.0.1",
-                port=5433 if replica else 5432,
+                port=self.target.replica_port if replica else self.target.db_port,
                 user=role,
                 dbname="aipi",
                 password=self.env[key],
                 autocommit=True,
-                connect_timeout=5,
+                connect_timeout=10,
                 options="-c statement_timeout=5000",
             )
-        except psycopg.Error:
-            raise ChaosError("Lab database unavailable; run make up") from None
+        except psycopg.Error as exc:
+            # Driver messages can contain connection details; expose only safe diagnostics.
+            detail = type(exc).__name__ + (f" sqlstate={exc.sqlstate}" if exc.sqlstate else "")
+            raise ChaosError(f"Lab database unavailable ({detail}); run make up") from None
 
     def docker(self, *args: str) -> str:
         result = subprocess.run(
@@ -91,6 +97,8 @@ class Lab:
             raise ChaosError("Container outside the lab allowlist")
         container_id = self.docker(
             "compose",
+            "--project-name",
+            self.target.project,
             "--env-file",
             str(ROOT / ".env"),
             "-f",
@@ -112,8 +120,8 @@ class Lab:
         state = Container.model_validate(
             json.loads(self.docker("inspect", "--format", template, container_id))
         )
-        if state.project != "aipi" or state.service != service:
-            raise ChaosError("Refusing a container outside the fixed aipi lab")
+        if state.project != self.target.project or state.service != service:
+            raise ChaosError("Refusing a container outside the configured aipi lab")
         return state
 
     def checkout(self) -> httpx.Response:

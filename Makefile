@@ -10,7 +10,7 @@ setup: setup-env
 	cd apps/web && npm ci --cache /tmp/aipi-npm-cache
 up: setup-env
 	$(COMPOSE) up -d --build --wait --wait-timeout 180
-	uv run python scripts/check_stack.py
+	uv run python -m scripts.check_stack
 down:
 	$(COMPOSE) --profile traffic down
 seed-traffic:
@@ -33,10 +33,12 @@ chaos-lag:
 	uv run python -m chaos.scenarios.scn_002_replica_lag
 investigate:
 	@test -n "$(ID)" || (echo "Usage: make investigate ID=<incident_id>"; exit 2)
-	uv run python scripts/investigate.py "$(ID)"
+	uv run python -m scripts.investigate "$(ID)"
 eval:
 	uv run python -m aipi_evaluation.cli $(EVAL_ARGS)
 record-golden:
 	uv run python -m aipi_evaluation.record --repeats $(or $(REPEATS),3)
-demo:
-	@echo "$@ is scheduled for its later phase; see PROGRESS.md"; exit 2
+demo: up
+	$(MAKE) seed-traffic
+	uv run python -m scripts.demo
+	$(MAKE) eval

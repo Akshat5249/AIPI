@@ -1,6 +1,7 @@
 """Typed telemetry columns and idempotent PostgreSQL persistence."""
 
 from datetime import UTC, datetime
+from itertools import groupby, islice
 from typing import Any
 
 from sqlalchemy import (
@@ -98,8 +99,11 @@ class TelemetryStore:
         count = 0
         with self.engine.begin() as connection:
             for kind, items in rows.items():
-                for item in items:
-                    statement = insert(TABLES[kind]).values(**item).on_conflict_do_nothing()
-                    result = connection.execute(statement)
-                    count += result.rowcount
+                # Preserve first-observation order, including heterogeneous optional
+                # columns, while bounding each statement well below PG's bind limit.
+                for _, group in groupby(items, key=lambda row: tuple(sorted(row))):
+                    while batch := list(islice(group, 500)):
+                        statement = insert(TABLES[kind]).values(batch).on_conflict_do_nothing()
+                        result = connection.execute(statement)
+                        count += result.rowcount
         return count

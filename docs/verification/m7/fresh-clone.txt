@@ -1,0 +1,623 @@
+/tmp/aipi-m7-clone.59TjeJ/aipi
+Python 3.12.0
+uv 0.11.21 (5aa65dd7a 2026-06-11 aarch64-apple-darwin)
+v25.9.0
+python3.12 scripts/init_env.py
+Created private .env with generated lab credentials
+python3.12 scripts/init_env.py
+Preserving existing .env
+uv sync --all-packages --frozen
+Using CPython 3.12.0 interpreter at: /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+Creating virtual environment at: .venv
+   Building aipi-agents @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/agents
+   Building aipi-evaluation @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/evaluation
+   Building aipi-telemetry @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/telemetry
+   Building aipi-api @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/apps/api
+   Building aipi-tools @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/tools
+   Building aipi-demo @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/services/demo-services
+      Built aipi-tools @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/tools
+      Built aipi-demo @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/services/demo-services
+      Built aipi-agents @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/agents
+      Built aipi-telemetry @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/telemetry
+      Built aipi-evaluation @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/evaluation
+      Built aipi-api @ file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/apps/api
+Prepared 6 packages in 2.37s
+Installed 86 packages in 1.05s
+ + aipi-agents==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/agents)
+ + aipi-api==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/apps/api)
+ + aipi-demo==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/services/demo-services)
+ + aipi-evaluation==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/evaluation)
+ + aipi-telemetry==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/telemetry)
+ + aipi-tools==0.1.0 (from file:///private/tmp/aipi-m7-clone.59TjeJ/aipi/packages/tools)
+ + alembic==1.20.0
+ + annotated-doc==0.0.5
+ + annotated-types==0.8.0
+ + anyio==4.15.1
+ + asgiref==3.12.1
+ + ast-serialize==0.13.0
+ + certifi==2026.7.22
+ + charset-normalizer==3.5.2
+ + click==8.5.0
+ + distro==1.9.0
+ + fastapi==0.141.1
+ + googleapis-common-protos==1.75.5
+ + h11==0.16.0
+ + httpcore==1.0.9
+ + httpcore2==2.13.1
+ + httpx==0.28.1
+ + httpx2==2.13.1
+ + idna==3.20
+ + importlib-metadata==8.7.1
+ + iniconfig==2.3.1
+ + jsonpatch==1.35
+ + jsonpointer==3.2.1
+ + langchain-core==1.6.10
+ + langchain-protocol==0.0.19
+ + langgraph==1.2.15
+ + langgraph-checkpoint==4.3.0
+ + langgraph-prebuilt==1.1.0
+ + langgraph-sdk==0.4.7
+ + langsmith==0.14.8
+ + librt==0.16.0
+ + mako==1.4.3
+ + markupsafe==3.0.4
+ + mypy==2.4.0
+ + mypy-extensions==1.1.0
+ + opentelemetry-api==1.39.1
+ + opentelemetry-exporter-otlp-proto-common==1.39.1
+ + opentelemetry-exporter-otlp-proto-http==1.39.1
+ + opentelemetry-instrumentation==0.60b1
+ + opentelemetry-instrumentation-asgi==0.60b1
+ + opentelemetry-instrumentation-fastapi==0.60b1
+ + opentelemetry-instrumentation-httpx==0.60b1
+ + opentelemetry-proto==1.39.1
+ + opentelemetry-sdk==1.39.1
+ + opentelemetry-semantic-conventions==0.60b1
+ + opentelemetry-util-http==0.60b1
+ + orjson==3.13.0
+ + ormsgpack==1.12.2
+ + packaging==26.3
+ + pathspec==1.1.1
+ + pluggy==1.6.0
+ + protobuf==6.33.6
+ + psycopg==3.3.6
+ + psycopg-binary==3.3.6
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + pydantic-settings==2.15.0
+ + pygments==2.21.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + python-dotenv==1.2.4
+ + pyyaml==6.0.3
+ + requests==2.34.2
+ + requests-toolbelt==1.0.0
+ + ruff==0.17.0
+ + sniffio==1.3.1
+ + sqlalchemy==2.1.4
+ + starlette==1.7.0
+ + tenacity==9.2.1
+ + truststore==0.10.5
+ + types-pyyaml==6.0.12.20260906
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + urllib3==2.8.0
+ + uuid-utils==0.17.1
+ + uvicorn==0.54.0
+ + websockets==16.1.1
+ + wrapt==1.17.3
+ + xxhash==4.0.1
+ + zipp==4.1.1
+ + zstandard==0.25.0
+cd apps/web && npm ci --cache /tmp/aipi-npm-cache
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 254 packages, and audited 255 packages in 20s
+
+62 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+python3.12 scripts/init_env.py
+Preserving existing .env
+docker compose --env-file .env -f infra/docker/compose.yml up -d --build --wait --wait-timeout 180
+ Image aipi-fresh-check-scorer:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-web:local Building
+ Image aipi-fresh-check-python:local Building
+ Image aipi-fresh-check-python:local Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 4.46kB 0.0s done
+#1 DONE 0.0s
+
+#2 [orders-api internal] load build definition from Dockerfile.python
+#2 transferring dockerfile:
+#2 ...
+
+#3 [web internal] load build definition from Dockerfile.web
+#3 transferring dockerfile: 305B 0.0s done
+#3 DONE 0.3s
+
+#2 [orders-api internal] load build definition from Dockerfile.python
+#2 transferring dockerfile: 842B 0.1s done
+#2 DONE 0.3s
+
+#4 [scorer internal] load metadata for docker.io/library/python:3.12-slim-bookworm
+#4 ...
+
+#5 [web internal] load metadata for docker.io/library/node:25-bookworm-slim
+#5 DONE 5.2s
+
+#4 [checkout-api internal] load metadata for docker.io/library/python:3.12-slim-bookworm
+#4 DONE 5.4s
+
+#6 [migrate internal] load .dockerignore
+#6 transferring context: 159B 0.0s done
+#6 DONE 0.2s
+
+#7 [pg-lag-probe internal] load build context
+#7 DONE 0.0s
+
+#8 [web internal] load build context
+#8 DONE 0.0s
+
+#9 [pg-lag-probe runtime  1/12] FROM docker.io/library/python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
+#9 resolve docker.io/library/python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
+#9 resolve docker.io/library/python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 0.3s done
+#9 DONE 0.3s
+
+#10 [web 1/6] FROM docker.io/library/node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370
+#10 resolve docker.io/library/node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 0.3s done
+#10 DONE 0.3s
+
+#7 [orders-api internal] load build context
+#7 ...
+
+#8 [web internal] load build context
+#8 transferring context: 253.38kB 0.3s done
+#8 DONE 0.5s
+
+#11 [web 3/6] COPY apps/web/package.json apps/web/package-lock.json ./
+#11 CACHED
+
+#12 [web 4/6] RUN npm ci
+#12 CACHED
+
+#13 [web 5/6] COPY apps/web .
+#13 CACHED
+
+#14 [web 2/6] WORKDIR /app
+#14 CACHED
+
+#15 [web 6/6] RUN npm run build && chown -R node:node /app
+#15 CACHED
+
+#7 [orders-api internal] load build context
+#7 transferring context: 418.57kB 0.5s done
+#7 transferring context: 418.57kB 0.5s done
+#7 DONE 0.7s
+
+#16 [web] exporting to image
+#16 exporting layers 0.0s done
+#16 exporting manifest sha256:b64d4997f827a7a5598a5b4b5b74e540a48bd5faecabd4e0f58810679d0a8c82 0.1s done
+#16 exporting config sha256:c3c0ef460373ecda73b929ed310449b60ce6ec7a59347a978318f9b99d3fbdce 0.1s done
+#16 ...
+
+#17 [pg-lag-probe runtime  5/12] COPY apps/api apps/api
+#17 CACHED
+
+#18 [pg-lag-probe runtime  6/12] COPY packages packages
+#18 CACHED
+
+#19 [pg-lag-probe runtime  7/12] COPY services/demo-services services/demo-services
+#19 CACHED
+
+#20 [pg-lag-probe runtime  9/12] COPY runbooks runbooks
+#20 CACHED
+
+#21 [pg-lag-probe runtime 10/12] COPY infra/docker/alembic.ini alembic.ini
+#21 CACHED
+
+#22 [pg-lag-probe runtime 11/12] COPY infra/docker/migrations migrations
+#22 CACHED
+
+#23 [pg-lag-probe runtime  2/12] WORKDIR /app
+#23 CACHED
+
+#24 [pg-lag-probe runtime  3/12] RUN pip install --no-cache-dir uv==0.11.21
+#24 CACHED
+
+#25 [pg-lag-probe runtime  4/12] COPY pyproject.toml uv.lock ./
+#25 CACHED
+
+#26 [pg-lag-probe runtime  8/12] RUN uv sync --frozen --all-packages --no-dev
+#26 CACHED
+
+#27 [pg-lag-probe runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#27 CACHED
+
+#16 [web] exporting to image
+#16 exporting attestation manifest sha256:4162ef12a29b020fc117d53a44abfc0bd1af83666fd8f8122bb4b6bbc4cafc6c
+#16 exporting attestation manifest sha256:4162ef12a29b020fc117d53a44abfc0bd1af83666fd8f8122bb4b6bbc4cafc6c 0.5s done
+#16 exporting manifest list sha256:62b4780e26369245a7200fa0ccc97910cac3e35c1700992447aeb6f353de23cc
+#16 ...
+
+#28 [scorer internal] load build context
+#28 transferring context: 18.25MB 1.9s done
+#28 DONE 2.0s
+
+#27 [scorer runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#27 CACHED
+
+#29 [scorer runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#29 CACHED
+
+#30 [scorer runtime  6/12] COPY packages packages
+#30 CACHED
+
+#31 [scorer runtime  8/12] RUN uv sync --frozen --all-packages --no-dev
+#31 CACHED
+
+#32 [scorer runtime  9/12] COPY runbooks runbooks
+#32 CACHED
+
+#33 [scorer runtime 11/12] COPY infra/docker/migrations migrations
+#33 CACHED
+
+#34 [scorer runtime 10/12] COPY infra/docker/alembic.ini alembic.ini
+#34 CACHED
+
+#35 [scorer runtime  4/12] COPY pyproject.toml uv.lock ./
+#35 CACHED
+
+#36 [scorer runtime  7/12] COPY services/demo-services services/demo-services
+#36 CACHED
+
+#37 [scorer scorer 1/2] RUN install -d -o 10001 -g 10001 /app/eval_reports
+#37 CACHED
+
+#23 [scorer runtime  2/12] WORKDIR /app
+#23 CACHED
+
+#38 [scorer runtime  5/12] COPY apps/api apps/api
+#38 CACHED
+
+#24 [scorer runtime  3/12] RUN pip install --no-cache-dir uv==0.11.21
+#24 CACHED
+
+#39 [scorer scorer 2/2] COPY tests/fixtures /app/tests/fixtures
+#39 CACHED
+
+#16 [web] exporting to image
+#16 exporting manifest list sha256:62b4780e26369245a7200fa0ccc97910cac3e35c1700992447aeb6f353de23cc 0.4s done
+#16 naming to docker.io/library/aipi-fresh-check-web:local
+#16 naming to docker.io/library/aipi-fresh-check-web:local 0.3s done
+#16 unpacking to docker.io/library/aipi-fresh-check-web:local
+#16 unpacking to docker.io/library/aipi-fresh-check-web:local 0.2s done
+#16 DONE 1.8s
+
+#40 [scorer] exporting to image
+#40 exporting layers 0.0s done
+#40 exporting manifest sha256:b50373b1c2ad13a0037c7373497c1e9727f4cd3277c7482cfa248e05799f0d90 0.3s done
+#40 exporting config sha256:316e766a38f0cc0ab6f15bb7f706d87628c31fce0b873a206da7abda2aa50ad4 0.2s done
+#40 exporting attestation manifest sha256:8139608c3cb4b7d26de67b87f71ab0e796477a42d24af1776b77bb5e707fa395
+#40 exporting attestation manifest sha256:8139608c3cb4b7d26de67b87f71ab0e796477a42d24af1776b77bb5e707fa395 0.1s done
+#40 exporting manifest list sha256:4107ee26f537824096520edf7cb284727c1a1a927bb94ecd3b829bab19f6a26b
+#40 exporting manifest list sha256:4107ee26f537824096520edf7cb284727c1a1a927bb94ecd3b829bab19f6a26b 0.1s done
+#40 naming to docker.io/library/aipi-fresh-check-scorer:local
+#40 ...
+
+#41 [checkout-api] exporting to image
+#41 exporting layers 0.0s done
+#41 exporting manifest sha256:ad5ec5f8d20b92e199268362e71f777d36dac8733e8cb4f0e0675c6783ec6597 0.4s done
+#41 exporting config sha256:a8ad5f4e2a7e3022458e6da5c262b0050053df2f6ca445f001e992c1cf976269 0.4s done
+#41 exporting attestation manifest sha256:ce38b6f35a48cc1546941b631fe9784f9088743f96647c917c11120ede8463af 0.3s done
+#41 exporting manifest list sha256:eb4b19637ddc582131f3e2979914204cbd9ed0c1ae02e9e468ab9e79fc84acc0 0.3s done
+#41 naming to docker.io/library/aipi-fresh-check-python:local 0.1s done
+#41 unpacking to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#41 DONE 2.1s
+
+#42 [migrate] exporting to image
+#42 exporting layers 0.0s done
+#42 exporting manifest sha256:7b16bc047bb4b3290966936ae19b5f0d89c83c860a3bd46134bcaa36222e69ab 0.2s done
+#42 exporting config sha256:44b2bc6374dae0a4671afe025f865f484e4ebfbf78c7193ae1fdbe9909151bf8 0.5s done
+#42 exporting attestation manifest sha256:b1ce1791af1096e2041bda3a5b2eb0d79deb84890455653c5cb6e4899a5d0fc3 0.4s done
+#42 exporting manifest list sha256:1074f1a6bafd7451915bcbf47eae442722a4707b8cf59ddc8439be7b33a8efe6 0.2s done
+#42 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#42 unpacking to docker.io/library/aipi-fresh-check-python:local 0.3s done
+#42 DONE 2.2s
+
+#43 [event-watcher] exporting to image
+#43 exporting layers 0.0s done
+#43 exporting manifest sha256:b5d6ec5d029a3b7780d2084bf4b7e443e249f6eb9752ddac51518281e3e7acc3 0.2s done
+#43 exporting config sha256:fb538bf0fa46b5c949e522c9c5e426bc2ea178c4cb654b3312d72f94881433d2 0.5s done
+#43 exporting attestation manifest sha256:97c86dbeff0d18c28c23f802f08929e14705b6fe4d7da59af0915a551dca88ba 0.4s done
+#43 exporting manifest list sha256:6c0b16fc8676202e46fc1bc0b887793ae2c7047cbcafbe7a4b7ae9f881de6fb9 0.3s done
+#43 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#43 unpacking to docker.io/library/aipi-fresh-check-python:local 0.3s done
+#43 DONE 2.2s
+
+#44 [api] exporting to image
+#44 exporting layers 0.0s done
+#44 exporting manifest sha256:5a05b619562f62382add86ea04af596af17de87dc2075564d2c85a24d3da1b57 0.3s done
+#44 exporting config sha256:e891dd144447c88ef8fb2fc9abe8e44c8eb0a3cb2ba926c721415bbe553247cb 0.4s done
+#44 exporting attestation manifest sha256:cdb7ee8499688942735d62593662fe8d70dcdae1956871b1e8316f4e4951e4a9 0.3s done
+#44 exporting manifest list sha256:926c99a87ccdec99063546a6cd87d2c9755d59a425353ef15a0943624b18bc28 0.3s done
+#44 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#44 unpacking to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#44 DONE 2.1s
+
+#45 [gateway] exporting to image
+#45 exporting layers 0.0s done
+#45 exporting manifest sha256:ad273b865302a48a3827f90731958691af8caf455228e6dca85eecf3ebf74e21 0.3s done
+#45 exporting config sha256:ad3316c5752d3080d1b6484ce73caf5db66f4c8c0d5b8051e6fe6c23c7863c4a 0.5s done
+#45 exporting attestation manifest sha256:d30e2520aa2a1de645043ada4451ecddcdd45a9eb374b76e2e723819bb15a1c4 0.3s done
+#45 exporting manifest list sha256:e7fc4c54449766a7dbeb03fb701496fb68b87d5e1a3e7ca0fe6b90ba2bbe4bf2 0.3s done
+#45 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#45 unpacking to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#45 DONE 2.2s
+
+#46 [orders-api] exporting to image
+#46 exporting layers 0.0s done
+#46 exporting manifest sha256:b02d6b02ae0375ef1691b27dfe2883c60659022e9f98c2a35ad33ec2af1f8274 0.2s done
+#46 exporting config sha256:5c194234028e365a9a9c3112f6c2ab5d2d2a7ad0348b23b68a89501653bf6d3a 0.5s done
+#46 exporting attestation manifest sha256:0ef1cd0702ce7b71486c6a15183ca085685290332bae3d15a831f1b096df4276 0.3s done
+#46 exporting manifest list sha256:0dd41d0814f72c9220b8863d177ccc6eac0ea2ddc25ae11db90b0e6d58c3f67b 0.3s done
+#46 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#46 unpacking to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#46 DONE 2.2s
+
+#40 [scorer] exporting to image
+#40 naming to docker.io/library/aipi-fresh-check-scorer:local 0.1s done
+#40 unpacking to docker.io/library/aipi-fresh-check-scorer:local
+#40 unpacking to docker.io/library/aipi-fresh-check-scorer:local 0.2s done
+#40 ...
+
+#47 [pg-lag-probe] exporting to image
+#47 exporting layers 0.1s done
+#47 exporting manifest sha256:f1639cf768a02bbfed9e5655bd357720a2b1e563bc12108f57865b4288e161bf 0.3s done
+#47 exporting config sha256:8bde83fc70ac496eeb59d31b2c0e8a63522952aeedc2d1670d97495ce090d4bf 0.5s done
+#47 exporting attestation manifest sha256:6a054c8b9f1d5b5130eec1845cfb546e4dab487005059d3cf008ae26714035bf 0.3s done
+#47 exporting manifest list sha256:c12cdfab2acb725c66e6334b7b9aa33d06a53959dddbfc101f8df9a7a113b559 0.3s done
+#47 naming to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#47 unpacking to docker.io/library/aipi-fresh-check-python:local 0.2s done
+#47 DONE 2.6s
+
+#48 [web] resolving provenance for metadata file
+#48 ...
+
+#40 [scorer] exporting to image
+#40 DONE 1.8s
+
+#48 [web] resolving provenance for metadata file
+#48 DONE 0.6s
+
+#49 [pg-lag-probe] resolving provenance for metadata file
+#49 DONE 0.6s
+
+#50 [migrate] resolving provenance for metadata file
+#50 ...
+
+#51 [event-watcher] resolving provenance for metadata file
+#51 DONE 2.0s
+
+#52 [checkout-api] resolving provenance for metadata file
+#52 DONE 1.8s
+
+#53 [orders-api] resolving provenance for metadata file
+#53 DONE 1.3s
+
+#54 [api] resolving provenance for metadata file
+#54 DONE 0.9s
+
+#55 [scorer] resolving provenance for metadata file
+#55 DONE 0.7s
+
+#50 [migrate] resolving provenance for metadata file
+#50 DONE 1.7s
+
+#56 [gateway] resolving provenance for metadata file
+#56 DONE 0.4s
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-scorer:local Built
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-web:local Built
+ Image aipi-fresh-check-python:local Built
+ Image aipi-fresh-check-python:local Built
+ Volume aipi-fresh-check_replica-data Creating
+ Volume aipi-fresh-check_primary-data Creating
+ Volume aipi-fresh-check_replica-data Creating
+ Volume aipi-fresh-check_primary-data Creating
+ Network aipi-fresh-check_default Creating
+ Network aipi-fresh-check_default Creating
+ Volume aipi-fresh-check_evaluation-results Creating
+ Volume aipi-fresh-check_evaluation-results Creating
+ Volume aipi-fresh-check_evaluation-results Created
+ Volume aipi-fresh-check_evaluation-results Created
+ Volume aipi-fresh-check_primary-data Created
+ Volume aipi-fresh-check_primary-data Created
+ Volume aipi-fresh-check_replica-data Created
+ Volume aipi-fresh-check_replica-data Created
+ Network aipi-fresh-check_default Created
+ Network aipi-fresh-check_default Created
+ Container aipi-fresh-check-postgres-primary-1 Creating
+ Container aipi-fresh-check-postgres-primary-1 Created
+ Container aipi-fresh-check-migrate-1 Creating
+ Container aipi-fresh-check-postgres-replica-1 Creating
+ Container aipi-fresh-check-migrate-1 Created
+ Container aipi-fresh-check-api-1 Creating
+ Container aipi-fresh-check-postgres-replica-1 Created
+ Container aipi-fresh-check-api-1 Created
+ Container aipi-fresh-check-scorer-1 Creating
+ Container aipi-fresh-check-web-1 Creating
+ Container aipi-fresh-check-otel-collector-1 Creating
+ Container aipi-fresh-check-web-1 Created
+ Container aipi-fresh-check-otel-collector-1 Created
+ Container aipi-fresh-check-pg-lag-probe-1 Creating
+ Container aipi-fresh-check-event-watcher-1 Creating
+ Container aipi-fresh-check-orders-api-1 Creating
+ Container aipi-fresh-check-checkout-api-1 Creating
+ Container aipi-fresh-check-scorer-1 Created
+ Container aipi-fresh-check-event-watcher-1 Created
+ Container aipi-fresh-check-orders-api-1 Created
+ Container aipi-fresh-check-pg-lag-probe-1 Created
+ Container aipi-fresh-check-checkout-api-1 Created
+ Container aipi-fresh-check-gateway-1 Creating
+ Container aipi-fresh-check-gateway-1 Created
+ Container aipi-fresh-check-postgres-primary-1 Starting
+ Container aipi-fresh-check-postgres-primary-1 Started
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-postgres-replica-1 Starting
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-migrate-1 Starting
+ Container aipi-fresh-check-postgres-replica-1 Started
+ Container aipi-fresh-check-migrate-1 Started
+ Container aipi-fresh-check-migrate-1 Waiting
+ Container aipi-fresh-check-migrate-1 Exited
+ Container aipi-fresh-check-api-1 Starting
+ Container aipi-fresh-check-api-1 Started
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-web-1 Starting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-scorer-1 Starting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-otel-collector-1 Starting
+ Container aipi-fresh-check-web-1 Started
+ Container aipi-fresh-check-scorer-1 Started
+ Container aipi-fresh-check-otel-collector-1 Started
+ Container aipi-fresh-check-postgres-replica-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-event-watcher-1 Starting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-checkout-api-1 Starting
+ Container aipi-fresh-check-postgres-replica-1 Healthy
+ Container aipi-fresh-check-postgres-replica-1 Healthy
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-orders-api-1 Starting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-pg-lag-probe-1 Starting
+ Container aipi-fresh-check-event-watcher-1 Started
+ Container aipi-fresh-check-checkout-api-1 Started
+ Container aipi-fresh-check-orders-api-1 Started
+ Container aipi-fresh-check-orders-api-1 Waiting
+ Container aipi-fresh-check-checkout-api-1 Waiting
+ Container aipi-fresh-check-pg-lag-probe-1 Started
+ Container aipi-fresh-check-checkout-api-1 Healthy
+ Container aipi-fresh-check-orders-api-1 Healthy
+ Container aipi-fresh-check-gateway-1 Starting
+ Container aipi-fresh-check-gateway-1 Started
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-gateway-1 Waiting
+ Container aipi-fresh-check-event-watcher-1 Waiting
+ Container aipi-fresh-check-migrate-1 Waiting
+ Container aipi-fresh-check-checkout-api-1 Waiting
+ Container aipi-fresh-check-orders-api-1 Waiting
+ Container aipi-fresh-check-pg-lag-probe-1 Waiting
+ Container aipi-fresh-check-scorer-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Waiting
+ Container aipi-fresh-check-otel-collector-1 Waiting
+ Container aipi-fresh-check-web-1 Waiting
+ Container aipi-fresh-check-migrate-1 Exited
+ Container aipi-fresh-check-pg-lag-probe-1 Healthy
+ Container aipi-fresh-check-otel-collector-1 Healthy
+ Container aipi-fresh-check-event-watcher-1 Healthy
+ Container aipi-fresh-check-checkout-api-1 Healthy
+ Container aipi-fresh-check-postgres-replica-1 Healthy
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-web-1 Healthy
+ Container aipi-fresh-check-orders-api-1 Healthy
+ Container aipi-fresh-check-scorer-1 Healthy
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-gateway-1 Healthy
+uv run python -m scripts.check_stack
+Healthy: http://127.0.0.1:18000/readyz
+Healthy: http://127.0.0.1:18080/readyz
+Healthy: http://127.0.0.1:15173/healthz
+Healthy: http://127.0.0.1:23133/
+/Library/Developer/CommandLineTools/usr/bin/make seed-traffic
+docker compose --env-file .env -f infra/docker/compose.yml --profile traffic up -d --wait traffic
+ Container aipi-fresh-check-orders-api-1 Running
+ Container aipi-fresh-check-checkout-api-1 Running
+ Container aipi-fresh-check-postgres-replica-1 Running
+ Container aipi-fresh-check-postgres-primary-1 Running
+ Container aipi-fresh-check-otel-collector-1 Running
+ Container aipi-fresh-check-gateway-1 Running
+ Container aipi-fresh-check-api-1 Running
+ Container aipi-fresh-check-traffic-1 Creating
+ Container aipi-fresh-check-traffic-1 Created
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-migrate-1 Starting
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-migrate-1 Started
+ Container aipi-fresh-check-migrate-1 Waiting
+ Container aipi-fresh-check-migrate-1 Exited
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Healthy
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-checkout-api-1 Waiting
+ Container aipi-fresh-check-orders-api-1 Waiting
+ Container aipi-fresh-check-checkout-api-1 Healthy
+ Container aipi-fresh-check-orders-api-1 Healthy
+ Container aipi-fresh-check-gateway-1 Waiting
+ Container aipi-fresh-check-gateway-1 Healthy
+ Container aipi-fresh-check-traffic-1 Starting
+ Container aipi-fresh-check-traffic-1 Started
+ Container aipi-fresh-check-otel-collector-1 Waiting
+ Container aipi-fresh-check-traffic-1 Waiting
+ Container aipi-fresh-check-gateway-1 Waiting
+ Container aipi-fresh-check-api-1 Waiting
+ Container aipi-fresh-check-orders-api-1 Waiting
+ Container aipi-fresh-check-checkout-api-1 Waiting
+ Container aipi-fresh-check-migrate-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Waiting
+ Container aipi-fresh-check-postgres-primary-1 Waiting
+ Container aipi-fresh-check-postgres-replica-1 Healthy
+ Container aipi-fresh-check-checkout-api-1 Healthy
+ Container aipi-fresh-check-api-1 Healthy
+ Container aipi-fresh-check-orders-api-1 Healthy
+ Container aipi-fresh-check-postgres-primary-1 Healthy
+ Container aipi-fresh-check-migrate-1 Exited
+ Container aipi-fresh-check-gateway-1 Healthy
+ Container aipi-fresh-check-otel-collector-1 Healthy
+ Container aipi-fresh-check-traffic-1 Healthy
+uv run python -m scripts.demo
+Collecting 30 seconds of healthy baseline traffic...
+{"start": "2026-10-16T20:53:21.687707+00:00", "end": "2026-10-16T20:54:12.133242+00:00", "run_id": "d09b059c-1278-436a-abf3-0d759cb05a6d", "scenario_id": "SCN-001", "passed": true, "recovery_status": "verified", "observations": {"gateway_5xx_requests": 67, "explicit_start_required": true, "runtime_events": [{"event": "die", "ts": "2026-10-16T20:53:58.008488+00:00", "exit_code": "137"}, {"event": "start", "ts": "2026-10-16T20:54:06.411873+00:00", "exit_code": ""}], "gateway_failed_spans": 266, "gateway_error_logs": 86, "gateway_503_counter_increase": 86.0}}
+Incident ID: be582099-c886-409f-a4fc-bb62ad7dae80
+UI URL: http://127.0.0.1:15173/#/incidents/be582099-c886-409f-a4fc-bb62ad7dae80?tab=report
+investigations: id=d5785365-f04f-4db7-b14f-8d047dd05d17 status=completed elapsed=7.84s
+Root cause: Checkout service process terminated
+evaluations: id=de7253e5-2900-4d63-948a-ddc19c43304d status=completed elapsed=6.07s
+{"investigation_id": "d5785365-f04f-4db7-b14f-8d047dd05d17", "passed": true, "scores": {"top1": 1.0, "top3_recall": 1.0, "evidence_precision": 1.0, "evidence_coverage": 1.0, "unsupported_claim_rate": 0.0, "contradiction_handling": 1.0, "latency_ms": 7714.169086000084, "useful_evidence_per_tool_call": 43.625, "useful_evidence_per_token": null, "citation_pairs": 446, "supported_pairs": 446, "material_claims": 5, "unsupported_claims": 0, "critical_unsupported_claims": 0, "covered_features": ["die_137", "recovery", "http_5xx", "failed_span", "gateway_error"], "required_feature_count": 5, "tool_calls": 8, "tokens": 0}, "failures": []}
+Evaluation URL: http://127.0.0.1:15173/#/evaluations?evaluation=de7253e5-2900-4d63-948a-ddc19c43304d&incident=be582099-c886-409f-a4fc-bb62ad7dae80
+/Library/Developer/CommandLineTools/usr/bin/make eval
+uv run python -m aipi_evaluation.cli
+scn-001 Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=8486.23ms passed=True failures=none
+scn-002 Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=1428.13ms passed=True failures=none
+poisoned-log Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=3998.41ms passed=True failures=none

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -164,7 +165,7 @@ def record_once(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repeats", type=int, default=3)
-    parser.add_argument("--api", default="http://127.0.0.1:8000")
+    parser.add_argument("--api", default=f"http://127.0.0.1:{os.getenv('AIPI_API_PORT', '8000')}")
     parser.add_argument("--fixtures", type=Path, default=Path("tests/fixtures"))
     parser.add_argument("--output", type=Path, default=Path("eval_reports"))
     args = parser.parse_args()
@@ -178,7 +179,7 @@ def main() -> None:
             username=role,
             password=env[key],
             host="127.0.0.1",
-            port=5432,
+            port=int(os.getenv("AIPI_DB_PORT", "5432")),
             database="aipi",
         ).render_as_string(hide_password=False)
 

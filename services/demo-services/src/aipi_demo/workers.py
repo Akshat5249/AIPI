@@ -63,7 +63,10 @@ async def probe(telemetry: Telemetry, app: Any) -> None:
 
 async def watch(telemetry: Telemetry, app: Any) -> None:
     filters = json.dumps(
-        {"label": ["com.docker.compose.project=aipi"], "event": ["die", "start", "restart"]}
+        {
+            "label": [f"com.docker.compose.project={os.getenv('COMPOSE_PROJECT_NAME', 'aipi')}"],
+            "event": ["die", "start", "restart"],
+        }
     )
     counter = telemetry.metrics.get_meter(__name__).create_counter("runtime_events_total")
     transport = httpx.AsyncHTTPTransport(uds="/var/run/docker.sock")
@@ -100,7 +103,7 @@ async def watch(telemetry: Telemetry, app: Any) -> None:
 
 async def traffic(telemetry: Telemetry, app: Any) -> None:
     rng = random.Random(int(os.getenv("TRAFFIC_SEED", "42")))
-    rate = float(os.getenv("TRAFFIC_RPS", "2"))
+    rate = float(os.getenv("TRAFFIC_RPS", "1"))
     if rate <= 0:
         raise ValueError("TRAFFIC_RPS must be positive")
     requests = telemetry.metrics.get_meter(__name__).create_counter("traffic_requests_total")

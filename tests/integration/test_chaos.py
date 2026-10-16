@@ -43,6 +43,7 @@ def test_live_scenario_runs_and_recovers(module) -> None:
             assert die_then_start(result.observations["runtime_events"])
             assert result.observations["gateway_5xx_requests"] > 0
         else:
+            assert result.observations["stale_read_probes"] == 10
             samples = result.observations["lag_samples"]
             assert samples[-1]["seconds"] > samples[0]["seconds"]
             assert result.observations["primary_healthy_samples"] >= 3
@@ -73,7 +74,7 @@ def test_ground_truth_and_replay_control_are_restricted() -> None:
             try:
                 db = psycopg.connect(
                     host="127.0.0.1",
-                    port=5432,
+                    port=lab.target.db_port,
                     dbname="aipi",
                     user=role,
                     password=lab.env[key],

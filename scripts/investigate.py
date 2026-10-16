@@ -6,11 +6,13 @@ import time
 
 import httpx
 
+from chaos.scenarios.target import LabTarget
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("incident_id")
-    parser.add_argument("--api", default="http://127.0.0.1:8000")
+    parser.add_argument("--api", default=LabTarget.from_env().api)
     args = parser.parse_args()
     with httpx.Client(base_url=args.api, timeout=20) as client:
         response = client.post(f"/api/incidents/{args.incident_id}/investigate", json={})

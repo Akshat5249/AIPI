@@ -1,0 +1,44 @@
+uv run pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-9.1.1, pluggy-1.6.0
+rootdir: /private/tmp/aipi-m7-clone.59TjeJ/aipi
+configfile: pyproject.toml
+testpaths: tests
+plugins: asyncio-1.4.0, anyio-4.15.1, langsmith-0.14.8
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 133 items
+
+tests/golden/test_agents.py ........                                     [  6%]
+tests/integration/test_agent_tools.py .                                  [  6%]
+tests/integration/test_chaos.py ...                                      [  9%]
+tests/integration/test_evaluation_api.py ....                            [ 12%]
+tests/integration/test_incidents.py .......                              [ 17%]
+tests/integration/test_investigations.py ...                             [ 19%]
+tests/integration/test_lab.py .....                                      [ 23%]
+tests/unit/test_agent_foundations.py ............                        [ 32%]
+tests/unit/test_agent_workflow.py ......                                 [ 36%]
+tests/unit/test_chaos_contracts.py .........                             [ 43%]
+tests/unit/test_correlators.py ...........                               [ 51%]
+tests/unit/test_evaluation.py .................                          [ 64%]
+tests/unit/test_evaluation_disclosure.py .....                           [ 68%]
+tests/unit/test_evidence_ranking.py ....                                 [ 71%]
+tests/unit/test_evidence_selection.py .....                              [ 75%]
+tests/unit/test_incident_core.py .............                           [ 84%]
+tests/unit/test_infra.py ..                                              [ 86%]
+tests/unit/test_lab_target.py ....                                       [ 89%]
+tests/unit/test_telemetry.py ..............                              [100%]
+
+======================= 133 passed in 395.35s (0:06:35) ========================
+cd apps/web && npm test
+
+> aipi-web@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.11 /private/tmp/aipi-m7-clone.59TjeJ/aipi/apps/web
+
+
+ Test Files  4 passed (4)
+      Tests  26 passed (26)
+   Start at  02:33:55
+   Duration  1.07s (transform 329ms, setup 638ms, import 413ms, tests 379ms, environment 1.75s)

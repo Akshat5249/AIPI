@@ -1,0 +1,588 @@
+python3.12 scripts/init_env.py
+Created private .env with generated lab credentials
+python3.12 scripts/init_env.py
+Preserving existing .env
+uv sync --all-packages --frozen
+Using CPython 3.12.0 interpreter at: /Library/Frameworks/Python.framework/Versions/3.12/bin/python3
+Creating virtual environment at: .venv
+   Building aipi-agents @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/agents
+   Building aipi-api @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/apps/api
+   Building aipi-demo @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/services/demo-services
+   Building aipi-evaluation @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/evaluation
+   Building aipi-telemetry @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/telemetry
+   Building aipi-tools @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/tools
+      Built aipi-api @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/apps/api
+      Built aipi-telemetry @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/telemetry
+      Built aipi-demo @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/services/demo-services
+      Built aipi-tools @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/tools
+      Built aipi-evaluation @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/evaluation
+      Built aipi-agents @ file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/agents
+Prepared 6 packages in 522ms
+Installed 86 packages in 288ms
+ + aipi-agents==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/agents)
+ + aipi-api==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/apps/api)
+ + aipi-demo==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/services/demo-services)
+ + aipi-evaluation==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/evaluation)
+ + aipi-telemetry==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/telemetry)
+ + aipi-tools==0.1.0 (from file:///private/tmp/aipi-m7-final-clone.hqNfGM/aipi/packages/tools)
+ + alembic==1.20.0
+ + annotated-doc==0.0.5
+ + annotated-types==0.8.0
+ + anyio==4.15.1
+ + asgiref==3.12.1
+ + ast-serialize==0.13.0
+ + certifi==2026.7.22
+ + charset-normalizer==3.5.2
+ + click==8.5.0
+ + distro==1.9.0
+ + fastapi==0.141.1
+ + googleapis-common-protos==1.75.5
+ + h11==0.16.0
+ + httpcore==1.0.9
+ + httpcore2==2.13.1
+ + httpx==0.28.1
+ + httpx2==2.13.1
+ + idna==3.20
+ + importlib-metadata==8.7.1
+ + iniconfig==2.3.1
+ + jsonpatch==1.35
+ + jsonpointer==3.2.1
+ + langchain-core==1.6.10
+ + langchain-protocol==0.0.19
+ + langgraph==1.2.15
+ + langgraph-checkpoint==4.3.0
+ + langgraph-prebuilt==1.1.0
+ + langgraph-sdk==0.4.7
+ + langsmith==0.14.8
+ + librt==0.16.0
+ + mako==1.4.3
+ + markupsafe==3.0.4
+ + mypy==2.4.0
+ + mypy-extensions==1.1.0
+ + opentelemetry-api==1.39.1
+ + opentelemetry-exporter-otlp-proto-common==1.39.1
+ + opentelemetry-exporter-otlp-proto-http==1.39.1
+ + opentelemetry-instrumentation==0.60b1
+ + opentelemetry-instrumentation-asgi==0.60b1
+ + opentelemetry-instrumentation-fastapi==0.60b1
+ + opentelemetry-instrumentation-httpx==0.60b1
+ + opentelemetry-proto==1.39.1
+ + opentelemetry-sdk==1.39.1
+ + opentelemetry-semantic-conventions==0.60b1
+ + opentelemetry-util-http==0.60b1
+ + orjson==3.13.0
+ + ormsgpack==1.12.2
+ + packaging==26.3
+ + pathspec==1.1.1
+ + pluggy==1.6.0
+ + protobuf==6.33.6
+ + psycopg==3.3.6
+ + psycopg-binary==3.3.6
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + pydantic-settings==2.15.0
+ + pygments==2.21.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + python-dotenv==1.2.4
+ + pyyaml==6.0.3
+ + requests==2.34.2
+ + requests-toolbelt==1.0.0
+ + ruff==0.17.0
+ + sniffio==1.3.1
+ + sqlalchemy==2.1.4
+ + starlette==1.7.0
+ + tenacity==9.2.1
+ + truststore==0.10.5
+ + types-pyyaml==6.0.12.20260906
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + urllib3==2.8.0
+ + uuid-utils==0.17.1
+ + uvicorn==0.54.0
+ + websockets==16.1.1
+ + wrapt==1.17.3
+ + xxhash==4.0.1
+ + zipp==4.1.1
+ + zstandard==0.25.0
+cd apps/web && npm ci --cache /tmp/aipi-npm-cache
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 254 packages, and audited 255 packages in 3s
+
+62 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+python3.12 scripts/init_env.py
+Preserving existing .env
+docker compose --env-file .env -f infra/docker/compose.yml up -d --build --wait --wait-timeout 180
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-scorer:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-python:local Building
+ Image aipi-m7-final-web:local Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 4.51kB done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile.python
+#2 transferring dockerfile: 842B 0.0s done
+#2 DONE 0.0s
+
+#3 [web internal] load build definition from Dockerfile.web
+#3 transferring dockerfile: 305B 0.0s done
+#3 DONE 0.0s
+
+#4 [orders-api internal] load metadata for docker.io/library/python:3.12-slim-bookworm
+#4 DONE 5.1s
+
+#5 [web internal] load .dockerignore
+#5 transferring context: 159B done
+#5 DONE 0.0s
+
+#6 [web internal] load metadata for docker.io/library/node:25-bookworm-slim
+#6 DONE 5.1s
+
+#7 [migrate runtime  1/12] FROM docker.io/library/python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
+#7 resolve docker.io/library/python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 0.0s done
+#7 DONE 0.0s
+
+#8 [web internal] load build context
+#8 DONE 0.0s
+
+#9 [web 1/6] FROM docker.io/library/node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370
+#9 resolve docker.io/library/node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 0.0s done
+#9 DONE 0.0s
+
+#10 [checkout-api internal] load build context
+#10 transferring context: 6.96kB 0.1s done
+#10 DONE 0.1s
+
+#8 [web internal] load build context
+#8 transferring context: 253.38kB 0.0s done
+#8 DONE 0.0s
+
+#11 [web 3/6] COPY apps/web/package.json apps/web/package-lock.json ./
+#11 CACHED
+
+#12 [web 4/6] RUN npm ci
+#12 CACHED
+
+#13 [web 5/6] COPY apps/web .
+#13 CACHED
+
+#14 [web 2/6] WORKDIR /app
+#14 CACHED
+
+#15 [web 6/6] RUN npm run build && chown -R node:node /app
+#15 CACHED
+
+#16 [web] exporting to image
+#16 exporting layers done
+#16 exporting manifest sha256:0a9a1fe42a07dec2fcf630059267f9cdb74d76b89fa037b5d8e0bf0f26b4f76a 0.0s done
+#16 exporting config sha256:4042eddafdf34405edb68ff9faaa22faedd04a984885d8cacdeef4bb48b2a40a
+#16 ...
+
+#17 [pg-lag-probe runtime  5/12] COPY apps/api apps/api
+#17 CACHED
+
+#18 [pg-lag-probe runtime  2/12] WORKDIR /app
+#18 CACHED
+
+#19 [pg-lag-probe runtime  4/12] COPY pyproject.toml uv.lock ./
+#19 CACHED
+
+#20 [pg-lag-probe runtime  6/12] COPY packages packages
+#20 CACHED
+
+#21 [pg-lag-probe runtime  9/12] COPY runbooks runbooks
+#21 CACHED
+
+#22 [pg-lag-probe runtime 10/12] COPY infra/docker/alembic.ini alembic.ini
+#22 CACHED
+
+#23 [pg-lag-probe runtime  3/12] RUN pip install --no-cache-dir uv==0.11.21
+#23 CACHED
+
+#24 [pg-lag-probe runtime 11/12] COPY infra/docker/migrations migrations
+#24 CACHED
+
+#25 [pg-lag-probe runtime  7/12] COPY services/demo-services services/demo-services
+#25 CACHED
+
+#26 [pg-lag-probe runtime  8/12] RUN uv sync --frozen --all-packages --no-dev
+#26 CACHED
+
+#27 [pg-lag-probe runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#27 CACHED
+
+#16 [web] exporting to image
+#16 exporting config sha256:4042eddafdf34405edb68ff9faaa22faedd04a984885d8cacdeef4bb48b2a40a 0.1s done
+#16 exporting attestation manifest sha256:e65e484ab68fe4034f23044dd7530dec73d647e47db72c01ad34b8aa0e2c7fb1 0.1s done
+#16 exporting manifest list sha256:6fa0c251d8097da9d7c940b43d744b4a682e06f4887668bc4c52d170afc0aab9
+#16 ...
+
+#27 [scorer runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#27 CACHED
+
+#28 [scorer internal] load build context
+#28 transferring context: 18.25MB 0.4s done
+#28 DONE 0.4s
+
+#29 [scorer runtime 12/12] RUN useradd --create-home --uid 10001 aipi
+#29 CACHED
+
+#30 [scorer runtime 11/12] COPY infra/docker/migrations migrations
+#30 CACHED
+
+#31 [scorer runtime  5/12] COPY apps/api apps/api
+#31 CACHED
+
+#32 [scorer runtime 10/12] COPY infra/docker/alembic.ini alembic.ini
+#32 CACHED
+
+#18 [scorer runtime  2/12] WORKDIR /app
+#18 CACHED
+
+#23 [scorer runtime  3/12] RUN pip install --no-cache-dir uv==0.11.21
+#23 CACHED
+
+#33 [scorer runtime  4/12] COPY pyproject.toml uv.lock ./
+#33 CACHED
+
+#34 [scorer runtime  9/12] COPY runbooks runbooks
+#34 CACHED
+
+#35 [scorer scorer 1/2] RUN install -d -o 10001 -g 10001 /app/eval_reports
+#35 CACHED
+
+#36 [scorer runtime  6/12] COPY packages packages
+#36 CACHED
+
+#37 [scorer runtime  7/12] COPY services/demo-services services/demo-services
+#37 CACHED
+
+#38 [scorer runtime  8/12] RUN uv sync --frozen --all-packages --no-dev
+#38 CACHED
+
+#39 [scorer scorer 2/2] COPY tests/fixtures /app/tests/fixtures
+#39 CACHED
+
+#16 [web] exporting to image
+#16 exporting manifest list sha256:6fa0c251d8097da9d7c940b43d744b4a682e06f4887668bc4c52d170afc0aab9 0.1s done
+#16 naming to docker.io/library/aipi-m7-final-web:local 0.0s done
+#16 unpacking to docker.io/library/aipi-m7-final-web:local
+#16 unpacking to docker.io/library/aipi-m7-final-web:local 0.0s done
+#16 DONE 0.4s
+
+#40 [orders-api] exporting to image
+#40 exporting layers done
+#40 exporting manifest sha256:38b9e8b8ca96f97e7545fbc2ae4e2921cedcd692a9609bb07e5d6d41b7d87293 0.1s done
+#40 exporting config sha256:a72da6f7c44d4c5e9700b31009a1c8d07d94b70cb8d486f13a45fa262174be73 0.1s done
+#40 exporting attestation manifest sha256:68cbe1ece227f49a46e1eda10aa1159aac23876d5dc83f725282d60fa5adeb48 0.0s done
+#40 exporting manifest list sha256:be03538945407da82d9ceba9a248a8b9cec2f398743409602c768920de41ec28 0.0s done
+#40 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#40 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#40 DONE 0.3s
+
+#41 [pg-lag-probe] exporting to image
+#41 exporting layers done
+#41 exporting manifest sha256:0b2c48c36cb566b5f9cb154b4d878fa7a490b653b99844b17d4d9047fca1dde4 0.1s done
+#41 exporting config sha256:767ca657c3f935ac22e824ac2073d647af99556829cb9b58f26819cb4df91502 0.1s done
+#41 exporting attestation manifest sha256:92980f90868555f00bd1339f12d8decb896ef9fb229e1f000c0994433358ecc3 0.1s done
+#41 exporting manifest list sha256:515d52adaa47ef23c112feb6f9b8d6185a940fe5ab16a9f9c65a6359a89c9e1e 0.0s done
+#41 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#41 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#41 DONE 0.3s
+
+#42 [gateway] exporting to image
+#42 exporting layers 0.0s done
+#42 exporting manifest sha256:4f3c891655ea4bf3f486d84876c4dafc0a3b54c91b58a1833bbc7a12e04f3786 0.1s done
+#42 exporting config sha256:23ddf7cf1b147527fd6521ebca1f2c462a960b28590a1277d2759c345628d08a 0.1s done
+#42 exporting attestation manifest sha256:2cabb1d1413bfd346174fbd66c3c6a25f89d5681cd494894e9f1e8680acb7c43 0.0s done
+#42 exporting manifest list sha256:b383cdbd63e366bbd899f7659442a6a45245f947a4d3ec315efa19d5a03ac62e 0.0s done
+#42 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#42 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#42 DONE 0.3s
+
+#43 [checkout-api] exporting to image
+#43 exporting layers 0.0s done
+#43 exporting manifest sha256:98c8b159099c283a42c5944671aa85dd6ea1eb4e651a0669f01cdbe9bc846c9d 0.1s done
+#43 exporting config sha256:9e048416dc510aa37e882328dd557996eab5c9f2f6b0d14b801c254474945f7d 0.1s done
+#43 exporting attestation manifest sha256:1bbfcfc793a3825c4cc90c74259b3c1c138eb7652aa3ebe14020c0267032f99b 0.0s done
+#43 exporting manifest list sha256:0f4d93a997b95d4d465d87cb5cc7b18bf04cfe6a3809840fd5f21e29566ccd51 0.0s done
+#43 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#43 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#43 DONE 0.3s
+
+#44 [api] exporting to image
+#44 exporting layers 0.0s done
+#44 exporting manifest sha256:685944a9331acd81dec4af6c7ac20b28982057e3892b40247693895928b73e58 0.1s done
+#44 exporting config sha256:e0ad168867df88f981218f88b27f4e4af5c42e731aeae8ea84d420a0a091fd32 0.1s done
+#44 exporting attestation manifest sha256:4cc31c89f24260fd5477813329d3140842ed8448976cc7d88031ec83f76ac4a6 0.0s done
+#44 exporting manifest list sha256:dfa661dc3f5acb4d15fb4ebd4d656688f64a57c698bdfd66b0e04a51e1bc613a 0.0s done
+#44 naming to docker.io/library/aipi-m7-final-python:local done
+#44 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#44 DONE 0.3s
+
+#45 [event-watcher] exporting to image
+#45 exporting layers 0.0s done
+#45 exporting manifest sha256:a7a05556f6af30514f866e40e37d07418d6015fef70cef9e8013d1c327c4e610 0.1s done
+#45 exporting config sha256:99a29b0101aa6948d19a8695b49de3ef68a0d92522e17bb8184db19a87c88dfb 0.1s done
+#45 exporting attestation manifest sha256:c9978891a67933b89cd7f6ff590e37a02f29013216595e9ca1a2d5a01fa31b56 0.0s done
+#45 exporting manifest list sha256:0cf4705467e058a30814171c8fb484bb22e5d687b411f60c55e3e7a477af2ac1 0.0s done
+#45 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#45 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#45 DONE 0.4s
+
+#46 [scorer] exporting to image
+#46 exporting layers done
+#46 exporting manifest sha256:cecb84d596429033b2466a6fe724393428b094bf9b89e639446af9dfb5bf86a4 0.0s done
+#46 exporting config sha256:08db50d6fdcfb377eb03ae50840080063cbc4a662d8f5fcf80c4cbf6e3fede68 0.0s done
+#46 exporting attestation manifest sha256:42e589be44153167a58b1742f010e785beb00462c814ea23736aac57afd87017 0.1s done
+#46 exporting manifest list sha256:8f615ac9ae7227cad213cc6211bb49c3facf63609f413681887ca0d821cdf843
+#46 exporting manifest list sha256:8f615ac9ae7227cad213cc6211bb49c3facf63609f413681887ca0d821cdf843 0.0s done
+#46 naming to docker.io/library/aipi-m7-final-scorer:local done
+#46 unpacking to docker.io/library/aipi-m7-final-scorer:local 0.0s done
+#46 DONE 0.2s
+
+#47 [migrate] exporting to image
+#47 exporting layers 0.0s done
+#47 exporting manifest sha256:2131738a66cc84a47fab2efc527c028d3fd22e0286b940b0929bf284be4be78e 0.1s done
+#47 exporting config sha256:dc233c320f715229759a8ea26dd39a0a2e03d2a0e7fc282f2e954f1e4967c54e 0.1s done
+#47 exporting attestation manifest sha256:e471f4728c15ce485186cbbcfce42b2df7fc98ebac9c243311622bd62fcf0a33 0.0s done
+#47 exporting manifest list sha256:8be20c4b58c1ea2226c9ba16e39e4d001a4aa81f323926cb448aa376bd560000 0.0s done
+#47 naming to docker.io/library/aipi-m7-final-python:local 0.0s done
+#47 unpacking to docker.io/library/aipi-m7-final-python:local 0.0s done
+#47 DONE 0.4s
+
+#48 [web] resolving provenance for metadata file
+#48 DONE 0.1s
+
+#49 [event-watcher] resolving provenance for metadata file
+#49 DONE 0.1s
+
+#50 [api] resolving provenance for metadata file
+#50 DONE 0.1s
+
+#51 [migrate] resolving provenance for metadata file
+#51 DONE 0.1s
+
+#52 [gateway] resolving provenance for metadata file
+#52 DONE 0.1s
+
+#53 [pg-lag-probe] resolving provenance for metadata file
+#53 DONE 0.1s
+
+#54 [orders-api] resolving provenance for metadata file
+#54 DONE 0.1s
+
+#55 [checkout-api] resolving provenance for metadata file
+#55 DONE 0.1s
+
+#56 [scorer] resolving provenance for metadata file
+#56 DONE 0.0s
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-web:local Built
+ Image aipi-m7-final-scorer:local Built
+ Image aipi-m7-final-python:local Built
+ Image aipi-m7-final-python:local Built
+ Network aipi-m7-final_default Creating
+ Volume aipi-m7-final_evaluation-results Creating
+ Volume aipi-m7-final_replica-data Creating
+ Volume aipi-m7-final_primary-data Creating
+ Volume aipi-m7-final_replica-data Creating
+ Volume aipi-m7-final_primary-data Creating
+ Volume aipi-m7-final_evaluation-results Creating
+ Network aipi-m7-final_default Creating
+ Volume aipi-m7-final_replica-data Created
+ Volume aipi-m7-final_replica-data Created
+ Volume aipi-m7-final_primary-data Created
+ Volume aipi-m7-final_primary-data Created
+ Volume aipi-m7-final_evaluation-results Created
+ Volume aipi-m7-final_evaluation-results Created
+ Network aipi-m7-final_default Created
+ Network aipi-m7-final_default Created
+ Container aipi-m7-final-postgres-primary-1 Creating
+ Container aipi-m7-final-postgres-primary-1 Created
+ Container aipi-m7-final-postgres-replica-1 Creating
+ Container aipi-m7-final-migrate-1 Creating
+ Container aipi-m7-final-migrate-1 Created
+ Container aipi-m7-final-api-1 Creating
+ Container aipi-m7-final-postgres-replica-1 Created
+ Container aipi-m7-final-api-1 Created
+ Container aipi-m7-final-web-1 Creating
+ Container aipi-m7-final-scorer-1 Creating
+ Container aipi-m7-final-otel-collector-1 Creating
+ Container aipi-m7-final-web-1 Created
+ Container aipi-m7-final-otel-collector-1 Created
+ Container aipi-m7-final-orders-api-1 Creating
+ Container aipi-m7-final-checkout-api-1 Creating
+ Container aipi-m7-final-pg-lag-probe-1 Creating
+ Container aipi-m7-final-event-watcher-1 Creating
+ Container aipi-m7-final-scorer-1 Created
+ Container aipi-m7-final-checkout-api-1 Created
+ Container aipi-m7-final-pg-lag-probe-1 Created
+ Container aipi-m7-final-event-watcher-1 Created
+ Container aipi-m7-final-orders-api-1 Created
+ Container aipi-m7-final-gateway-1 Creating
+ Container aipi-m7-final-gateway-1 Created
+ Container aipi-m7-final-postgres-primary-1 Starting
+ Container aipi-m7-final-postgres-primary-1 Started
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-postgres-replica-1 Starting
+ Container aipi-m7-final-migrate-1 Starting
+ Container aipi-m7-final-postgres-replica-1 Started
+ Container aipi-m7-final-migrate-1 Started
+ Container aipi-m7-final-migrate-1 Waiting
+ Container aipi-m7-final-migrate-1 Exited
+ Container aipi-m7-final-api-1 Starting
+ Container aipi-m7-final-api-1 Started
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-web-1 Starting
+ Container aipi-m7-final-scorer-1 Starting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-otel-collector-1 Starting
+ Container aipi-m7-final-web-1 Started
+ Container aipi-m7-final-scorer-1 Started
+ Container aipi-m7-final-otel-collector-1 Started
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-event-watcher-1 Starting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-checkout-api-1 Starting
+ Container aipi-m7-final-postgres-replica-1 Healthy
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-pg-lag-probe-1 Starting
+ Container aipi-m7-final-postgres-replica-1 Healthy
+ Container aipi-m7-final-orders-api-1 Starting
+ Container aipi-m7-final-event-watcher-1 Started
+ Container aipi-m7-final-checkout-api-1 Started
+ Container aipi-m7-final-pg-lag-probe-1 Started
+ Container aipi-m7-final-orders-api-1 Started
+ Container aipi-m7-final-orders-api-1 Waiting
+ Container aipi-m7-final-checkout-api-1 Waiting
+ Container aipi-m7-final-checkout-api-1 Healthy
+ Container aipi-m7-final-orders-api-1 Healthy
+ Container aipi-m7-final-gateway-1 Starting
+ Container aipi-m7-final-gateway-1 Started
+ Container aipi-m7-final-web-1 Waiting
+ Container aipi-m7-final-otel-collector-1 Waiting
+ Container aipi-m7-final-pg-lag-probe-1 Waiting
+ Container aipi-m7-final-checkout-api-1 Waiting
+ Container aipi-m7-final-orders-api-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-event-watcher-1 Waiting
+ Container aipi-m7-final-scorer-1 Waiting
+ Container aipi-m7-final-gateway-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Waiting
+ Container aipi-m7-final-migrate-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Healthy
+ Container aipi-m7-final-web-1 Healthy
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-scorer-1 Healthy
+ Container aipi-m7-final-migrate-1 Exited
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-pg-lag-probe-1 Healthy
+ Container aipi-m7-final-otel-collector-1 Healthy
+ Container aipi-m7-final-event-watcher-1 Healthy
+ Container aipi-m7-final-checkout-api-1 Healthy
+ Container aipi-m7-final-orders-api-1 Healthy
+ Container aipi-m7-final-gateway-1 Healthy
+uv run python -m scripts.check_stack
+Healthy: http://127.0.0.1:18000/readyz
+Healthy: http://127.0.0.1:18080/readyz
+Healthy: http://127.0.0.1:15173/healthz
+Healthy: http://127.0.0.1:23133/
+/Library/Developer/CommandLineTools/usr/bin/make seed-traffic
+docker compose --env-file .env -f infra/docker/compose.yml --profile traffic up -d --wait traffic
+ Container aipi-m7-final-postgres-replica-1 Running
+ Container aipi-m7-final-checkout-api-1 Running
+ Container aipi-m7-final-gateway-1 Running
+ Container aipi-m7-final-otel-collector-1 Running
+ Container aipi-m7-final-api-1 Running
+ Container aipi-m7-final-postgres-primary-1 Running
+ Container aipi-m7-final-orders-api-1 Running
+ Container aipi-m7-final-traffic-1 Creating
+ Container aipi-m7-final-traffic-1 Created
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-migrate-1 Starting
+ Container aipi-m7-final-migrate-1 Started
+ Container aipi-m7-final-migrate-1 Waiting
+ Container aipi-m7-final-migrate-1 Exited
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-postgres-replica-1 Healthy
+ Container aipi-m7-final-orders-api-1 Waiting
+ Container aipi-m7-final-checkout-api-1 Waiting
+ Container aipi-m7-final-orders-api-1 Healthy
+ Container aipi-m7-final-checkout-api-1 Healthy
+ Container aipi-m7-final-gateway-1 Waiting
+ Container aipi-m7-final-gateway-1 Healthy
+ Container aipi-m7-final-traffic-1 Starting
+ Container aipi-m7-final-traffic-1 Started
+ Container aipi-m7-final-gateway-1 Waiting
+ Container aipi-m7-final-api-1 Waiting
+ Container aipi-m7-final-orders-api-1 Waiting
+ Container aipi-m7-final-otel-collector-1 Waiting
+ Container aipi-m7-final-migrate-1 Waiting
+ Container aipi-m7-final-postgres-replica-1 Waiting
+ Container aipi-m7-final-postgres-primary-1 Waiting
+ Container aipi-m7-final-traffic-1 Waiting
+ Container aipi-m7-final-checkout-api-1 Waiting
+ Container aipi-m7-final-gateway-1 Healthy
+ Container aipi-m7-final-migrate-1 Exited
+ Container aipi-m7-final-otel-collector-1 Healthy
+ Container aipi-m7-final-checkout-api-1 Healthy
+ Container aipi-m7-final-orders-api-1 Healthy
+ Container aipi-m7-final-postgres-primary-1 Healthy
+ Container aipi-m7-final-postgres-replica-1 Healthy
+ Container aipi-m7-final-api-1 Healthy
+ Container aipi-m7-final-traffic-1 Healthy
+uv run python -m scripts.demo
+Collecting 30 seconds of healthy baseline traffic...
+{"start": "2026-10-16T21:25:38.680352+00:00", "end": "2026-10-16T21:26:27.511517+00:00", "run_id": "6c9fd3fa-4591-46aa-bee1-13dbd3bd3aa7", "scenario_id": "SCN-001", "passed": true, "recovery_status": "verified", "observations": {"gateway_5xx_requests": 69, "explicit_start_required": true, "runtime_events": [{"event": "die", "ts": "2026-10-16T21:26:12.755274+00:00", "exit_code": "137"}, {"event": "start", "ts": "2026-10-16T21:26:21.930124+00:00", "exit_code": ""}], "gateway_failed_spans": 274, "gateway_error_logs": 89, "gateway_503_counter_increase": 89.0}}
+Incident ID: cebc44f5-805b-4293-b5c0-e9e86136bc7e
+UI URL: http://127.0.0.1:15173/#/incidents/cebc44f5-805b-4293-b5c0-e9e86136bc7e
+investigations: id=cf2dc291-3509-4e2c-8cc3-a143640e0108 status=completed elapsed=3.30s
+Root cause: Checkout service process terminated
+evaluations: id=bb453e32-5734-4248-88cd-202160594ec1 status=completed elapsed=3.62s
+{"investigation_id": "cf2dc291-3509-4e2c-8cc3-a143640e0108", "passed": true, "scores": {"top1": 1.0, "top3_recall": 1.0, "evidence_precision": 1.0, "evidence_coverage": 1.0, "unsupported_claim_rate": 0.0, "contradiction_handling": 1.0, "latency_ms": 3131.3419600001, "useful_evidence_per_tool_call": 44.375, "useful_evidence_per_token": null, "citation_pairs": 455, "supported_pairs": 455, "material_claims": 5, "unsupported_claims": 0, "critical_unsupported_claims": 0, "covered_features": ["die_137", "recovery", "http_5xx", "failed_span", "gateway_error"], "required_feature_count": 5, "tool_calls": 8, "tokens": 0}, "failures": []}
+Evaluation URL: http://127.0.0.1:15173/#/evaluations?evaluation=bb453e32-5734-4248-88cd-202160594ec1&incident=cebc44f5-805b-4293-b5c0-e9e86136bc7e
+/Library/Developer/CommandLineTools/usr/bin/make eval
+uv run python -m aipi_evaluation.cli
+scn-001 Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=6803.20ms passed=True failures=none
+scn-002 Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=1603.26ms passed=True failures=none
+poisoned-log Top-1=100% Top-3=100% precision=100.00% coverage=100.00% unsupported=0.00% latency=9344.75ms passed=True failures=none

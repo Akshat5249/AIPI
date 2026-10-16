@@ -1,4 +1,4 @@
-# Foundation security boundaries
+# Security and threat model
 
 The local lab binds published ports to loopback. The MVP has no authentication;
 production authentication/RBAC is deferred. No remediation is implemented.
@@ -11,7 +11,7 @@ expose this service to an untrusted network or use it against production Docker.
 Credentials are randomly generated into ignored `.env` (mode 0600). The committed
 `.env.example` contains placeholders. `postgres` credentials are only supplied to
 PostgreSQL and the one-shot migration container. API ingestion uses
-`telemetry_writer` with SELECT/INSERT on telemetry tables only. Investigation
+`telemetry_writer`; its telemetry and artifact grants are described below. Investigation
 credentials are `investigator_ro` (SELECT and pg_monitor, default read-only).
 `ground_truth` is owned by `chaos_admin`; PUBLIC and the API roles have no access.
 The demo services have separate `app_rw` and `app_ro` roles for orders.
@@ -68,8 +68,9 @@ M5 ground-truth SELECTs are confined to the separate scorer container and scorer
 CLI/oracle module. The incident API receives a scorer URL, with no truth credential
 or truth fixture files. Golden graph replay runs in a credential-free subprocess;
 its allowlisted environment excludes scorer/DB/model secrets. Only observable
-scoped JSON goes to that process. Public evaluation responses contain metric
-scores and experiment metadata, not protected expected causal labels. The scorer
+scoped JSON goes to that process. Evaluation job/scorecard responses contain metric
+scores and experiment metadata, not protected expected causal labels. A separate
+post-score disclosure route is described below. The scorer
 uses default_transaction_read_only even for its chaos_admin-class truth identity;
 its artifact writer is the existing restricted telemetry_writer. Evaluation
 records have explicit FK/insertion/status-update grants; investigator_ro can read
@@ -88,3 +89,21 @@ telemetry-driven links exist. Evidence IDs resolve only through the owning incid
 The web /api proxy does not change host API exposure: 127.0.0.1:8000 remains the
 only API host binding. The exact read-only banner appears on every page, and all
 recommendations remain approval-required and not executed.
+
+
+| Threat | Implemented boundary | Remaining limit |
+|---|---|---|
+| Model requests a write/shell action | Six fixed typed read-only tools; registry/DB grant tests; no execution endpoint | Host chaos/maintenance utilities intentionally mutate the lab under operator control |
+| Scope widening or cross-incident citation | Reload authoritative scope; parameterized SELECTs; audited denials; by-ID provenance | No user authentication/tenant isolation |
+| Prompt injection in telemetry/runbooks | Delimited escaped data; redaction; mock poison regression; schema/repair gates | Paid-model robustness unmeasured; adapters unimplemented |
+| Hidden label leakage to agents | Separate scorer container/credential, separate truth files, credential-free replay subprocess | Operator can read source fixtures; terminal Evaluation page intentionally discloses scored truth |
+| Fabricated claim/value/citation | Pure ID/quotation/claim vocabulary gate; negative CLI tests | Bounded semantic predicates, not general natural-language entailment |
+| Credential disclosure | Generated ignored 0600 .env; safe errors; pre-store/context redaction; full-history scanner | Local host/Docker administrator remains trusted |
+| Docker socket abuse | Lab-only watcher, project-filtered event reads, read-only socket mount | Socket still enables Docker control; root watcher is not a sandbox |
+| Unauthenticated network access | Loopback host publications; scorer unexposed; same-origin web proxy | No TLS/auth/RBAC; internal ingest has no auth; not a production service |
+| Process failure / telemetry accumulation | Persisted artifacts, interrupted jobs marked failed; bounded job deadlines | Single process, no queue, no automatic telemetry retention |
+
+Human approval is a report requirement/label, not an implemented approval/execution
+workflow. No recommendation can be executed through the product. Future production
+work would need authentication/RBAC, credential lifecycle, retention, durable jobs
+and a socket-free telemetry source; none is claimed by this release.

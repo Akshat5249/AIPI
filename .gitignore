@@ -13,3 +13,11 @@ coverage/
 *.egg-info/
 .DS_Store
 eval_reports/
+.cache/
+.uv-cache/
+.vite/
+.eslintcache
+*.tsbuildinfo
+.coverage
+.coverage.*
+htmlcov/

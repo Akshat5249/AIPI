@@ -1,6 +1,14 @@
-# AI Production Incident Investigator — Documentation Pack
+# AIPI documentation
 
-Markdown mirror of the complete project documentation set.
+Current implementation references: [ARCHITECTURE](ARCHITECTURE.md), [API](API.md),
+[TELEMETRY](TELEMETRY.md), [EVALUATION](EVALUATION.md), [SECURITY](SECURITY.md),
+[DEPLOYMENT](DEPLOYMENT.md), [DECISIONS](DECISIONS.md), [DEMO_GUIDE](DEMO_GUIDE.md).
+README and PROGRESS contain verified setup/results.
+
+The numbered documents below are the original design/specification inputs,
+retained as historical requirements, not descriptions of deployed features.
+Where they propose future systems, use the current references above and ADRs for
+what actually ships. CODEX_MASTER_PROMPT.md resolves original design conflicts.
 
 ## Documents
 

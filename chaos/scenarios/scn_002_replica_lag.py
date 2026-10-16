@@ -47,8 +47,13 @@ def inject(lab: Lab, run: Run) -> None:
     orders = [lab.create_order() for _ in range(10)]
     run.data["last_order"] = orders[-1]
     run.observations["healthy_primary_writes"] = len(orders)
-    if lab.read_visible(orders[-1]):
-        raise ChaosError("Paused replica unexpectedly contains the new order")
+    # Observe each newly written order, so the false-lead error/latency signal does
+    # not depend on background traffic scheduling or one lucky request sample.
+    for order in orders:
+        response = lab.client.get(f"/orders/{order.id}")
+        if response.status_code != 404:
+            raise ChaosError("Paused replica did not expose the expected stale read")
+    run.observations["stale_read_probes"] = len(orders)
     healthy = []
     with lab.connect("investigator_ro") as db:
         for _ in range(10):
