@@ -1,6 +1,8 @@
 # Architecture decisions
 
-The master prompt takes precedence over the original design pack.
+These records preserve implementation decisions and their historical milestone labels.
+The [architecture](ARCHITECTURE.md), [API](API.md) and [security model](SECURITY.md)
+describe the current implementation.
 
 ## ADR-001 — LangGraph orchestration; six validated nodes implemented in M4
 
@@ -102,7 +104,7 @@ on M3 metadata/artifact tables. No new credential or .env change is needed; it
 cannot read ground truth. Investigation retrieval itself remains read-only.
 GET /api/scenarios uses static public descriptors instead of a privileged view or
 ground-truth connection. Catalog/schema tests guard against causal-label exposure.
-The six read-only tools and their investigation audit records remain M4 work.
+ADR-017 and ADR-018 describe the implemented read-only tools and investigation audit records.
 
 
 ## ADR-016 — Full-scope correlation and summarized evidence with type floors
@@ -170,10 +172,10 @@ invariance even when a particular witness falls outside the displayed bundle.
 ## ADR-017 — Scoped investigation tools, supervisor audits and synthetic-first mock
 
 M4a first authored `synthetic:true` observable fixture bundles. Hidden truth files
-are read only by `aipi_evaluation.golden`; agents/tools do not import the scorer,
+are opened through the scorer's `aipi_evaluation.oracle`; agents/tools do not import the scorer,
 chaos code or truth readers. The deterministic mock derives falsifiable competing
 hypotheses solely from full-scope correlator signals. Optional paid providers are
-not implemented in this local release, as explicitly permitted by the M4 request.
+not implemented in this local release.
 
 Six typed tools expose fixed allowlisted SELECT operations under investigator_ro.
 A runner binds its owning incident, independently reloads its authoritative scope,
@@ -188,8 +190,8 @@ receiver view observation is included only if its observation timestamp is insid
 the requested incident window. Current recovered state is not evidence about a
 completed historical outage. Both connections assert investigator_ro identity.
 
-Confidence uses the exact section-8 weighted formula and capped contradiction
-penalty. Components are deterministic: direct conjunction coverage/proximity/check
+Confidence uses the [fixed evidence formula](ARCHITECTURE.md#confidence-scoring)
+and capped contradiction penalty. Components are deterministic: direct conjunction coverage/proximity/check
 =1; nonspecific symptom coverage=.4, proximity=.2, check=0; retrieval quality=1
 (or .8 for truncated retrieval, 0 without supporting evidence). Unique material
 contradicting families each add .15, capped at .45. The model has no score input.
@@ -282,7 +284,7 @@ bundles (synthetic=false); the original hand-authored corpus remains under
 fixtures/synthetic for unit tests. The poisoned golden adds an explicitly synthetic
 untrusted log to the recorded kill window; expected labels stay in *.truth.json.
 Scorecards and repeat summaries are JSON/Markdown under ignored eval_reports;
-committed verification summaries and PROGRESS preserve real measured results.
+the [published experiment record](results/mock-live-runs.json) preserves measured results.
 
 
 Scorer API scorecards persist in a named evaluation-results volume initialized
@@ -335,7 +337,7 @@ truth credential or DB privileges. Only the Evaluation page requests/displays it
 A live UI gate starts with make up and seed-traffic, injects the real local fault,
 creates its incident in the browser, investigates, opens evidence outside the cap,
 exports the report, and scores the actual recovered run through the evaluation UI.
-Screenshots and observed output are recorded in PROGRESS.md. Paid providers and
+Captured [dashboard screenshots](images/README.md) preserve the observed UI. Paid providers and
 production hosting/authentication remain outside this local MVP gate.
 
 
@@ -365,8 +367,8 @@ Golden replay polling now allows 90 seconds and prints status/elapsed on timeout
 
 Large recorded observable fixtures stay uncompressed JSON to preserve reviewable
 raw witnesses and direct golden replay without a second decompression format.
-Their exact sizes and full-history secret-scan results are recorded under M7
-verification. Synthetic truth stays separate, and mock-only measurements are
+The recorded kill and poisoned bundles are 7,523,593 and 7,524,096 bytes,
+respectively; neither approaches GitHub's 100 MB file limit. Synthetic truth stays separate, and mock-only measurements are
 explicitly qualified throughout current implementation documentation.
 
 

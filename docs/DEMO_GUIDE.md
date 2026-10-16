@@ -1,4 +1,4 @@
-# Five-minute demo and discussion guide
+# Five-minute demo guide
 
 After README setup, run `make demo`. A warm run builds/starts health checks,
 starts seeded traffic, gathers 30 seconds of baseline, kills checkout-api, verifies
@@ -32,27 +32,13 @@ make test and make record-golden inject faults too; serialize them with demos.
 make down retains lab volumes. For isolated clones keep the README port/project
 exports active throughout setup, chaos, tests and teardown.
 
-Interview talking points:
+## What to verify
 
-- Deterministic full-scope correlation is independent of the 50-item presentation
-  cap. Summary IDs version their actual sample membership; raw rule witnesses
-  remain resolvable. Show a citation rather than merely quoting a confidence.
-- Separate observable symptoms from expected labels: the scorer has its own
-  credential/process and the graph has no oracle import/connection.
-- Ranking uses the fixed coverage/proximity/retrieval/check formula and explicit
-  contradiction penalty, not a model's self-assigned confidence.
-- Show a negative gate test for fabricated values/unknown IDs. Explain the bounded
-  supported claim vocabulary rather than suggesting general hallucination detection.
-- State the measurement limits: deterministic mock, two curated faults, n=3 each,
-  no real-LLM accuracy, no auth/RBAC and no GitHub CI run yet.
+- Service kill: die with exit 137 followed by start, gateway errors and a
+  termination hypothesis supported by those observations.
+- Replica pause: increasing lag and replay-paused evidence, stale-read or timeout
+  evidence, and healthy-primary observations AGAINST the primary-outage hypothesis.
+- Both: every cited ID opens scoped evidence, recommendations remain unexecuted,
+  and the scorer reports unsupported claims rather than hiding a failed gate.
 
-Resume bullets (accurate scope; do not describe these as production/LLM results):
-
-- Built an OTel/PostgreSQL incident lab with scoped immutable evidence, six read-only
-  tools and a Pydantic-validated six-node LangGraph investigation/report workflow.
-- Implemented isolated scorer-backed replay, citation/value hallucination gates
-  and JSON/Markdown scorecards; measured six recovered mock runs across two faults
-  with 100% Top-1 and 2.12955 s median investigation latency.
-- Built a React/TypeScript dashboard with evidence provenance, FOR/AGAINST review,
-  resumable SSE and post-score evaluation disclosure; verified a real local fault
-  from incident creation to evaluation without manual database edits.
+See the [captured dashboard](images/README.md) and [measured mock results](results/README.md).

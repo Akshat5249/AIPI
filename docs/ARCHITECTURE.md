@@ -47,3 +47,43 @@ API and scorer jobs are single-process local tasks, not durable distributed
 queues. Persisted interrupted jobs fail on restart. There is no app authentication
 or RBAC. Host publications bind to loopback; scorer has no public host port.
 See DEPLOYMENT for isolation and operating constraints; DECISIONS records ADRs.
+
+## Storage and ownership
+
+All schemas are created by [Alembic migrations](../infra/docker/migrations/versions).
+The public database separates source telemetry, frozen evidence and investigation
+artifacts; role grants enforce which component can read or write each family.
+
+| Data | Owner and purpose |
+|---|---|
+| `telemetry_logs`, `telemetry_metrics`, `telemetry_spans`, `telemetry_events` | Normalized, redacted observable sources, inserted idempotently by ingestion |
+| `incidents`, `evidence`, `evidence_bundles`, `scope_denials` | Incident scope, immutable snapshots and sanitized policy-denial audit |
+| `investigations`, `hypotheses`, `hypothesis_evidence`, `reports`, `recommendations` | Run status, ranked FOR/AGAINST relations and stored report |
+| `tool_calls`, `investigation_events`, `agent_evidence` | Tool/node audit, SSE sequence and scoped evidence provenance |
+| `evaluation_runs` | Scorer job status, experiment metadata and scorecards |
+| `ground_truth.scenarios`, `ground_truth.chaos_runs` | Protected expected labels and actual injection/recovery records; scorer/host chaos only |
+
+Typed service/time columns and indexes support bounded queries; JSONB stores
+heterogeneous payloads. Artifact foreign keys preserve incident/investigation
+ownership. `evidence` is keyed by incident plus evidence ID, so a source-derived
+ID cannot grant cross-incident access. There is no automatic retention or
+partition management in this local implementation.
+
+## Confidence scoring
+
+The [scoring module](../packages/agents/src/aipi_agents/scoring_config.py) computes:
+
+```text
+score = 0.35 * evidence_coverage
+      + 0.25 * causal_proximity
+      + 0.20 * retrieval_quality
+      + 0.20 * deterministic_check_score
+      - min(0.45, 0.15 * material_contradicting_evidence_count)
+confidence = clamp(score, 0, 1)
+```
+
+The four positive features are validated in [0, 1]; contradiction count is a
+nonnegative integer. Pure verification derives features from observable evidence,
+then ranking applies this formula. No model self-confidence is accepted. Fixed
+input/contradiction tests cover the weights and clamping. These heuristic weights
+are not calibrated probabilities of correctness across arbitrary incidents.

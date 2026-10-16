@@ -7,7 +7,8 @@ from full-scope deterministic correlator signals, with no network/key required.
 Optional paid providers are deferred and fail explicitly if selected.
 
 Pure verification preserves supporting and contradicting evidence families.
-Scoring uses the exact AIPI_CONTEXT section-8 formula, never model confidence.
+Scoring uses the [fixed evidence formula](../../docs/ARCHITECTURE.md#confidence-scoring),
+never model self-confidence.
 Facts retain complete full-scope rule witnesses beyond the display cap; all
 structured/Markdown citations must resolve within the scoped evidence input.
 Recommendations are approval-required read-only checks and never execute.

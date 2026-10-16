@@ -97,13 +97,7 @@ def test_metric_values_and_hidden_labels_never_affect_rank():
         select_ranked(rank_candidates((first,)), limit=51)
 
 
-def test_progress_table_and_recorded_decisions_are_complete():
+def test_recorded_decisions_are_complete():
     decisions = Path("docs/DECISIONS.md").read_text()
     defined = set(re.findall(r"^(?:- |## )ADR-(\d{3})[: —]", decisions, re.MULTILINE))
     assert {f"{number:03}" for number in range(7, 16)} <= defined
-    progress = Path("PROGRESS.md").read_text()
-    assert "`60790a4`" in next(line for line in progress.splitlines() if line.startswith("| M3 |"))
-    table = progress.split("## 4. DECISIONS AND DEVIATIONS", 1)[1].split("---\n\n## 5.", 1)[0]
-    rows = [line for line in table.splitlines() if line.startswith("|")]
-    assert all(len(line.split("|")) == 7 for line in rows)
-    assert "ADR-013 |\n| 4" in table

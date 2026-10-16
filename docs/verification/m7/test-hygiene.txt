@@ -1,5 +1,0 @@
-..Synthetic failure cleanup: 4 owned rows removed; unrelated sentinel retained
-.REPLAY API SCN-001: completed Top-1=1 precision=1 scorecard persisted no truth fields
-.REPLAY API SCN-002: completed Top-1=1 precision=1 scorecard persisted no truth fields
-.
-5 passed, 6 deselected in 17.35s

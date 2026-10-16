@@ -1,3 +1,0 @@
-Both PostgreSQL sessions survived orphaned health-client exit 2
-.
-1 passed in 4.52s

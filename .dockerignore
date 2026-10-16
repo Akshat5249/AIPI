@@ -9,3 +9,17 @@
 **/.mypy_cache
 **/.ruff_cache
 .DS_Store
+
+**/.cache
+**/.uv-cache
+**/.vite
+**/coverage
+eval_reports
+*.log
+*.tmp
+*.bak
+.agents
+.codex
+.claude
+.cursor
+scratch

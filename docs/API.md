@@ -106,7 +106,7 @@ The public catalog does not query ground_truth. Its static descriptors deliberat
 have no import dependency on the chaos scenario definitions or hidden labels.
 The API's reader and writer identities both lack ground_truth schema access.
 
-## M4 investigations
+## Investigations
 
 `POST /api/incidents/{id}/investigate` with `{}` (or no body) returns 202 with
 queued investigation metadata. It schedules an in-process background task.
@@ -133,7 +133,7 @@ the default mock. It needs no model key. A process restart marks interrupted
 jobs failed; restart an investigation with another POST. One API process is the
 MVP deployment boundary. The report routes expose no scenario ground-truth fields.
 
-## M5 evaluations
+## Evaluations
 
 POST `/api/evaluations/replay` with scenario_id SCN-001/SCN-002 returns 202 queued
 metadata. Default mode=golden replays saved observable fixtures with mock.
@@ -150,7 +150,7 @@ scorer reads protected run truth. Replay does not inject faults through HTTP;
 `GET /api/incidents/{id}/investigation` exposes the latest typed investigation
 metadata, letting the scorer tie live report latency/usage to its persisted owner.
 
-## M6 dashboard and evaluation disclosure
+## Dashboard and evaluation disclosure
 
 The dashboard uses a same-origin `/api` proxy (Vite on the host forwards to
 127.0.0.1:8000; the web container forwards to api:8000). API and web host ports

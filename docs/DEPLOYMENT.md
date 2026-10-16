@@ -1,6 +1,6 @@
 # Local deployment and verification
 
-Use the fresh-clone commands and optional isolated port exports in README.md.
+Use the fresh-clone commands and optional isolated port exports in [README](../README.md).
 Python is locked to 3.12, npm dependencies are lockfile-driven, and uv sync uses
 --frozen. Dockerfiles use Python 3.12 slim bookworm and Node 25 bookworm slim;
 PostgreSQL is official postgres:16. Native arm64 images are used on Apple Silicon;
@@ -60,9 +60,10 @@ Full-history scanning uses --all, including reachable prior commits. A separate
 working-tree scan can supplement it; it does not substitute for history. .gitignore
 excludes .env variants (except .env.example), .venv, node_modules and caches.
 LICENSE is MIT. Recorded fixtures intentionally retain complete raw scoped
-witnesses for reproducible out-of-bundle citation validation; see verification/m7
-for exact tracked large-file sizes and scan results. No history rewriting or push
-is part of the local gate.
+witnesses for reproducible out-of-bundle citation validation. The two largest
+files are tests/fixtures/scn-001.json (7,523,593 bytes) and poisoned-log.json
+(7,524,096 bytes), intentionally reviewable without decompression. Generated
+scorecards and debug logs stay ignored. Full-history scans do not rewrite history.
 
 Troubleshooting: inspect `docker compose --env-file .env -f
 infra/docker/compose.yml ps` and targeted logs. A 5432 authentication error after
@@ -78,7 +79,7 @@ a 90-second deadline. No blanket retries hide a failed gate.
 Both PostgreSQL services use Compose init:true and a 60-second stop grace. The
 init process reaps orphaned health-check clients, preventing their abnormal exits
 from being mistaken for PostgreSQL worker crashes. This mechanism was reproduced
-in disposable tmpfs containers during M7; see ADR-022 and verification/m7. A live
+in disposable tmpfs containers; see [ADR-022](DECISIONS.md#adr-022--postgresql-init-reaping-and-bounded-wal-retention). A live
 regression holds an existing SQL connection across a failing orphan client.
 
 
@@ -87,6 +88,7 @@ This is not an archive or an indefinite offline-replica guarantee. If the replic
 reports "requested WAL segment ... has already been removed", waiting or replay
 resume cannot supply it; it needs a new base backup from the primary. A reseed
 writes/replaces replica data and must respect operator constraints on retained
-volumes. M7 preserved the preexisting out-of-sync replica rather than resetting
-it without authorization; see PROGRESS.md for its exact state. Fresh-clone gates
-use a separate project with newly created volumes and credentials.
+volumes. Preserve primary data and matching credentials; take a backup and
+explicitly identify the derivative replica volume before any operator-approved
+reseed. Do not use a blanket volume prune. A new isolated project can validate
+the software without changing retained data.

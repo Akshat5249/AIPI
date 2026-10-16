@@ -59,7 +59,8 @@ root cause, and assert both failure exit and the relevant failure code.
 
 Results are the deterministic mock on **two curated scenarios, n=3 each**, not
 real-LLM accuracy figures. The measured six runs, variance and no-miss record are
-in PROGRESS.md section 6 and verification/m5/live-summary.json. Optional paid
+in [the measured results](results/README.md) and the unchanged
+[raw experiment record](results/mock-live-runs.json). Optional paid
 adapters are unimplemented. New smoke/golden replay latencies are separate
 verification measurements and do not replace that experiment. GitHub CI has not
 run; local actionlint/tests do not establish a hosted CI result.

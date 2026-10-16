@@ -1,4 +1,4 @@
-"""Exact AIPI_CONTEXT section 8 confidence formula; no model confidence input."""
+"""Evidence-weighted confidence formula; no model confidence input."""
 
 from pydantic import BaseModel, ConfigDict, Field
 

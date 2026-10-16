@@ -21,3 +21,29 @@ eval_reports/
 .coverage
 .coverage.*
 htmlcov/
+
+# Local diagnostics and editor temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*~
+*.swp
+*.swo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local coding-agent context and scratch; runtime agent prompts remain tracked
+/.agents/
+/.codex/
+/.claude/
+/.cursor/
+/AGENTS.md
+/CLAUDE.md
+/CODEX_MASTER_PROMPT.md
+/PROGRESS.md
+/scratch/
+/tmp/
