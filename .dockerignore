@@ -23,3 +23,5 @@ eval_reports
 .claude
 .cursor
 scratch
+# Host-only raw video, encoded segments and QA frames
+demo/.work

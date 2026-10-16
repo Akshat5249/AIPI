@@ -1,0 +1,14 @@
+{
+  "verified_at": "2026-10-16T23:10:03.558Z",
+  "full_decode": "passed",
+  "browser_playback": "passed",
+  "seek_every_chapter": "passed",
+  "width": 1920,
+  "height": 1080,
+  "duration": 86,
+  "readyState": 4,
+  "bytes": 4173025,
+  "sha256": "cf224b59ce5d77f3b9305d5fe87e9456f0e741ecfa26e63ebfc8826ac33962c8",
+  "format": "H.264 MP4, yuv420p, 30 fps, faststart",
+  "audio": "silent; burned-in captions and optional SRT supplied"
+}

@@ -1,0 +1,70 @@
+1
+00:00:00,000 --> 00:00:06,000
+AIPI — Real faults. Scoped evidence. Cited reports.
+
+2
+00:00:06,000 --> 00:00:12,000
+OpenTelemetry → PostgreSQL → LangGraph → isolated evaluation
+
+3
+00:00:12,000 --> 00:00:14,000
+Inject one controlled service failure.
+Actual make chaos-kill command · host operator only
+
+4
+00:00:14,000 --> 00:00:20,000
+Verify the failure — and its recovery.
+Condensed actual stdout · die (137) → start · waiting period shortened
+
+5
+00:00:20,000 --> 00:00:28,000
+Declare the scope before investigating.
+checkout-api + gateway · explicit service and time boundaries
+
+6
+00:00:28,000 --> 00:00:29,500
+Follow every step of the investigation.
+Six LangGraph stages · audited read-only tools · deterministic mock
+
+7
+00:00:29,500 --> 00:00:36,000
+Follow every step of the investigation.
+Six LangGraph stages · audited read-only tools · deterministic mock
+
+8
+00:00:36,000 --> 00:00:43,000
+Freeze observations. Keep their provenance.
+Runtime events · 50-item display cap · full-scope correlation
+
+9
+00:00:43,000 --> 00:00:50,000
+Compare causes, including counterevidence.
+FOR / AGAINST citations · confidence from a fixed evidence formula
+
+10
+00:00:50,000 --> 00:00:56,000
+Follow a citation beyond the display cap.
+Actual scoped evidence-by-ID lookup · frozen source payload
+
+11
+00:00:56,000 --> 00:01:03,000
+Keep facts, hypotheses and next checks separate.
+Requires human approval · export the stored Markdown report
+
+12
+00:01:03,000 --> 00:01:05,000
+Score this recovered fault against protected truth.
+Scorer opens labels after investigation · these scores describe this run
+
+13
+00:01:05,000 --> 00:01:13,000
+Score this recovered fault against protected truth.
+Scorer opens labels after investigation · these scores describe this run
+
+14
+00:01:13,000 --> 00:01:20,000
+Read-only tools. Frozen evidence. Gates against fabricated claims.
+
+15
+00:01:20,000 --> 00:01:26,000
+Reproduce with make demo. Deterministic mock; no remediation executed.

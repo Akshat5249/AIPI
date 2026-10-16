@@ -6,6 +6,18 @@ Docker/PostgreSQL fault lab, a six-stage LangGraph workflow, a React dashboard
 and an isolated evaluation service. The default reasoning adapter is a
 **deterministic mock**: no model key or paid service is required.
 
+## Demo video
+
+[![Watch the AIPI project demo](demo/aipi-demo-thumbnail.png)](demo/aipi-demo.mp4)
+
+**86 seconds · 1080p H.264 · captioned.** A real checkout fault and recovery,
+UI-created incident, scoped investigation, cited report and live evaluation.
+Reasoning uses the deterministic mock; the displayed scores belong to that run.
+Click the thumbnail to open the MP4, or download it for local playback.
+
+Reproduce the workflow with `make demo` after setup.
+[Recording commands, storyboard and verification](demo/README.md).
+
 ## Problem
 
 Logs, metrics and traces often describe the same failure in different ways.
@@ -103,7 +115,7 @@ OpenAPI is then [127.0.0.1:18000/docs](http://127.0.0.1:18000/docs). The dashboa
 API-reference link currently uses the default port. For host Vite development,
 set `API_PROXY_TARGET=http://127.0.0.1:18000` when running `npm run dev` in `apps/web`.
 
-## Demo
+## Reproduce the demo
 
 After setup, a warm walkthrough takes approximately five minutes:
 

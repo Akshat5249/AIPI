@@ -47,3 +47,6 @@ yarn-error.log*
 /PROGRESS.md
 /scratch/
 /tmp/
+
+# Reproducible demo capture intermediates (keep the final MP4/poster/manifest)
+/demo/.work/

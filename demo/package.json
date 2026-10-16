@@ -1,0 +1,13 @@
+{
+  "name": "aipi-demo-production",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=25 <26"},
+  "scripts": {
+    "capture": "node capture.mjs",
+    "render": "node render.mjs",
+    "verify": "node verify.mjs"
+  },
+  "devDependencies": {"playwright": "1.62.1"}
+}
